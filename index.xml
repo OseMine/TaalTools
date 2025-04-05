@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <index version="1" name="TaalTools">
   <category name="Utility">
-    <reapack name="Drums MultiChannel Splitter" type="script" desc="Creates stereo tracks from multichannel drum recording">
+    <reapack name="Drums MultiChannel Splitter" type="script" desc="Taal Drum Multitrack Splitter">
       <metadata>
         <description><![CDATA[
 # TaalTools - Drum Multichannel Track Splitter
 
-Creates 15 stereo tracks from a multichannel drum recording with proper naming, coloring and routing.
-Supports standard drum recording setups.
+Professional drum track processor that automatically splits a 32-channel recording into 15 properly named and routed stereo tracks. 
+Ideal for studio drum recordings with standardized input configurations.
 
 ## Features
 - Automatically creates 15 stereo tracks 

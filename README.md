@@ -15,7 +15,7 @@ A collection of tools for REAPER.
 
 ## Tools
 
-### Drum Multichannel Track Splitter
+### Drum Multichannel Track Splitter (Taal Drum Multitrack Splitter)
 Creates 15 stereo tracks from a multichannel drum recording with proper naming, coloring and routing.
 Supports standard drum recording setup with channels 3-32.
 

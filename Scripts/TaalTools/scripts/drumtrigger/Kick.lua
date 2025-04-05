@@ -2,7 +2,7 @@
 -- @author Taal
 -- @version 1.0
 
-package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/lib/?.lua"
+package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/Scripts/TaalTools/lib/?.lua"
 local midi_utils = require("midi_utils")
 
 function Main()

@@ -1,0 +1,49 @@
+desc: TaalTools Formula Synthesizer
+author: Taal
+version: 1.0
+changelog: Initial Release
+
+slider1:0<0,127,1>Note Number
+slider2:0<0,1,0.001>Formula Amount
+slider3:0<0,1>Formula Type (0=sin, 1=custom)
+slider4:1<0,10,0.1>Amplitude
+slider5:0<-12,12,1>Octave Shift
+
+@init
+// Initialize variables
+last_note = -1;
+phi = 0;
+sample_rate = srate;
+pi = 3.14159265359;
+custom_formula = "sin(2*pi*x)"; // Default formula
+
+@slider
+note = slider1;
+formula_amt = slider2;
+formula_type = slider3;
+amplitude = slider4;
+octave = slider5;
+
+@block
+// Calculate frequency for MIDI note with octave shift
+freq = 440 * pow(2, (note - 69 + octave * 12) / 12);
+delta_phi = 2 * pi * freq / sample_rate;
+
+@sample
+phi += delta_phi;
+phi >= 2*pi ? phi -= 2*pi;
+
+// Basic formula synthesis
+x = phi;
+y = 0;
+
+formula_type < 0.5 ? (
+  // Built-in formulas
+  y = sin(x);
+) : (
+  // Custom formula (example: sin(2*x) + sin(3*x)/3)
+  y = sin(2*x) + sin(3*x)/3;
+);
+
+// Apply amplitude
+spl0 = spl1 = y * amplitude;

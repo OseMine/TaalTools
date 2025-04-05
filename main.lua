@@ -6,7 +6,7 @@
 -- @provides
 --   [main] main.lua
 
-package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/Scripts/TaalTools/lib/?.lua"
+package.path = package.path .. ";" .. reaper.GetResourcePath() .. "lib/?.lua"
 local utils = require("utils")
 
 local function showMenu()

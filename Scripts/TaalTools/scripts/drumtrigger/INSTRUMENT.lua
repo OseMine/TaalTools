@@ -1,4 +1,4 @@
--- @description TaalTools - Drum Trigger (Tom 1)
+-- @description TaalTools - Drum Trigger (INSTRUMENT)
 -- @author Taal
 -- @version 1.0
 
@@ -9,10 +9,10 @@ function Main()
     return
   end
   
-  -- Send MIDI note for Tom 1 (note 48)
-  reaper.StuffMIDIMessage(0, 0x90, 48, 127) -- Note On
+  -- Send MIDI note for INSTRUMENT (note XX)
+  reaper.StuffMIDIMessage(0, 0x90, NOTE_NUMBER, 127) -- Note On
   reaper.Sleep(10) -- Wait 10ms
-  reaper.StuffMIDIMessage(0, 0x80, 48, 0) -- Note Off
+  reaper.StuffMIDIMessage(0, 0x80, NOTE_NUMBER, 0) -- Note Off
 end
 
 if not preset_file_init then

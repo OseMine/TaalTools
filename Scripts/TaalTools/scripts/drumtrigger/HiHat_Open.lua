@@ -9,15 +9,14 @@ function Main()
       return
     end
     
-    -- Send MIDI note for Closed HiHat (note 42)
+    -- Send MIDI note for Closed HiHat (note 46)
     reaper.StuffMIDIMessage(0, 0x90, 46, 127) -- Note On
-  reaper.Sleep(10) -- Wait 10ms
+    reaper.Sleep(10) -- Wait 10ms
     reaper.StuffMIDIMessage(0, 0x80, 46, 0) -- Note Off
-  end
-  
-  if not preset_file_init then
+end
+
+if not preset_file_init then
     local _, file, sec, cmd = reaper.get_action_context()
     preset_file_init = true
     Main()
-  end
-  
+end

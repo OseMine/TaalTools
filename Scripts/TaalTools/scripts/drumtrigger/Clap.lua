@@ -2,7 +2,7 @@
 -- @author Taal
 -- @version 1.0
 
-function triggerMIDINote()
+function Main()
   local track = reaper.GetSelectedTrack(0, 0)
   if not track then
     reaper.ShowMessageBox("Please select a track!", "Error", 0)
@@ -10,9 +10,13 @@ function triggerMIDINote()
   end
   
   -- Send MIDI note for Clap (note 39)
-  reaper.StuffMIDIMessage(0, 0x90, 39, 127)
-  reaper.Sleep(10)
-  reaper.StuffMIDIMessage(0, 0x80, 39, 0)
+  reaper.StuffMIDIMessage(0, 0x90, 39, 127) -- Note On
+  reaper.Sleep(10) -- Wait 10ms
+  reaper.StuffMIDIMessage(0, 0x80, 39, 0) -- Note Off
 end
 
-triggerMIDINote()
+if not preset_file_init then
+  local _, file, sec, cmd = reaper.get_action_context()
+  preset_file_init = true
+  Main()
+end

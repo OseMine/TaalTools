@@ -34,6 +34,10 @@ Script name: `VolumeUp.lua`
 Decreases the volume of selected tracks by 0.5dB. Perfect for fine-tuning track volumes.
 Script name: `VolumeDown.lua`
 
+### MIDI Trigger
+Sends MIDI notes to the selected track. Perfect for creating custom drum pads with Stream Deck and OSC.
+Script name: `MIDI_Trigger.lua`
+
 ## Links
 
 - Repository: [https://github.com/OseMine/TaalTools](https://github.com/OseMine/TaalTools)

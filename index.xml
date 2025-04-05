@@ -75,5 +75,53 @@ Decreases the volume of selected tracks by 0.5dB.
         <source main="main" file="Scripts/VolumeDown.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/VolumeDown.lua</source>
       </version>
     </reapack>
+    <reapack name="MIDI Trigger" type="script" desc="MIDI Note Trigger">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - MIDI Note Trigger
+
+Triggers MIDI notes on the selected track. Perfect for creating custom drum pads with Stream Deck and OSC.
+
+## Features
+- Sends MIDI note on/off messages
+- Works with any MIDI instrument
+- Ideal for Stream Deck integration
+- Can be mapped to OSC commands
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source main="main" file="Scripts/TaalTools/scripts/MIDI_Trigger.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/MIDI_Trigger.lua</source>
+      </version>
+    </reapack>
+    <reapack name="Drum Triggers" type="script" desc="MOD Drum MIDI Triggers">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - MOD Drum Triggers
+
+Collection of MIDI triggers for IK Multimedia MOD Drum.
+
+## Features
+- Individual triggers for each drum piece
+- Optimized for Stream Deck integration
+- Standard GM MIDI mapping
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Kick.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Kick.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Snare.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Snare.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Open.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Open.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Crash1.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Crash1.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Crash2.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Crash2.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom1.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Tom1.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom2.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Tom2.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom3.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Tom3.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Ride.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Ride.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Cowbell.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Cowbell.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Clap.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Clap.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Splash3.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Splash3.lua</source>
+      </version>
+    </reapack>
   </category>
 </index>

@@ -14,7 +14,8 @@ local function showMenu()
   menu = menu .. "1. Drum Multichannel Track Splitter\n"
   menu = menu .. "2. Bus Creator\n"
   menu = menu .. "3. Volume Up (0.5dB)\n"
-  menu = menu .. "4. Volume Down (0.5dB)"
+  menu = menu .. "4. Volume Down (0.5dB)\n"
+  menu = menu .. "5. MIDI Trigger"
   
   local choice = reaper.ShowMessageBox(menu, "TaalTools", 1)
   if choice == 1 then
@@ -25,6 +26,8 @@ local function showMenu()
     dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Scripts/VolumeUp.lua")
   elseif choice == 4 then
     dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Scripts/VolumeDown.lua")
+  elseif choice == 5 then
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/MIDI_Trigger.lua")
   end
 end
 

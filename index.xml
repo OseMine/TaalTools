@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="TaalTools" commit="7f7a3ed1c6f9807c4129f2bf76c12223e9f0dc3b">
+<index version="1" name="TaalTools">
   <category name="Utility">
     <reapack name="Drums MultiChannel Splitter" type="script" desc="Creates stereo tracks from multichannel drum recording">
       <metadata>
@@ -7,18 +7,18 @@
 # TaalTools - Drum Multichannel Track Splitter
 
 Creates 15 stereo tracks from a multichannel drum recording with proper naming, coloring and routing.
-Supports standard drum recording setup with channels 3-32.
+Supports standard drum recording setups.
 
 ## Features
-- Automatically creates 15 stereo tracks
+- Automatically creates 15 stereo tracks 
 - Sets up proper channel routing
 - Names and colors tracks according to common drum standards
-- Supports channels 3-32 for standard drum recording setups
+- Supports channels 3-32 for standard recording setups
 ]]></description>
       </metadata>
-      <version name="1.0" author="Taal" time="2024-01-20T12:00:00Z">
+      <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main">Drums_MultiChannelSplitter.lua</source>
+        <source main="main" file="Drums_MultiChannelSplitter.lua">https://github.com/OseMine/TaalTools/raw/main/Drums_MultiChannelSplitter.lua</source>
       </version>
     </reapack>
   </category>

@@ -8,7 +8,7 @@
 -- @changelog
 --   - Initial release
 -- @provides
---   [main] .
+--   [script] ./Drums_MultiChannelSplitter.lua
 -- @link
 --   Forum Thread https://forum.cockos.com/showthread.php?t=xxx
 

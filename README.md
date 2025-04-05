@@ -17,18 +17,22 @@ A collection of tools for REAPER.
 
 ## Tools
 
-### Drum Multichannel Track Splitter (Taal Drum Multitrack Splitter)
+### Drums MultiChannel Splitter
 Creates 15 stereo tracks from a multichannel drum recording with proper naming, coloring and routing.
 Supports standard drum recording setup with channels 3-32.
+Script name: `Drums_MultiChannelSplitter.lua`
 
 ### Bus Creator
 Creates a new bus track and automatically routes all selected tracks to it. The selected tracks will have their master/parent send disabled and their channels 1/2 routed to the bus track.
+Script name: `Bus_Creator.lua`
 
 ### Volume Up
 Increases the volume of selected tracks by 0.5dB. Perfect for fine-tuning track volumes.
+Script name: `VolumeUp.lua`
 
 ### Volume Down
 Decreases the volume of selected tracks by 0.5dB. Perfect for fine-tuning track volumes.
+Script name: `VolumeDown.lua`
 
 ## Links
 

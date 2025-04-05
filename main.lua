@@ -6,9 +6,8 @@
 -- @provides
 --   [main] main.lua
 
-function msg(m)
-  reaper.ShowConsoleMsg(tostring(m) .. "\n")
-end
+package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/Scripts/TaalTools/lib/?.lua"
+local utils = require("utils")
 
 local function showMenu()
   local menu = "TaalTools Menu\n"
@@ -17,9 +16,9 @@ local function showMenu()
   
   local choice = reaper.ShowMessageBox(menu, "TaalTools", 1)
   if choice == 1 then
-    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Drums_MultiChannelSplitter.lua")
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/Drums_MultiChannelSplitter.lua")
   elseif choice == 2 then
-    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Bus_Creator.lua")
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/Bus_Creator.lua")
   end
 end
 

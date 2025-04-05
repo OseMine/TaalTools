@@ -11,9 +11,8 @@ function Main()
   
   -- Send MIDI note for Kick (note 36)
   reaper.StuffMIDIMessage(0, 0x90, 36, 127) -- Note On
-  reaper.defer(function() 
-    reaper.StuffMIDIMessage(0, 0x80, 36, 0) -- Note Off
-  end)
+  reaper.MB_Sleep(10) -- Wait 10ms
+  reaper.StuffMIDIMessage(0, 0x80, 36, 0) -- Note Off
 end
 
 if not preset_file_init then

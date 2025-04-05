@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="TaalTools">
+<index version="1.0.1" name="TaalTools">
   <category name="Utility">
     <reapack name="Drums MultiChannel Splitter" type="script" desc="Taal Drum Multitrack Splitter">
       <metadata>

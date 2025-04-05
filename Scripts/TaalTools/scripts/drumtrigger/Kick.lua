@@ -2,8 +2,7 @@
 -- @author Taal
 -- @version 1.0
 
-local script_path = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
-package.path = package.path .. ";" .. script_path .. "../../../../lib/?.lua"
+package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/Scripts/TaalTools/lib/?.lua"
 local midi_utils = require("midi_utils")
 
 function Main()

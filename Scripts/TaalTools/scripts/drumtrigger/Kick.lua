@@ -2,9 +2,8 @@
 -- @author Taal
 -- @version 1.0
 
-local info = debug.getinfo(1, "S")
-local script_path = info.source:match[[^@?(.*[\/])[^\/]-$]]
-package.path = package.path .. ";" .. script_path .. "../../lib/?.lua"
+local script_path = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
+package.path = package.path .. ";" .. script_path .. "../../../../lib/?.lua"
 local midi_utils = require("midi_utils")
 
 function Main()
@@ -14,9 +13,7 @@ function Main()
     return
   end
   
-  reaper.StuffMIDIMessage(0, 0x90, 36, 127) -- Note On
-  midi_utils.sleep(10) -- Wait 10ms
-  reaper.StuffMIDIMessage(0, 0x80, 36, 0) -- Note Off
+  midi_utils.trigger_note(36) -- Kick drum note
 end
 
 if not preset_file_init then

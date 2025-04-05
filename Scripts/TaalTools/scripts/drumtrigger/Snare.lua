@@ -11,7 +11,7 @@ function Main()
   
   -- Send MIDI note for Snare (note 38)
   reaper.StuffMIDIMessage(0, 0x90, 38, 127) -- Note On
-  reaper.MB_Sleep(10) -- Wait 10ms
+  reaper.Sleep(10) -- Wait 10ms
   reaper.StuffMIDIMessage(0, 0x80, 38, 0) -- Note Off
 end
 

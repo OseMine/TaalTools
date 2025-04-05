@@ -11,7 +11,7 @@ function Main()
     
     -- Send MIDI note for Closed HiHat (note 42)
     reaper.StuffMIDIMessage(0, 0x90, 46, 127) -- Note On
-    reaper.MB_Sleep(10) -- Wait 10ms
+  reaper.Sleep(10) -- Wait 10ms
     reaper.StuffMIDIMessage(0, 0x80, 46, 0) -- Note Off
   end
   

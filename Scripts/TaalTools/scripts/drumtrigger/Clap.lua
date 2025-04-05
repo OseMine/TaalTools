@@ -2,6 +2,10 @@
 -- @author Taal
 -- @version 1.0
 
+local info = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
+package.path = package.path .. ";" .. info .. "?.lua"
+local midi_utils = require("midi_utils")
+
 function Main()
   local track = reaper.GetSelectedTrack(0, 0)
   if not track then
@@ -9,10 +13,7 @@ function Main()
     return
   end
   
-  -- Send MIDI note for Clap (note 39)
-  reaper.StuffMIDIMessage(0, 0x90, 39, 127) -- Note On
-  reaper.Sleep(10) -- Wait 10ms
-  reaper.StuffMIDIMessage(0, 0x80, 39, 0) -- Note Off
+  midi_utils.trigger_note(39) -- Clap note
 end
 
 if not preset_file_init then

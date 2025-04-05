@@ -107,7 +107,7 @@ Collection of MIDI triggers for IK Multimedia MOD Drum.
 - Standard GM MIDI mapping
 ]]></description>
       </metadata>
-      <version name="1.0.4" author="Taal">
+      <version name="1.1" author="Taal">
         <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Kick.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Kick.lua</source>
         <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Snare.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Snare.lua</source>
         <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua</source>

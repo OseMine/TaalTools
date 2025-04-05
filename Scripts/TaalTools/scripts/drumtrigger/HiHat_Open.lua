@@ -1,22 +1,23 @@
--- @description TaalTools - Drum Trigger (Closed HiHat)
+-- @description TaalTools - Drum Trigger (Open HiHat)
 -- @author Taal
 -- @version 1.0
 
+local info = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
+package.path = package.path .. ";" .. info .. "?.lua"
+local midi_utils = require("midi_utils")
+
 function Main()
-    local track = reaper.GetSelectedTrack(0, 0)
-    if not track then
-      reaper.ShowMessageBox("Please select a track!", "Error", 0)
-      return
-    end
-    
-    -- Send MIDI note for Closed HiHat (note 46)
-    reaper.StuffMIDIMessage(0, 0x90, 46, 127) -- Note On
-    reaper.Sleep(10) -- Wait 10ms
-    reaper.StuffMIDIMessage(0, 0x80, 46, 0) -- Note Off
+  local track = reaper.GetSelectedTrack(0, 0)
+  if not track then
+    reaper.ShowMessageBox("Please select a track!", "Error", 0)
+    return
+  end
+  
+  midi_utils.trigger_note(46) -- Open HiHat note
 end
 
 if not preset_file_init then
-    local _, file, sec, cmd = reaper.get_action_context()
-    preset_file_init = true
-    Main()
+  local _, file, sec, cmd = reaper.get_action_context()
+  preset_file_init = true
+  Main()
 end

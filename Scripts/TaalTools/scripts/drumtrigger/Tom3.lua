@@ -1,18 +1,23 @@
 -- @description TaalTools - Drum Trigger (Tom 3)
 -- @author Taal
 -- @version 1.0
-note = 43
 
-function triggerDrum()
-  -- Add your drum trigger logic here
-  -- This function will be called to trigger the drum sound
-end
+local info = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
+package.path = package.path .. ";" .. info .. "?.lua"
+local midi_utils = require("midi_utils")
 
-function onMidiEvent(event)
-  if event.type == "note_on" and event.note == note then
-    triggerDrum()
+function Main()
+  local track = reaper.GetSelectedTrack(0, 0)
+  if not track then
+    reaper.ShowMessageBox("Please select a track!", "Error", 0)
+    return
   end
+  
+  midi_utils.trigger_note(43) -- Tom 3 note
 end
 
--- Register the MIDI event handler
-reaper.MIDIEditor_OnCommand(reaper.MIDIEditor_GetActive(), onMidiEvent)
+if not preset_file_init then
+  local _, file, sec, cmd = reaper.get_action_context()
+  preset_file_init = true
+  Main()
+end

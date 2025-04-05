@@ -1,8 +1,9 @@
 -- @description TaalTools - Drum Trigger (Kick)
--- @description TaalTools - Drum Trigger (Kick)
+-- @author Taal
 -- @version 1.0
 
-package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/Scripts/TaalTools/lib/?.lua"
+local info = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
+package.path = package.path .. ";" .. info .. "?.lua"
 local midi_utils = require("midi_utils")
 
 function Main()

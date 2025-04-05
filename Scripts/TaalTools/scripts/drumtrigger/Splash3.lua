@@ -1,18 +1,23 @@
--- @description TaalTools - Drum Trigger (Splash 3)
+-- @description TaalTools - Drum Trigger (Splash)
 -- @author Taal
 -- @version 1.0
 
-function triggerMIDINote()
+local info = debug.getinfo(1,'S').source:match[[^@?(.*[\/])[^\/]-$]]
+package.path = package.path .. ";" .. info .. "?.lua"
+local midi_utils = require("midi_utils")
+
+function Main()
   local track = reaper.GetSelectedTrack(0, 0)
   if not track then
     reaper.ShowMessageBox("Please select a track!", "Error", 0)
     return
   end
   
-  -- Send MIDI note for Splash (note 55)
-  reaper.StuffMIDIMessage(0, 0x90, 55, 127)
-  reaper.Sleep(10)
-  reaper.StuffMIDIMessage(0, 0x80, 55, 0)
+  midi_utils.trigger_note(55) -- Splash note
 end
 
-triggerMIDINote()
+if not preset_file_init then
+  local _, file, sec, cmd = reaper.get_action_context()
+  preset_file_init = true
+  Main()
+end

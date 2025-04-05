@@ -142,7 +142,7 @@ A flexible formula-based synthesizer that can create sounds based on mathematica
 - Real-time formula switching
 ]]></description>
       </metadata>
-      <version name="1.0" author="Taal">
+      <version name="1.5" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
         <source file="Effects/Formula_Synthesizer.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Formula_Synthesizer.jsfx</source>
       </version>

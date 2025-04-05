@@ -1,16 +1,25 @@
 desc: TaalTools Formula Synthesizer
 author: Taal
-version: 1.0
-changelog: Initial Release
+version: 1.1
+changelog: Added UI for custom formulas
 
 slider1:0<0,127,1>Note Number
 slider2:0<0,1,0.001>Formula Amount
-slider3:0<0,1>Formula Type (0=sin, 1=custom)
+slider3:0<0,1>Formula Type (0=builtin, 1=custom)
 slider4:1<0,10,0.1>Amplitude
 slider5:0<-12,12,1>Octave Shift
+slider6:0<0,7,1{Sin,Square,Sawtooth,Triangle,Sin(2x),Sin(3x),Sin(x)+Sin(2x)/2,Custom}>Builtin Formula
 
 @init
-// Initialize variables
+function init_interface()
+(
+  gfx_clear = 0;
+  gfx_a = 1;
+  custom_formula = "sin(x)";
+);
+
+init_interface();
+
 last_note = -1;
 phi = 0;
 sample_rate = srate;
@@ -33,17 +42,62 @@ delta_phi = 2 * pi * freq / sample_rate;
 phi += delta_phi;
 phi >= 2*pi ? phi -= 2*pi;
 
-// Basic formula synthesis
 x = phi;
 y = 0;
 
 formula_type < 0.5 ? (
   // Built-in formulas
-  y = sin(x);
+  slider6 == 0 ? y = sin(x);
+  slider6 == 1 ? y = x < pi ? 1 : -1;
+  slider6 == 2 ? y = (x / pi) * 2 - 1;
+  slider6 == 3 ? y = x < pi ? x/pi*2-1 : (2-x/pi)*2-1;
+  slider6 == 4 ? y = sin(2*x);
+  slider6 == 5 ? y = sin(3*x);
+  slider6 == 6 ? y = sin(x) + sin(2*x)/2;
+  slider6 == 7 ? y = eval(custom_formula);
 ) : (
-  // Custom formula (example: sin(2*x) + sin(3*x)/3)
-  y = sin(2*x) + sin(3*x)/3;
+  // Custom formula from UI
+  y = eval(custom_formula);
 );
 
 // Apply amplitude
 spl0 = spl1 = y * amplitude;
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_textbox(x, y, w, h, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_set(0.8, 0.8, 0.8, 1);
+  gfx_rect(x, y, w, h);
+  gfx_set(0, 0, 0, 1);
+  gfx_x += 5; gfx_y += h/3;
+  gfx_drawstr(txt);
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools Formula Synthesizer");
+
+// Draw formula input box
+draw_label(10, 50, "Custom Formula:");
+draw_textbox(10, 70, gfx_w-20, 30, custom_formula);
+
+// Draw help text
+gfx_set(0.7, 0.7, 0.7, 1);
+draw_label(10, 120, "Available functions: sin(), cos(), tan(), sqrt(), pow(), abs()");
+draw_label(10, 140, "Variables: x (phase), pi (3.14159...)");
+draw_label(10, 160, "Example: sin(2*x) + sin(3*x)/3");
+
+// Handle mouse input for formula editing
+mouse_cap & 1 && mouse_y >= 70 && mouse_y <= 100 ? (
+  gfx_x = 15; gfx_y = 80;
+  custom_formula = gfx_getchar() >= 0 ? sprintf(#, "%s%c", custom_formula, gfx_getchar()) : custom_formula;
+);

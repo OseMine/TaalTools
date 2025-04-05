@@ -1,5 +1,5 @@
 -- @description TaalTools - Drum Trigger (Kick)
--- @author Taal
+-- @description TaalTools - Drum Trigger (Kick)
 -- @version 1.0
 
 package.path = package.path .. ";" .. reaper.GetResourcePath() .. "/Scripts/TaalTools/lib/?.lua"

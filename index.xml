@@ -21,5 +21,23 @@ Ideal for studio drum recordings with standardized input configurations.
         <source main="main" file="Drums_MultiChannelSplitter.lua">https://github.com/OseMine/TaalTools/raw/main/Drums_MultiChannelSplitter.lua</source>
       </version>
     </reapack>
+    <reapack name="Bus Creator" type="script" desc="Bus Creator Utility">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Bus Creator
+
+Creates a bus track and automatically routes selected tracks to it.
+
+## Features
+- Creates a new bus track
+- Routes selected tracks' channels 1/2 to the bus
+- Disables master/parent send on selected tracks
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source main="main" file="Bus_Creator.lua">https://github.com/OseMine/TaalTools/raw/main/Bus_Creator.lua</source>
+      </version>
+    </reapack>
   </category>
 </index>

@@ -12,11 +12,14 @@ end
 
 local function showMenu()
   local menu = "TaalTools Menu\n"
-  menu = menu .. "1. Drum Multichannel Track Splitter"
+  menu = menu .. "1. Drum Multichannel Track Splitter\n"
+  menu = menu .. "2. Bus Creator"
   
   local choice = reaper.ShowMessageBox(menu, "TaalTools", 1)
   if choice == 1 then
     dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Drums_MultiChannelSplitter.lua")
+  elseif choice == 2 then
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Bus_Creator.lua")
   end
 end
 

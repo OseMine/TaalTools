@@ -21,6 +21,9 @@ A collection of tools for REAPER.
 Creates 15 stereo tracks from a multichannel drum recording with proper naming, coloring and routing.
 Supports standard drum recording setup with channels 3-32.
 
+### Bus Creator
+Creates a new bus track and automatically routes all selected tracks to it. The selected tracks will have their master/parent send disabled and their channels 1/2 routed to the bus track.
+
 ## Links
 
 - Repository: [https://github.com/OseMine/TaalTools](https://github.com/OseMine/TaalTools)

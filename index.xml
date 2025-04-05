@@ -124,4 +124,28 @@ Collection of MIDI triggers for IK Multimedia MOD Drum.
       </version>
     </reapack>
   </category>
+  
+  <category name="Effects">
+    <reapack name="Formula Synthesizer" type="effect" desc="Formula-based JSFX Synthesizer">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Formula Synthesizer
+
+A flexible formula-based synthesizer that can create sounds based on mathematical expressions.
+
+## Features
+- Formula-based synthesis engine
+- Built-in and custom formulas support
+- MIDI note input support
+- Octave shifting
+- Amplitude control
+- Real-time formula switching
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/Formula_Synthesizer.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Formula_Synthesizer.jsfx</source>
+      </version>
+    </reapack>
+  </category>
 </index>

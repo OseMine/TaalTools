@@ -38,6 +38,10 @@ Script name: `VolumeDown.lua`
 Sends MIDI notes to the selected track. Perfect for creating custom drum pads with Stream Deck and OSC.
 Script name: `MIDI_Trigger.lua`
 
+### Formula Synthesizer
+A JSFX synthesizer that generates sound based on mathematical formulas. Supports custom formulas and MIDI input.
+Effect name: `Formula_Synthesizer.jsfx`
+
 ## Links
 
 - Repository: [https://github.com/OseMine/TaalTools](https://github.com/OseMine/TaalTools)

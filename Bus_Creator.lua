@@ -14,9 +14,9 @@ function createBusForSelectedTracks()
     
     reaper.Undo_BeginBlock()
     
-    -- Create new bus track
-    reaper.InsertTrackAtIndex(reaper.CountTracks(0), true)
-    local busTrack = reaper.GetTrack(0, reaper.CountTracks(0) - 1)
+    -- Create new bus track at the top
+    reaper.InsertTrackAtIndex(0, true)
+    local busTrack = reaper.GetTrack(0, 0)
     reaper.GetSetMediaTrackInfo_String(busTrack, "P_NAME", "BUS", true)
     
     -- Process each selected track

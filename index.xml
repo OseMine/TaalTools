@@ -54,7 +54,7 @@ Increases the volume of selected tracks by 0.5dB.
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/VolumeUp.lua">https://github.com/OseMine/TaalTools/raw/main/scripts/VolumeUp.lua</source>
+        <source main="main" file="Scripts/VolumeUp.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/VolumeUp.lua</source>
       </version>
     </reapack>
     <reapack name="Volume Down" type="script" desc="Decrease Volume Slightly">
@@ -72,7 +72,7 @@ Decreases the volume of selected tracks by 0.5dB.
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/VolumeDown.lua">https://github.com/OseMine/TaalTools/raw/main/scripts/VolumeDown.lua</source>
+        <source main="main" file="Scripts/VolumeDown.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/VolumeDown.lua</source>
       </version>
     </reapack>
   </category>

@@ -22,9 +22,9 @@ local function showMenu()
   elseif choice == 2 then
     dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/Bus_Creator.lua")
   elseif choice == 3 then
-    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/VolumeUp.lua")
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Scripts/VolumeUp.lua")
   elseif choice == 4 then
-    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/VolumeDown.lua")
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/Scripts/VolumeDown.lua")
   end
 end
 

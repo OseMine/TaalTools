@@ -1,14 +1,12 @@
 desc: TaalTools Formula Synthesizer
 author: Taal
-version: 1.1
-changelog: Added UI for custom formulas
+version: 1.3
+changelog: Simplified interface
 
-slider1:0<0,127,1>Note Number
-slider2:0<0,1,0.001>Formula Amount
-slider3:0<0,1>Formula Type (0=builtin, 1=custom)
-slider4:1<0,10,0.1>Amplitude
-slider5:0<-12,12,1>Octave Shift
-slider6:0<0,7,1{Sin,Square,Sawtooth,Triangle,Sin(2x),Sin(3x),Sin(x)+Sin(2x)/2,Custom}>Builtin Formula
+slider1:0.5<0,5,0.1>Amplitude
+slider2:0<-12,12,1>Octave Shift
+slider3:0<0,7,1{Sin,Square,Sawtooth,Triangle,Sin(2x),Sin(3x),Sin(x)+Sin(2x)/2,Custom}>Builtin Formula
+slider4:0<0,8,1{sin(x),cos(x),tan(x),x*x,sqrt(x),sin(2*x),sin(3*x),sin(x)+sin(2*x)/2,sin(x)+cos(x)/2}>Custom Formula
 
 @init
 function init_interface()
@@ -25,18 +23,50 @@ phi = 0;
 sample_rate = srate;
 pi = 3.14159265359;
 custom_formula = "sin(2*pi*x)"; // Default formula
+midi_note = -1;  // For MIDI note tracking
+last_midi_note = 60;  // Default to middle C
+current_formula = "sin(x)";
 
 @slider
-note = slider1;
-formula_amt = slider2;
-formula_type = slider3;
-amplitude = slider4;
-octave = slider5;
+amplitude = slider1;
+octave = slider2;
 
 @block
-// Calculate frequency for MIDI note with octave shift
-freq = 440 * pow(2, (note - 69 + octave * 12) / 12);
+// Handle MIDI input
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 != 0 ? ( // Note On
+    midi_note = msg2;
+    last_midi_note = msg2;  // Store the last played note
+  ) : status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    midi_note == msg2 ? midi_note = -1;
+  );
+  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+);
+
+// Use last played note for pitch calculation
+freq = 440 * pow(2, (last_midi_note - 69 + octave * 12) / 12);
 delta_phi = 2 * pi * freq / sample_rate;
+
+// Update current formula display based on settings
+slider3 == 0 ? current_formula = "sin(x)";
+slider3 == 1 ? current_formula = "x < pi ? 0.7 : -0.7";
+slider3 == 2 ? current_formula = "(x / pi * 2 - 1) * 0.7";
+slider3 == 3 ? current_formula = "(x < pi ? x/pi*2-1 : (2-x/pi)*2-1) * 0.7";
+slider3 == 4 ? current_formula = "sin(2*x) * 0.7";
+slider3 == 5 ? current_formula = "sin(3*x) * 0.7";
+slider3 == 6 ? current_formula = "(sin(x) + sin(2*x)/2) * 0.5";
+slider3 == 7 ? (
+  slider4 == 0 ? current_formula = "sin(x)";
+  slider4 == 1 ? current_formula = "cos(x)";
+  slider4 == 2 ? current_formula = "tan(x) * 0.2";
+  slider4 == 3 ? current_formula = "(x*x - pi) / pi";
+  slider4 == 4 ? current_formula = "sqrt(abs(x/pi))";
+  slider4 == 5 ? current_formula = "sin(2*x)";
+  slider4 == 6 ? current_formula = "sin(3*x)";
+  slider4 == 7 ? current_formula = "(sin(x) + sin(2*x)/2) * 0.7";
+  slider4 == 8 ? current_formula = "(sin(x) + cos(x)/2) * 0.7";
+);
 
 @sample
 phi += delta_phi;
@@ -45,23 +75,26 @@ phi >= 2*pi ? phi -= 2*pi;
 x = phi;
 y = 0;
 
-formula_type < 0.5 ? (
-  // Built-in formulas
-  slider6 == 0 ? y = sin(x);
-  slider6 == 1 ? y = x < pi ? 1 : -1;
-  slider6 == 2 ? y = (x / pi) * 2 - 1;
-  slider6 == 3 ? y = x < pi ? x/pi*2-1 : (2-x/pi)*2-1;
-  slider6 == 4 ? y = sin(2*x);
-  slider6 == 5 ? y = sin(3*x);
-  slider6 == 6 ? y = sin(x) + sin(2*x)/2;
-  slider6 == 7 ? y = eval(custom_formula);
-) : (
-  // Custom formula from UI
-  y = eval(custom_formula);
-);
+// Mix builtin and custom formulas based on formula amount
+slider3 == 0 ? y = sin(x);
+slider3 == 1 ? y = x < pi ? 0.7 : -0.7;  // Square wave (reduced amplitude)
+slider3 == 2 ? y = ((x / pi) * 2 - 1) * 0.7;  // Sawtooth (reduced amplitude)
+slider3 == 3 ? y = (x < pi ? x/pi*2-1 : (2-x/pi)*2-1) * 0.7;  // Triangle (reduced amplitude)
+slider3 == 4 ? y = sin(2*x) * 0.7;
+slider3 == 5 ? y = sin(3*x) * 0.7;
+slider3 == 6 ? y = (sin(x) + sin(2*x)/2) * 0.5;
+slider3 == 7 ? y = slider4 == 0 ? sin(x) :
+                   slider4 == 1 ? cos(x) :
+                   slider4 == 2 ? tan(x) * 0.2 :  // Reduce tan amplitude
+                   slider4 == 3 ? (x*x - pi) / pi :
+                   slider4 == 4 ? sqrt(abs(x/pi)) :
+                   slider4 == 5 ? sin(2*x) :
+                   slider4 == 6 ? sin(3*x) :
+                   slider4 == 7 ? (sin(x) + sin(2*x)/2) * 0.7 :
+                   (sin(x) + cos(x)/2) * 0.7;
 
-// Apply amplitude
-spl0 = spl1 = y * amplitude;
+// Apply amplitude (reduced by half)
+spl0 = spl1 = y * amplitude * 0.5;
 
 @gfx 500 200
 function draw_label(x, y, txt) (
@@ -87,14 +120,14 @@ gfx_set(1, 1, 1, 1);
 draw_label(10, 10, "TaalTools Formula Synthesizer");
 
 // Draw formula input box
-draw_label(10, 50, "Custom Formula:");
-draw_textbox(10, 70, gfx_w-20, 30, custom_formula);
+draw_label(10, 50, "Current Formula:");
+draw_textbox(10, 70, gfx_w-20, 30, current_formula);
 
 // Draw help text
 gfx_set(0.7, 0.7, 0.7, 1);
-draw_label(10, 120, "Available functions: sin(), cos(), tan(), sqrt(), pow(), abs()");
-draw_label(10, 140, "Variables: x (phase), pi (3.14159...)");
-draw_label(10, 160, "Example: sin(2*x) + sin(3*x)/3");
+draw_label(10, 120, "Use MIDI keyboard or Note Number slider to control pitch");
+draw_label(10, 140, "Current Note: " + (midi_note >= 0 ? sprintf(#, "%d", midi_note) : "None"));
+draw_label(10, 160, "Available formulas: sin(x), cos(x), tan(x), x*x, sqrt(x), etc.");
 
 // Handle mouse input for formula editing
 mouse_cap & 1 && mouse_y >= 70 && mouse_y <= 100 ? (

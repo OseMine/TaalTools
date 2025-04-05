@@ -8,7 +8,7 @@
 -- @changelog
 --   - Initial release
 -- @provides
---   [main] .
+--   [main=main,midi_editor,midi_inlineeditor] Drums_MultiChannelSplitter.lua
 -- @link
 --   Forum Thread https://forum.cockos.com/showthread.php?t=xxx
 

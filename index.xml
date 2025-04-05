@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <index version="1" name="TaalTools">
   <category name="Scripts">
-    <reapack name="Drum MultiChannel Splitter" type="script">
-      <metadata>
-        <description>Creates stereo tracks from multichannel drum recording</description>
-      </metadata>
+    <reapack name="Drum MultiChannel Splitter" type="effect">
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="main">Drums_MultiChannelSplitter.lua</source>
+        <source>Drums_MultiChannelSplitter.lua</source>
       </version>
     </reapack>
   </category>

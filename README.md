@@ -24,6 +24,12 @@ Supports standard drum recording setup with channels 3-32.
 ### Bus Creator
 Creates a new bus track and automatically routes all selected tracks to it. The selected tracks will have their master/parent send disabled and their channels 1/2 routed to the bus track.
 
+### Volume Up
+Increases the volume of selected tracks by 0.5dB. Perfect for fine-tuning track volumes.
+
+### Volume Down
+Decreases the volume of selected tracks by 0.5dB. Perfect for fine-tuning track volumes.
+
 ## Links
 
 - Repository: [https://github.com/OseMine/TaalTools](https://github.com/OseMine/TaalTools)

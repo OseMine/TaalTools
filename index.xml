@@ -39,5 +39,41 @@ Creates a bus track and automatically routes selected tracks to it.
         <source main="main" file="Bus_Creator.lua">https://github.com/OseMine/TaalTools/raw/main/Bus_Creator.lua</source>
       </version>
     </reapack>
+    <reapack name="Volume Up" type="script" desc="Increase Volume Slightly">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Volume Up
+
+Increases the volume of selected tracks by 0.5dB.
+
+## Features
+- Subtle volume increase (0.5dB)
+- Works on multiple selected tracks
+- Includes undo support
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source main="main" file="VolumeUp.lua">https://github.com/OseMine/TaalTools/raw/main/VolumeUp.lua</source>
+      </version>
+    </reapack>
+    <reapack name="Volume Down" type="script" desc="Decrease Volume Slightly">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Volume Down
+
+Decreases the volume of selected tracks by 0.5dB.
+
+## Features
+- Subtle volume decrease (0.5dB)
+- Works on multiple selected tracks
+- Includes undo support
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source main="main" file="VolumeDown.lua">https://github.com/OseMine/TaalTools/raw/main/VolumeDown.lua</source>
+      </version>
+    </reapack>
   </category>
 </index>

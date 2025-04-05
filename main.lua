@@ -12,13 +12,19 @@ local utils = require("utils")
 local function showMenu()
   local menu = "TaalTools Menu\n"
   menu = menu .. "1. Drum Multichannel Track Splitter\n"
-  menu = menu .. "2. Bus Creator"
+  menu = menu .. "2. Bus Creator\n"
+  menu = menu .. "3. Volume Up (0.5dB)\n"
+  menu = menu .. "4. Volume Down (0.5dB)"
   
   local choice = reaper.ShowMessageBox(menu, "TaalTools", 1)
   if choice == 1 then
     dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/Drums_MultiChannelSplitter.lua")
   elseif choice == 2 then
     dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/Bus_Creator.lua")
+  elseif choice == 3 then
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/VolumeUp.lua")
+  elseif choice == 4 then
+    dofile(reaper.GetResourcePath() .. "/Scripts/TaalTools/scripts/VolumeDown.lua")
   end
 end
 

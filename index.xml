@@ -226,7 +226,7 @@ Collection of classic analog-style filters with LP/HP/BP modes.
 - Added proper drive processing for all filters
 - Added 2x oversampling for all filter types
 - Fixed filter type switching and mode handling]]></changelog>
-        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
       </version>
     </reapack>
 
@@ -254,7 +254,7 @@ High-quality digital filter collection including State Variable, Butterworth and
         <changelog><![CDATA[- Fixed biquad parameter handling
 - Improved state variable filter processing
 - Better filter mode switching]]></changelog>
-        <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
       </version>
     </reapack>
 
@@ -273,7 +273,7 @@ A spectral filter that automatically follows frequency peaks in real-time.
 ]]></description>
       </metadata>
       <version name="1.0" author="Taal">
-        <source file="Effects/Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Peak_Following_Filter.jsfx</source>
+        <source file="Effects/Filters/Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Peak_Following_Filter.jsfx</source>
       </version>
     </reapack>
 
@@ -291,7 +291,7 @@ A classic resonant lowpass filter with natural analog-style characteristics.
 ]]></description>
       </metadata>
       <version name="1.0" author="Taal">
-        <source file="Effects/Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Resonant_LP.jsfx</source>
+        <source file="Effects/Filters/Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Resonant_LP.jsfx</source>
       </version>
     </reapack>
 
@@ -310,7 +310,7 @@ Professional 3-band peak filter with HP/LP sections and saturation.
 ]]></description>
       </metadata>
       <version name="1.0" author="Taal">
-        <source file="Effects/Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Three_Band_Peak_Filter.jsfx</source>
+        <source file="Effects/Filters/Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Three_Band_Peak_Filter.jsfx</source>
       </version>
     </reapack>
 
@@ -329,9 +329,9 @@ A comprehensive collection of professional filter types.
 ]]></description>
       </metadata>
       <version name="1.0" author="Taal">
-        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
-        <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
-        <source file="Effects/TT_Butterworth_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Butterworth_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Butterworth_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Butterworth_Filter.jsfx</source>
       </version>
     </reapack>
 

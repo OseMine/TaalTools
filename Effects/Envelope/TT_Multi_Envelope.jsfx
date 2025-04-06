@@ -1,0 +1,77 @@
+desc: TaalTools Multi-Stage Envelope
+author: Taal
+version: 1.0
+
+slider1:0<0,4,1{2 Stage,3 Stage,4 Stage,5 Stage,6 Stage}>Number of Stages
+slider2:100<1,1000,1>Stage 1 Time (ms)
+slider3:1<0,1,0.01>Stage 1 Level
+slider4:200<1,1000,1>Stage 2 Time (ms)
+slider5:0.5<0,1,0.01>Stage 2 Level
+slider6:300<1,1000,1>Stage 3 Time (ms)
+slider7:0.8<0,1,0.01>Stage 3 Level
+slider8:400<1,1000,1>Stage 4 Time (ms)
+slider9:0.3<0,1,0.01>Stage 4 Level
+slider10:500<1,1000,1>Stage 5 Time (ms)
+slider11:0.6<0,1,0.01>Stage 5 Level
+slider12:600<1,1000,1>Stage 6 Time (ms)
+slider13:0<0,1,0.01>Stage 6 Level
+slider14:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+current_stage = 0;
+stage_start_time = 0;
+stage_start_level = 0;
+num_stages = 2;
+output_vol = 1;
+
+@slider
+num_stages = slider1 + 2;
+stage_times = slider2;
+stage_levels = slider3;
+output_vol = 10^(slider14/20);
+
+// Store stage times and levels in arrays
+stage_times[0] = slider2 * 0.001;
+stage_levels[0] = slider3;
+stage_times[1] = slider4 * 0.001;
+stage_levels[1] = slider5;
+stage_times[2] = slider6 * 0.001;
+stage_levels[2] = slider7;
+stage_times[3] = slider8 * 0.001;
+stage_levels[3] = slider9;
+stage_times[4] = slider10 * 0.001;
+stage_levels[4] = slider11;
+stage_times[5] = slider12 * 0.001;
+stage_levels[5] = slider13;
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 > 0 ? ( // Note On
+    current_stage = 0;
+    stage_start_time = time_precise();
+    stage_start_level = envelope;
+    vel = msg3/127;
+  );
+  midisend(offset,msg1,msg2,msg3); // Pass through
+);
+
+@sample
+current_time = time_precise();
+
+current_stage < num_stages ? (
+  dt = (current_time - stage_start_time) / stage_times[current_stage];
+  dt >= 1 ? (
+    current_stage += 1;
+    stage_start_time = current_time;
+    stage_start_level = stage_levels[current_stage-1];
+    envelope = stage_start_level;
+  ) : (
+    next_level = current_stage < num_stages ? stage_levels[current_stage] : 0;
+    envelope = stage_start_level + (next_level - stage_start_level) * dt;
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

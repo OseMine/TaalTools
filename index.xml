@@ -335,5 +335,27 @@ A comprehensive collection of professional filter types.
       </version>
     </reapack>
 
+    <reapack name="Envelope Generators" type="effect" desc="Collection of Envelope Generators">
+      <metadata>
+        <description><![CDATA[
+# TaalTools Envelope Generators
+
+A collection of professional envelope generators for modulation and amplitude shaping.
+
+## Features
+- ADSR Envelope with legato mode
+- Multi-stage envelope (2-6 stages)
+- Curve-based envelope with custom curve shapes
+- MIDI responsive
+- Full output level control
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
+      </version>
+    </reapack>
+
   </category>
 </index>

@@ -1,0 +1,98 @@
+desc: TaalTools Curve Envelope
+author: Taal
+version: 1.0
+
+slider1:100<1,1000,1>Attack Time (ms)
+slider2:0<-1,1,0.01>Attack Curve
+slider3:200<1,1000,1>Decay Time (ms)
+slider4:0<-1,1,0.01>Decay Curve
+slider5:0.7<0,1,0.01>Sustain Level
+slider6:500<1,1000,1>Release Time (ms)
+slider7:0<-1,1,0.01>Release Curve
+slider8:0<0,1,1{Off,On}>Retrigger Mode
+slider9:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0;
+output_vol = 1;
+
+function apply_curve(x, curve) local(y) (
+  curve == 0 ? (
+    y = x;
+  ) : curve > 0 ? (
+    y = 1 - pow(1-x, 1+curve*3);
+  ) : (
+    y = pow(x, 1-curve*3);
+  );
+  y;
+);
+
+@slider
+attack = slider1 * 0.001;
+attack_curve = slider2;
+decay = slider3 * 0.001;
+decay_curve = slider4;
+sustain = slider5;
+release = slider6 * 0.001;
+release_curve = slider7;
+retrigger = slider8;
+output_vol = 10^(slider9/20);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  
+  status == $x90 && msg3 > 0 ? ( // Note On
+    retrigger || phase == 0 ? (
+      phase = 1;
+      attack_start = time_precise();
+      attack_base = envelope;
+    );
+    vel = msg3/127;
+  );
+  
+  status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    release_base = envelope;
+    release_start = time_precise();
+    phase = 4;
+  );
+  
+  midisend(offset,msg1,msg2,msg3);
+);
+
+@sample
+current_time = time_precise();
+
+phase == 1 ? ( // Attack
+  dt = (current_time - attack_start) / attack;
+  dt >= 1 ? (
+    phase = 2;
+    decay_start = current_time;
+    envelope = 1;
+  ) : (
+    curve_dt = apply_curve(dt, attack_curve);
+    envelope = attack_base + (1 - attack_base) * curve_dt;
+  );
+) : phase == 2 ? ( // Decay
+  dt = (current_time - decay_start) / decay;
+  dt >= 1 ? (
+    phase = 3;
+    envelope = sustain;
+  ) : (
+    curve_dt = apply_curve(dt, decay_curve);
+    envelope = 1 - (1 - sustain) * curve_dt;
+  );
+) : phase == 4 ? ( // Release
+  dt = (current_time - release_start) / release;
+  dt >= 1 ? (
+    phase = 0;
+    envelope = 0;
+  ) : (
+    curve_dt = apply_curve(dt, release_curve);
+    envelope = release_base * (1 - curve_dt);
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

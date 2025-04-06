@@ -1,0 +1,82 @@
+desc: TaalTools ADSR Envelope
+author: Taal
+version: 1.0
+
+slider1:100<1,1000,1>Attack (ms)
+slider2:200<1,2000,1>Decay (ms)
+slider3:0.7<0,1,0.01>Sustain
+slider4:500<1,5000,1>Release (ms)
+slider5:0<0,1,1{Off,On}>Legato Mode
+slider6:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0; // 0=off, 1=attack, 2=decay, 3=sustain, 4=release
+last_triggered = 0;
+output_vol = 1;
+note_on = 0;
+
+@slider
+attack = slider1 * 0.001;
+decay = slider2 * 0.001;
+sustain = slider3;
+release = slider4 * 0.001;
+legato = slider5;
+output_vol = 10^(slider6/20);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 > 0 ? ( // Note On
+    !note_on || !legato ? (
+      phase = 1;
+      attack_base = envelope;
+      attack_start = time_precise();
+    );
+    note_on += 1;
+    vel = msg3/127;
+  );
+  status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    note_on -= 1;
+    note_on <= 0 ? (
+      release_base = envelope;
+      release_start = time_precise();
+      phase = 4;
+      note_on = 0;
+    );
+  );
+  midisend(offset,msg1,msg2,msg3); // Pass through
+);
+
+@sample
+current_time = time_precise();
+
+phase == 1 ? ( // Attack
+  dt = (current_time - attack_start) / attack;
+  dt >= 1 ? (
+    phase = 2;
+    decay_start = current_time;
+    envelope = 1;
+  ) : (
+    envelope = attack_base + (1 - attack_base) * dt;
+  );
+) : phase == 2 ? ( // Decay
+  dt = (current_time - decay_start) / decay;
+  dt >= 1 ? (
+    phase = 3;
+    envelope = sustain;
+  ) : (
+    envelope = 1 - (1 - sustain) * dt;
+  );
+) : phase == 4 ? ( // Release
+  dt = (current_time - release_start) / release;
+  dt >= 1 ? (
+    phase = 0;
+    envelope = 0;
+  ) : (
+    envelope = release_base * (1 - dt);
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

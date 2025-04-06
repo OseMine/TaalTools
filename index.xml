@@ -488,6 +488,18 @@ A collection of professional envelope generators for modulation and amplitude sh
         <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
       </version>
+      <version name="1.9" author="Taal">
+        <changelog><![CDATA[- Removed conflicting filter package dependencies
+- Fixed file path conflicts
+- Removed unavailable synthesizer files
+- Added timeout handling for envelope files
+- Optimized package structure]]></changelog>
+        <!-- VCA Files Only -->
+        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
+      </version>
     </reapack>
   </category>
 </index>

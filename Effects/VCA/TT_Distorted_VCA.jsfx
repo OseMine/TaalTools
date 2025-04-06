@@ -3,7 +3,7 @@ author: Taal
 version: 1.0
 
 slider1:0.5<0,1,0.01>Input Gain
-slider2:0<0,5,1{Classic,Fuzz,Retro,Simple,Waveshaper,NOOO}>Drive Type
+slider2:0<0,11,1{Classic,Fuzz,Retro,Simple,Waveshaper,NOOO,Tube,Hard Fuzz,Clipper,Old Waveshaper,Rectifier,Crusher}>Drive Type
 slider3:0.7<0,1,0.01>Drive Amount
 slider4:0.3<0,1,0.01>Tone
 slider5:0.5<0,1,0.01>Mix
@@ -64,6 +64,44 @@ function nooo_drive(x, drive) local(ceiling,t1) (
   t1 /= ceiling;
 );
 
+// Additional distortion types
+function tube_drive(x, drive) local(out) (
+  drive = 1 + drive * 8;
+  out = x * drive;
+  out = out / (1 + abs(out));
+  out += 0.1 * out * out; // Add even harmonics
+  out;
+);
+
+function hard_fuzz_drive(x, drive) local(out) (
+  x *= (1 + drive * 10);
+  x = x >= 0 ? 1 - exp(-x) : -1 + exp(x);
+  x * 0.8;
+);
+
+function clip_drive(x, drive) local(threshold) (
+  threshold = 1/(1 + drive * 5);
+  max(min(x * (1 + drive * 5), threshold), -threshold);
+);
+
+function old_wave_drive(x, drive) local(out) (
+  out = sin(x * $pi * (1 + drive * 3));
+  out *= 1 + drive;
+  out / (1 + drive * 0.5);
+);
+
+function rectify_drive(x, drive) local(pos, neg) (
+  pos = max(x, 0) * (1 + drive);
+  neg = min(x, 0) * (1 - drive * 0.7);
+  pos + neg;
+);
+
+function crush_drive(x, drive) local(bits, step) (
+  bits = 16 - drive * 12;
+  step = pow(2, -bits);
+  floor(x/step + 0.5) * step;
+);
+
 @slider
 output_vol = 10^(slider7/20);
 tone_factor = slider4 * 0.9 + 0.1;
@@ -94,15 +132,39 @@ slider2 == 0 ? (
   // Waveshaper
   dist_l = 2/(1+exp(-2*in_l*slider3)) - 1;
   dist_r = 2/(1+exp(-2*in_r*slider3)) - 1;
-) : (
+) : slider2 == 5 ? (
   // NOOO
   dist_l = nooo_drive(in_l, slider3);
   dist_r = nooo_drive(in_r, slider3);
+) : slider2 == 6 ? (
+  // Tube
+  dist_l = tube_drive(in_l, slider3);
+  dist_r = tube_drive(in_r, slider3);
+) : slider2 == 7 ? (
+  // Hard Fuzz
+  dist_l = hard_fuzz_drive(in_l, slider3);
+  dist_r = hard_fuzz_drive(in_r, slider3);
+) : slider2 == 8 ? (
+  // Clipper
+  dist_l = clip_drive(in_l, slider3);
+  dist_r = clip_drive(in_r, slider3);
+) : slider2 == 9 ? (
+  // Old Waveshaper
+  dist_l = old_wave_drive(in_l, slider3);
+  dist_r = old_wave_drive(in_r, slider3);
+) : slider2 == 10 ? (
+  // Rectifier
+  dist_l = rectify_drive(in_l, slider3);
+  dist_r = rectify_drive(in_r, slider3);
+) : (
+  // Crusher
+  dist_l = crush_drive(in_l, slider3);
+  dist_r = crush_drive(in_r, slider3);
 );
 
 // Tone control (simple lowpass)
 dist_l = dist_l * tone_factor + prev_l * (1 - tone_factor);
-dist_r = dist_r * tone_factor + prev_r * (1 - tone_factor);
+dist_r = dist_l * tone_factor + prev_r * (1 - tone_factor);
 prev_l = dist_l;
 prev_r = dist_r;
 

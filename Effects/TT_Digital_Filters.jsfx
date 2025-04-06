@@ -1,6 +1,6 @@
 desc: TaalTools Digital Filters
 author: Taal
-version: 1.0
+version: 1.1
 
 slider1:0<0,2,1{State Variable,Butterworth,Biquad}>Filter Type
 slider2:0<0,2,1{LP,HP,BP}>Filter Mode 
@@ -75,7 +75,7 @@ function process_svf(input) local(output) (
   output;
 );
 
-function process_biquad(input, inputr) local(output) (
+function process_biquad(input) local(output) (
   // Biquad Filter
   output = b0*input + b1*bq.x1 + b2*bq.x2 - a1*bq.y1 - a2*bq.y2;
   bq.x2 = bq.x1;

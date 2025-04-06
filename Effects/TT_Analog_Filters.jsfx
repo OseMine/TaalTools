@@ -1,6 +1,6 @@
 desc: TaalTools Analog Filters
 author: Taal
-version: 1.0
+version: 1.1
 
 slider1:0<0,2,1{ARP4075,Moog,Roland}>Filter Type
 slider2:0<0,2,1{LP,HP,BP}>Filter Mode
@@ -66,35 +66,33 @@ function process_moog(input) local(f,k,p,scale,r,x) (
   moog.y4;
 );
 
+@sample
 // Process each sample
 input0 = spl0;
 input1 = spl1;
 
-slider1 == 0 ? (
-  out0 = process_arp4075(input0);
-  out1 = process_arp4075(input1);
-) : slider1 == 1 ? (
-  out0 = process_moog(input0); 
-  out1 = process_moog(input1);
-) : (
-  // Roland uses same structure as Moog but different scaling
-  out0 = process_moog(input0);
-  out1 = process_moog(input1); 
-);
+// Process based on selected filter type and mode
+lp0 = slider1 == 0 ? process_arp4075(input0) :
+      slider1 == 1 ? process_moog(input0) :
+      process_moog(input0); // Roland mode
+      
+lp1 = slider1 == 0 ? process_arp4075(input1) :
+      slider1 == 1 ? process_moog(input1) :
+      process_moog(input1); // Roland mode
 
 // Apply filter mode
 slider2 == 0 ? (
-  // LP - already handled
+  // LP - use direct lowpass output
+  out0 = lp0;
+  out1 = lp1;
 ) : slider2 == 1 ? (
-  // HP
-  out0 = input0 - out0;
-  out1 = input1 - out1;
+  // HP - subtract lowpass from input
+  out0 = input0 - lp0;
+  out1 = input1 - lp1;
 ) : (
   // BP - subtract HP from LP
-  hp0 = input0 - out0;
-  hp1 = input1 - out1;
-  out0 = out0 - hp0;
-  out1 = out1 - hp1;
+  out0 = lp0 - (input0 - lp0);
+  out1 = lp1 - (input1 - lp1);
 );
 
 spl0 = out0 * output;

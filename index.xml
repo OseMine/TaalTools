@@ -207,6 +207,12 @@ Collection of classic analog-style filters with LP/HP/BP modes.
         <changelog><![CDATA[Initial Release]]></changelog>
         <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
       </version>
+      <version name="1.1" author="Taal">
+        <changelog><![CDATA[- Fixed conditional syntax
+- Improved filter mode switching
+- Added better intermediate variable handling]]></changelog>
+        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
+      </version>
     </reapack>
 
     <reapack name="Digital Filters" type="effect" desc="Modern Digital Filter Collection">
@@ -227,6 +233,12 @@ High-quality digital filter collection including State Variable, Butterworth and
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
+      </version>
+      <version name="1.1" author="Taal">
+        <changelog><![CDATA[- Fixed biquad parameter handling
+- Improved state variable filter processing
+- Better filter mode switching]]></changelog>
         <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
       </version>
     </reapack>

@@ -144,7 +144,7 @@ A flexible formula-based synthesizer that can create sounds based on mathematica
       </metadata>
       <version name="2" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/Formula_Synthesizer.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Formula_Synthesizer.jsfx</source>
+        <source file="Effects/Synthesizers/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synthesizers/TT_Formula_Synth.jsfx</source>
       </version>
     </reapack>
     <reapack name="Vintage Analog Synthesizer" type="effect" desc="Classic Analog-Style Synthesizer">
@@ -164,7 +164,7 @@ A faithful recreation of classic analog synthesizer sounds with hardware-like ch
       </metadata>
       <version name="1.1" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/Synthesizers/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synthesizers/TT_Vintage_Analog_Synth.jsfx</source>
       </version>
     </reapack>
     <reapack name="VA Synthesizer Extended" type="effect" desc="Extended Vintage-Style Synthesizer">
@@ -184,7 +184,7 @@ An extended version of the vintage analog synthesizer with additional waveforms 
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/VA_Synthesizer_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VA_Synthesizer_Extended.jsfx</source>
+        <source file="Effects/Synthesizers/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synthesizers/TT_VA_Synth_Extended.jsfx</source>
       </version>
     </reapack>
     <reapack name="Analog Filters" type="effect" desc="Classic Analog Filter Collection">
@@ -424,7 +424,10 @@ A collection of professional envelope generators for modulation and amplitude sh
         <changelog><![CDATA[- Added Distorted VCA with multiple drive types
 - Added tube, fuzz, clipper, waveshaper, rectifier modes
 - Added tone control and stereo processing options
-- Added DC blocking for cleaner output]]></changelog>
+- Added DC blocking for cleaner output
+- Added classic distortion algorithms from Cockos
+- Added improved saturation and compression algorithms
+- Added analog-style DC blocker implementation]]></changelog>
         <!-- Envelope Files -->
         <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
@@ -434,6 +437,11 @@ A collection of professional envelope generators for modulation and amplitude sh
         <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
+        
+        <!-- Synthesizer Files with Corrected Paths -->
+        <source file="Effects/Synthesizers/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synthesizers/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/Synthesizers/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synthesizers/TT_Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/Synthesizers/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synthesizers/TT_VA_Synth_Extended.jsfx</source>
         
         <!-- VCA Files -->
         <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>

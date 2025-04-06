@@ -3,7 +3,7 @@ author: Taal
 version: 1.0
 
 slider1:0.5<0,1,0.01>Input Gain
-slider2:0<0,5,1{Tube,Fuzz,Clipper,Waveshaper,Rectifier,Crusher}>Drive Type
+slider2:0<0,5,1{Classic,Fuzz,Retro,Simple,Waveshaper,NOOO}>Drive Type
 slider3:0.7<0,1,0.01>Drive Amount
 slider4:0.3<0,1,0.01>Tone
 slider5:0.5<0,1,0.01>Mix
@@ -13,47 +13,60 @@ slider7:0<-24,24,0.1>Output (dB)
 @init
 prev_l = prev_r = 0;
 dc_block_l = dc_block_r = 0;
+DCcoef = exp(-2 * $pi * 25/srate);
 
-function tube_drive(x, drive) local(out) (
-  drive = 1 + drive * 8;
-  out = x * drive;
-  out = out / (1 + abs(out));
-  out += 0.1 * out * out; // Add even harmonics
-  out;
+// Classic distortion
+function classic_drive(x, drive) local(preamp,soft,maxv,t,s,diff) (
+  preamp = 2^((drive*50)/6);
+  soft = 2^(drive*10);
+  maxv = 2^(-12/6);
+  x *= preamp;
+  t = abs(x);
+  t > maxv ? (
+    s = sign(x);
+    diff = t-maxv;
+    x = s*(maxv + diff/(soft+diff));
+  );
+  x;
 );
 
-function fuzz_drive(x, drive) local(out) (
-  x *= (1 + drive * 10);
-  x = x >= 0 ? 1 - exp(-x) : -1 + exp(x);
-  x * 0.8;
+// Fuzz distortion
+function fuzz_drive(x, drive) local(shape,maxv,as,s0) (
+  shape = 1 + drive * 300;
+  maxv = 2^(-25/6);
+  as = abs(x);
+  s0 = x * (as + shape) / (as*(as + shape-1) + 1);
+  max(min(s0,maxv),-maxv);
 );
 
-function clip_drive(x, drive) local(threshold) (
-  threshold = 1/(1 + drive * 5);
-  max(min(x * (1 + drive * 5), threshold), -threshold);
+// Retro distortion 
+function retro_drive(x, drive) local(y,compressor) (
+  y = 0.0001 + x*x;
+  compressor = 0.15 + (x/y)*0.85;
+  compressor = min(max(compressor,0.02),50);
+  y = y*compressor;
+  (x*1.618-y*drive)*0.618;
 );
 
-function shape_drive(x, drive) local(out) (
-  out = sin(x * $pi * (1 + drive * 3));
-  out *= 1 + drive;
-  out / (1 + drive * 0.5);
+// Simple waveshaper
+function simple_drive(x, drive) local(foo) (
+  foo = 2*drive/(1-drive);
+  (1+foo)*x/(1+foo*abs(x));
 );
 
-function rectify_drive(x, drive) local(pos, neg) (
-  pos = max(x, 0) * (1 + drive);
-  neg = min(x, 0) * (1 - drive * 0.7);
-  pos + neg;
-);
-
-function crush_drive(x, drive) local(bits, step) (
-  bits = 16 - drive * 12;
-  step = pow(2, -bits);
-  floor(x/step + 0.5) * step;
+// NOOO saturation
+function nooo_drive(x, drive) local(ceiling,t1) (
+  ceiling = exp(0.11512925464970228420089957273422 * -12);
+  x *= ceiling;
+  t1 = 2/(1+exp(-2*x)) - 1;
+  x = x*(2/(1+exp(-2*drive)))/(drive);
+  t1 = x + drive*(t1-x) + drive*(t1 * t1); 
+  t1 /= ceiling;
 );
 
 @slider
 output_vol = 10^(slider7/20);
-tone_factor = slider4 * 0.9 + 0.1; // 0.1 to 1.0 range
+tone_factor = slider4 * 0.9 + 0.1;
 
 @sample
 // Input stage with gain
@@ -62,29 +75,29 @@ in_r = spl1 * slider1;
 
 // Apply selected drive type
 slider2 == 0 ? (
-  // Tube
-  dist_l = tube_drive(in_l, slider3);
-  dist_r = tube_drive(in_r, slider3);
+  // Classic
+  dist_l = classic_drive(in_l, slider3);
+  dist_r = classic_drive(in_r, slider3);
 ) : slider2 == 1 ? (
   // Fuzz
   dist_l = fuzz_drive(in_l, slider3);
   dist_r = fuzz_drive(in_r, slider3);
 ) : slider2 == 2 ? (
-  // Clipper
-  dist_l = clip_drive(in_l, slider3);
-  dist_r = clip_drive(in_r, slider3);
+  // Retro
+  dist_l = retro_drive(in_l, slider3);
+  dist_r = retro_drive(in_r, slider3);
 ) : slider2 == 3 ? (
-  // Waveshaper
-  dist_l = shape_drive(in_l, slider3);
-  dist_r = shape_drive(in_r, slider3);
+  // Simple
+  dist_l = simple_drive(in_l, slider3);
+  dist_r = simple_drive(in_r, slider3);
 ) : slider2 == 4 ? (
-  // Rectifier
-  dist_l = rectify_drive(in_l, slider3);
-  dist_r = rectify_drive(in_r, slider3);
+  // Waveshaper
+  dist_l = 2/(1+exp(-2*in_l*slider3)) - 1;
+  dist_r = 2/(1+exp(-2*in_r*slider3)) - 1;
 ) : (
-  // Crusher
-  dist_l = crush_drive(in_l, slider3);
-  dist_r = crush_drive(in_r, slider3);
+  // NOOO
+  dist_l = nooo_drive(in_l, slider3);
+  dist_r = nooo_drive(in_r, slider3);
 );
 
 // Tone control (simple lowpass)
@@ -94,10 +107,8 @@ prev_l = dist_l;
 prev_r = dist_r;
 
 // DC blocking
-dc_block_l += 0.001 * (dist_l - dc_block_l);
-dc_block_r += 0.001 * (dist_r - dc_block_r);
-dist_l -= dc_block_l;
-dist_r -= dc_block_r;
+otm1 = DCcoef*otm1 + dist_l - itm1; itm1=dist_l; dist_l=otm1;
+otm2 = DCcoef*otm2 + dist_r - itm2; itm2=dist_r; dist_r=otm2;
 
 // Mix
 out_l = in_l * (1 - slider5) + dist_l * slider5;

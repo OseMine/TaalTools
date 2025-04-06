@@ -162,7 +162,7 @@ A faithful recreation of classic analog synthesizer sounds with hardware-like ch
 - True stereo output with subtle stereo width
 ]]></description>
       </metadata>
-      <version name="1.0" author="Taal">
+      <version name="1.1" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
         <source file="Effects/Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Vintage_Analog_Synth.jsfx</source>
       </version>

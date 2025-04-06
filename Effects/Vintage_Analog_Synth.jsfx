@@ -35,37 +35,41 @@ function analog_saturate(x) (
   x - (x*x*x)/3;           // Soft saturation
 );
 
-function generate_saw(p) local(out, i) (
+function generate_saw(p) local(out, i, amp) (
   out = 0;
-  // Pure additive synthesis with natural harmonics series
+  // Pure additive synthesis with steeper rolloff for undertones
   i = 1;
   while(i <= num_harmonics) (
-    out += sin(p * i) / i;  // Pure 1/n rolloff without modifications
+    // Reduce undertones, enhance mids and highs
+    amp = 1/i * (1 + (i/32) * 0.2); // Boost higher harmonics slightly
+    out += sin(p * i) * amp;
     i += 1;
   );
-  out = out * 0.5; // Basic normalization
-  out = saturate(out * 1.3); // Slightly stronger saturation
+  out = out * 0.6; // Normalize
+  out = saturate(out * 1.3); // Slight extra drive
   out;
 );
 
-function generate_square(p) local(out, i) (
+function generate_square(p) local(out, i, amp) (
   out = 0;
-  // Enhanced odd harmonics series
+  // Enhanced odd harmonics with more undertones
   i = 1;
   while(i <= num_harmonics) (
-    // Much slower rolloff for odd harmonics
-    n = 2*i - 1;
-    amp = 1/n * pow(brightness, (i-1) * 0.2); // Slower falloff (0.2 instead of 0.5)
+    n = 2*i - 1;  // Odd harmonics only
+    // Slower rolloff for first few harmonics, then steeper
+    i <= 4 ? (
+      amp = 1/n * 0.9;  // Strong fundamental and low harmonics
+    ) : (
+      amp = 1/n * pow(brightness, (i-4) * 0.3);  // Steeper rolloff for higher harmonics
+    );
     out += sin(p * n) * amp;
     i += 1;
   );
-  out = out * 0.7;  // Normalize
-  // Add more high harmonics for brightness
-  out += sin(p * 3) * 0.15;
-  out += sin(p * 5) * 0.12;
-  out += sin(p * 7) * 0.1;
-  out += sin(p * 9) * 0.08;
-  out = saturate(out * 1.5); // Stronger saturation
+  // Add more low-end weight
+  out = out * 0.6;
+  out += sin(p/2) * 0.15; // Sub oscillator
+  out += sin(p) * 0.2;    // Enhanced fundamental
+  out = saturate(out * 1.4);
   out;
 );
 

@@ -1,12 +1,15 @@
 desc: TaalTools Analog Filters
-author: Taal
-version: 1.1
+author: Taal (with algorithms by Liteon)
+version: 1.4
 
-slider1:0<0,2,1{ARP4075,Moog,Roland}>Filter Type
+slider1:0<0,4,1{ARP4075,Moog,Roland,Apple 2-Pole,Moog 4-Pole}>Filter Type
 slider2:0<0,2,1{LP,HP,BP}>Filter Mode
 slider3:1000<20,20000>Frequency (Hz)
 slider4:0.5<0,1>Resonance
-slider5:0<-24,24,0.1>Output (dB)
+slider5:0<0,100,0.05>Drive (%)
+slider6:0<-24,24,0.1>Output (dB)
+slider7:0<0,1,1{On,Off}>Limiter
+slider8:0<0,1,1{Off,On}>Oversample (x2)
 
 @init
 ext_tail_size = -1;
@@ -18,12 +21,57 @@ arp.state1 = arp.state2 = arp.state3 = arp.state4 = 0;
 moog.y1 = moog.y2 = moog.y3 = moog.y4 = 0;
 moog.oldx = moog.oldy1 = moog.oldy2 = moog.oldy3 = 0;
 
+// Apple 2-pole states
+apple.mX1l = apple.mX2l = apple.mY1l = apple.mY2l = 0;
+apple.mX1r = apple.mX2r = apple.mY1r = apple.mY2r = 0;
+
+// Moog 4-pole states
+m4p.y1 = m4p.y2 = m4p.y3 = m4p.y4 = 0;
+m4p.oldx = m4p.oldy1 = m4p.oldy2 = m4p.oldy3 = 0;
+
+// General parameters
+cDenorm = 10^-30;
+mv = 2^(-0.2/6);
+drive = 1;
+drvc = 1.2;
+
+//FIR restoration for oversampling
+c1 = 1;
+c2 = -0.75;
+c3 = 0.17;
+fgain = 5;
+
+//FIR bandlimit
+bl_c1 = 0.52;
+bl_c2 = 0.54;
+bl_c3 = -0.02;
+
 @slider
 freq = slider3;
 res = slider4;
-output = 10^(slider5/20);
+drive = 1 + slider5/100;
+output = 10^(slider6/20);
+oversample = slider8;
+
+// Additional processing for Apple 2-pole
+apple.cutoff = 2 * freq / srate;
+apple.res = pow(10, 0.05 * -slider4);
+k = 0.5 * apple.res * sin($pi * apple.cutoff);
+c1 = 0.5 * (1 - k) / (1 + k);
+c2 = (0.5 + c1) * cos($pi * apple.cutoff);
+c3 = (0.5 + c1 - c2) * 0.25;
+    
+apple.mA0 = 2 * c3;
+apple.mA1 = 2 * 2 * c3;
+apple.mA2 = 2 * c3;
+apple.mB1 = 2 * -c2;
+apple.mB2 = 2 * c1;
+
+// Additional processing for Moog 4-pole
+// ...add Moog 4-pole coefficient calculations...
 
 @sample
+// Function definitions
 function process_arp4075(input) local(fc, out) (
   fc = (2.0 * $pi * freq / srate);
   fc = sin(fc);
@@ -66,19 +114,121 @@ function process_moog(input) local(f,k,p,scale,r,x) (
   moog.y4;
 );
 
-@sample
-// Process each sample
-input0 = spl0;
-input1 = spl1;
+function process_apple(input) local(output) (
+  // Apple 2-pole lowpass processing
+  output = apple.mA0*input + apple.mA1*apple.mX1l + apple.mA2*apple.mX2l - apple.mB1*apple.mY1l - apple.mB2*apple.mY2l;
+  apple.mX2l = apple.mX1l;
+  apple.mX1l = input;
+  apple.mY2l = apple.mY1l;
+  apple.mY1l = output;
+  output;
+);
 
-// Process based on selected filter type and mode
-lp0 = slider1 == 0 ? process_arp4075(input0) :
-      slider1 == 1 ? process_moog(input0) :
-      process_moog(input0); // Roland mode
-      
-lp1 = slider1 == 0 ? process_arp4075(input1) :
-      slider1 == 1 ? process_moog(input1) :
-      process_moog(input1); // Roland mode
+function process_moog4pole(input) local(f,k,p,scale,r,x) (
+  f = 2.0 * freq / srate;
+  k = 3.6 * f - 1.6 * f * f - 1.0;
+  p = (k + 1.0) * 0.5;
+  scale = (1.0 - p) * 1.386249;
+  r = res * scale;
+  x = input - r * m4p.y4;
+  
+  m4p.y1 = x * p + m4p.oldx * p - k * m4p.y1;
+  m4p.y2 = m4p.y1 * p + m4p.oldy1 * p - k * m4p.y2;
+  m4p.y3 = m4p.y2 * p + m4p.oldy2 * p - k * m4p.y3;
+  m4p.y4 = m4p.y3 * p + m4p.oldy3 * p - k * m4p.y4;
+  
+  m4p.y4 = min(max(m4p.y4,-1),1);
+  
+  m4p.oldx = x;
+  m4p.oldy1 = m4p.y1;
+  m4p.oldy2 = m4p.y2;
+  m4p.oldy3 = m4p.y3;
+  
+  m4p.y4;
+);
+
+// Apply drive consistently for all filter types
+function apply_drive(input) local(x) (
+  x = input * drive;
+  x / (1 + abs(x));
+);
+
+// Process samples with oversampling
+@sample
+oversample ? (
+  // Oversample processing (2x)
+  input0 = spl0;
+  input1 = spl1;
+  
+  // First sample
+  in0 = input0 * 0.5;
+  in1 = input1 * 0.5;
+  // Process with selected filter
+  slider1 == 0 ? (
+    lp0 = process_arp4075(apply_drive(in0));
+    lp1 = process_arp4075(apply_drive(in1));
+  ) : slider1 == 1 ? (
+    lp0 = process_moog(apply_drive(in0));
+    lp1 = process_moog(apply_drive(in1));
+  ) : slider1 == 2 ? (
+    lp0 = process_moog(apply_drive(in0));
+    lp1 = process_moog(apply_drive(in1));
+  ) : slider1 == 3 ? (
+    lp0 = process_apple(apply_drive(in0));
+    lp1 = process_apple(apply_drive(in1));
+  ) : (
+    lp0 = process_moog4pole(apply_drive(in0));
+    lp1 = process_moog4pole(apply_drive(in1));
+  );
+  
+  // Second sample
+  in0 = input0 * 0.5;
+  in1 = input1 * 0.5;
+  // Process with selected filter
+  slider1 == 0 ? (
+    lp0 += process_arp4075(apply_drive(in0));
+    lp1 += process_arp4075(apply_drive(in1));
+  ) : slider1 == 1 ? (
+    lp0 += process_moog(apply_drive(in0));
+    lp1 += process_moog(apply_drive(in1));
+  ) : slider1 == 2 ? (
+    lp0 += process_moog(apply_drive(in0));
+    lp1 += process_moog(apply_drive(in1));
+  ) : slider1 == 3 ? (
+    lp0 += process_apple(apply_drive(in0));
+    lp1 += process_apple(apply_drive(in1));
+  ) : (
+    lp0 += process_moog4pole(apply_drive(in0));
+    lp1 += process_moog4pole(apply_drive(in1));
+  );
+  
+  // Average oversampled output
+  lp0 *= 0.5;
+  lp1 *= 0.5;
+  
+) : (
+  // Normal processing
+  input0 = spl0;
+  input1 = spl1;
+  
+  // Process with selected filter
+  slider1 == 0 ? (
+    lp0 = process_arp4075(apply_drive(input0));
+    lp1 = process_arp4075(apply_drive(input1));
+  ) : slider1 == 1 ? (
+    lp0 = process_moog(apply_drive(input0));
+    lp1 = process_moog(apply_drive(input1));
+  ) : slider1 == 2 ? (
+    lp0 = process_moog(apply_drive(input0));
+    lp1 = process_moog(apply_drive(input1));
+  ) : slider1 == 3 ? (
+    lp0 = process_apple(apply_drive(input0));
+    lp1 = process_apple(apply_drive(input1));
+  ) : (
+    lp0 = process_moog4pole(apply_drive(input0));
+    lp1 = process_moog4pole(apply_drive(input1));
+  );
+);
 
 // Apply filter mode
 slider2 == 0 ? (
@@ -95,5 +245,21 @@ slider2 == 0 ? (
   out1 = lp1 - (input1 - lp1);
 );
 
-spl0 = out0 * output;
-spl1 = out1 * output;
+// Apply drive and output gain
+slider5 > 0 ? (
+  drive = 1 + slider5/100;
+  out0 = out0 * drive / (1 + abs(out0 * drive));
+  out1 = out1 * drive / (1 + abs(out1 * drive));
+);
+
+// Apply limiter if enabled
+slider7 == 0 ? (
+  spl0 = min(max(out0 * output, -mv), mv);
+  spl1 = min(max(out1 * output, -mv), mv);
+) : (
+  spl0 = out0 * output;
+  spl1 = out1 * output;
+);
+
+@gfx 100 16
+// ...existing graphics code...

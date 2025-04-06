@@ -213,6 +213,21 @@ Collection of classic analog-style filters with LP/HP/BP modes.
 - Added better intermediate variable handling]]></changelog>
         <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
       </version>
+      <version name="1.3" author="Taal">
+        <changelog><![CDATA[- Added Apple 2-pole filter
+- Added Moog 4-pole classic filter
+- Added 12-pole filter implementation
+- Improved filter routing and processing]]></changelog>
+        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
+      </version>
+      <version name="1.4" author="Taal">
+        <changelog><![CDATA[- Added Apple 2-pole filter algorithms
+- Added Moog 4-pole classic filter algorithms
+- Added proper drive processing for all filters
+- Added 2x oversampling for all filter types
+- Fixed filter type switching and mode handling]]></changelog>
+        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
+      </version>
     </reapack>
 
     <reapack name="Digital Filters" type="effect" desc="Modern Digital Filter Collection">

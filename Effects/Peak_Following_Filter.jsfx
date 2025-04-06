@@ -1,0 +1,14 @@
+desc: TaalTools Peak Following Filter
+author: Taal (algorithm by Cockos)
+version: 1.0
+
+slider1:5<0,6,1{64,128,256,512,1024,2048,4096}>FFT Size
+slider2:60<0,24000,10>Minimum Center Freq (Hz)
+slider3:8000<0,24000,10>Maximum Center Freq (Hz)
+slider4:2<0,8,0.01>Filter Width (oct)
+slider5:0<-120,24,1>Peak Gain (dB)
+slider6:-120<-120,24,1>Non-Peak Gain (dB)
+slider7:120<0,1000,1>Filter Position Attack Time (ms)
+slider8:1.29<0.5,1.5,0.01>High End Slope
+
+// ...existing FFT Peak Following Filter code from algorithems.txt...

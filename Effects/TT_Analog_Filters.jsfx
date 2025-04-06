@@ -1,0 +1,101 @@
+desc: TaalTools Analog Filters
+author: Taal
+version: 1.0
+
+slider1:0<0,2,1{ARP4075,Moog,Roland}>Filter Type
+slider2:0<0,2,1{LP,HP,BP}>Filter Mode
+slider3:1000<20,20000>Frequency (Hz)
+slider4:0.5<0,1>Resonance
+slider5:0<-24,24,0.1>Output (dB)
+
+@init
+ext_tail_size = -1;
+
+// ARP4075 states
+arp.state1 = arp.state2 = arp.state3 = arp.state4 = 0;
+
+// Moog/Roland states
+moog.y1 = moog.y2 = moog.y3 = moog.y4 = 0;
+moog.oldx = moog.oldy1 = moog.oldy2 = moog.oldy3 = 0;
+
+@slider
+freq = slider3;
+res = slider4;
+output = 10^(slider5/20);
+
+@sample
+function process_arp4075(input) local(fc, out) (
+  fc = (2.0 * $pi * freq / srate);
+  fc = sin(fc);
+  out = input;
+  
+  // 4 filter stages
+  arp.state1 += fc * (out - arp.state1 + res * (arp.state1 - out));
+  out = arp.state1;
+  arp.state2 += fc * (out - arp.state2 + res * (arp.state2 - out));
+  out = arp.state2;
+  arp.state3 += fc * (out - arp.state3 + res * (arp.state3 - out));
+  out = arp.state3;
+  arp.state4 += fc * (out - arp.state4 + res * (arp.state4 - out));
+  out = arp.state4;
+  
+  out;
+);
+
+function process_moog(input) local(f,k,p,scale,r,x) (
+  f = 2.0 * freq / srate;
+  k = 3.6 * f - 1.6 * f * f - 1.0;
+  p = (k + 1.0) * 0.5;
+  scale = (1.8 - p) * 1.386249;
+  r = res * scale;
+  
+  x = input - r * moog.y4;
+  
+  moog.y1 = x * p + moog.oldx * p - k * moog.y1;
+  moog.y2 = moog.y1 * p + moog.oldy1 * p - k * moog.y2;
+  moog.y3 = moog.y2 * p + moog.oldy2 * p - k * moog.y3;
+  moog.y4 = moog.y3 * p + moog.oldy3 * p - k * moog.y4;
+  
+  moog.y4 = min(max(moog.y4,-1),1);
+  
+  moog.oldx = x;
+  moog.oldy1 = moog.y1;
+  moog.oldy2 = moog.y2;
+  moog.oldy3 = moog.y3;
+  
+  moog.y4;
+);
+
+// Process each sample
+input0 = spl0;
+input1 = spl1;
+
+slider1 == 0 ? (
+  out0 = process_arp4075(input0);
+  out1 = process_arp4075(input1);
+) : slider1 == 1 ? (
+  out0 = process_moog(input0); 
+  out1 = process_moog(input1);
+) : (
+  // Roland uses same structure as Moog but different scaling
+  out0 = process_moog(input0);
+  out1 = process_moog(input1); 
+);
+
+// Apply filter mode
+slider2 == 0 ? (
+  // LP - already handled
+) : slider2 == 1 ? (
+  // HP
+  out0 = input0 - out0;
+  out1 = input1 - out1;
+) : (
+  // BP - subtract HP from LP
+  hp0 = input0 - out0;
+  hp1 = input1 - out1;
+  out0 = out0 - hp0;
+  out1 = out1 - hp1;
+);
+
+spl0 = out0 * output;
+spl1 = out1 * output;

@@ -1,0 +1,23 @@
+desc: TaalTools 3-Band Peak Filter
+author: Taal (algorithm by Liteon)
+version: 1.0
+changelog: Initial Release
+
+slider1:0<0,1,1{Stereo,Mono}>Processing
+slider2:0<0,100,0.01>HP Filter (2-Pole)
+slider3:0<0,1,1{PF-3A,PF-3B}>Peak Filter Type
+slider4:50<0,100,0.01>Frequency 1
+slider5:0.3<0.005,1,0.00005>Bandwidth 1
+slider6:0<-18,18,0.01>Gain 1
+slider7:50<0,100,0.01>Frequency 2
+slider8:0.3<0.005,1,0.00005>Bandwidth 2
+slider9:0<-18,18,0.01>Gain 2
+slider10:50<0,100,0.01>Frequency 3
+slider11:0.3<0.005,1,0.00005>Bandwidth 3
+slider12:0<-18,18,0.05>Gain 3
+slider13:100<0,100,0.01>LP Filter (2-Pole)
+slider14:0<0,100,0.05>Saturation (%)
+slider15:0<-24,24,0.01>Output
+slider16:0<0,1,1{Off,On}>Oversample (x2)
+
+// ...existing 3-Band Peak Filter code from algorithems.txt...

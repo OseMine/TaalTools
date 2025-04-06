@@ -187,5 +187,48 @@ An extended version of the vintage analog synthesizer with additional waveforms 
         <source file="Effects/VA_Synthesizer_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VA_Synthesizer_Extended.jsfx</source>
       </version>
     </reapack>
+    <reapack name="Analog Filters" type="effect" desc="Classic Analog Filter Collection">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Analog Filters Collection
+
+Collection of classic analog-style filters with LP/HP/BP modes.
+
+## Features
+- ARP4075 filter emulation
+- Moog ladder filter
+- Roland 4-pole filter
+- Multiple filter modes (LP/HP/BP)
+- Variable resonance
+- Full stereo processing
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
+      </version>
+    </reapack>
+
+    <reapack name="Digital Filters" type="effect" desc="Modern Digital Filter Collection">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Digital Filter Collection
+
+High-quality digital filter collection including State Variable, Butterworth and Biquad filters.
+
+## Features
+- State Variable Filter (12dB/oct)
+- Butterworth Filter (24dB/oct)
+- Biquad Filter (12dB/oct)
+- Multiple filter modes (LP/HP/BP)
+- Variable resonance
+- Full stereo processing
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
+      </version>
+    </reapack>
   </category>
 </index>

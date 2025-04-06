@@ -1,0 +1,117 @@
+desc: TaalTools DAHDSR Envelope
+author: Taal
+version: 1.0
+
+slider1:0<0,1000,1>Delay Time (ms)
+slider2:100<1,1000,1>Attack Time (ms)
+slider3:200<1,1000,1>Hold Time (ms)
+slider4:300<1,2000,1>Decay Time (ms)
+slider5:0.7<0,1,0.01>Sustain Level
+slider6:500<1,5000,1>Release Time (ms)
+slider7:0<-1,1,0.01>Attack Curve
+slider8:0<-1,1,0.01>Decay Curve
+slider9:0<-1,1,0.01>Release Curve
+slider10:0<0,1,1{Off,On}>Legato Mode
+slider11:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0; // 0=off, 1=delay, 2=attack, 3=hold, 4=decay, 5=sustain, 6=release
+output_vol = 1;
+note_on = 0;
+
+function apply_curve(x, curve) local(y) (
+  curve == 0 ? (
+    y = x;
+  ) : curve > 0 ? (
+    y = 1 - pow(1-x, 1+curve*3);
+  ) : (
+    y = pow(x, 1-curve*3);
+  );
+  y;
+);
+
+@slider
+delay = slider1 * 0.001;
+attack = slider2 * 0.001;
+hold = slider3 * 0.001;
+decay = slider4 * 0.001;
+sustain = slider5;
+release = slider6 * 0.001;
+attack_curve = slider7;
+decay_curve = slider8;
+release_curve = slider9;
+legato = slider10;
+output_vol = 10^(slider11/20);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 > 0 ? ( // Note On
+    !note_on || !legato ? (
+      phase = 1;
+      stage_start = time_precise();
+      stage_start_level = envelope;
+    );
+    note_on += 1;
+    vel = msg3/127;
+  );
+  status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    note_on -= 1;
+    note_on <= 0 ? (
+      release_start = time_precise();
+      release_level = envelope;
+      phase = 6;
+      note_on = 0;
+    );
+  );
+  midisend(offset,msg1,msg2,msg3);
+);
+
+@sample
+current_time = time_precise();
+
+phase == 1 ? ( // Delay
+  dt = (current_time - stage_start) / delay;
+  dt >= 1 ? (
+    phase = 2;
+    stage_start = current_time;
+  );
+) : phase == 2 ? ( // Attack
+  dt = (current_time - stage_start) / attack;
+  dt >= 1 ? (
+    phase = 3;
+    stage_start = current_time;
+    envelope = 1;
+  ) : (
+    shaped_dt = apply_curve(dt, attack_curve);
+    envelope = stage_start_level + (1 - stage_start_level) * shaped_dt;
+  );
+) : phase == 3 ? ( // Hold
+  dt = (current_time - stage_start) / hold;
+  dt >= 1 ? (
+    phase = 4;
+    stage_start = current_time;
+  );
+) : phase == 4 ? ( // Decay
+  dt = (current_time - stage_start) / decay;
+  dt >= 1 ? (
+    phase = 5;
+    envelope = sustain;
+  ) : (
+    shaped_dt = apply_curve(dt, decay_curve);
+    envelope = 1 - (1 - sustain) * shaped_dt;
+  );
+) : phase == 6 ? ( // Release
+  dt = (current_time - release_start) / release;
+  dt >= 1 ? (
+    phase = 0;
+    envelope = 0;
+  ) : (
+    shaped_dt = apply_curve(dt, release_curve);
+    envelope = release_level * (1 - shaped_dt);
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

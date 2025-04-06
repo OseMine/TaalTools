@@ -1,0 +1,77 @@
+desc: TaalTools AR Envelope
+author: Taal
+version: 1.0
+
+slider1:100<1,1000,1>Attack (ms)
+slider2:500<1,5000,1>Release (ms)
+slider3:0<0,1,1{Linear,Exponential}>Attack Shape
+slider4:0<0,1,1{Linear,Exponential}>Release Shape
+slider5:0<0,1,1{Off,On}>Legato Mode
+slider6:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0; // 0=off, 1=attack, 2=release
+output_vol = 1;
+note_on = 0;
+
+function apply_shape(x, is_exp) (
+  is_exp ? (1 - exp(-3 * x)) / (1 - exp(-3)) : x;
+);
+
+@slider
+attack = slider1 * 0.001;
+release = slider2 * 0.001;
+attack_shape = slider3;
+release_shape = slider4;
+legato = slider5;
+output_vol = 10^(slider6/20);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 > 0 ? ( // Note On
+    !note_on || !legato ? (
+      phase = 1;
+      attack_start = time_precise();
+      attack_base = envelope;
+    );
+    note_on += 1;
+    vel = msg3/127;
+  );
+  status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    note_on -= 1;
+    note_on <= 0 ? (
+      release_start = time_precise();
+      release_base = envelope;
+      phase = 2;
+      note_on = 0;
+    );
+  );
+  midisend(offset,msg1,msg2,msg3);
+);
+
+@sample
+current_time = time_precise();
+
+phase == 1 ? ( // Attack
+  dt = (current_time - attack_start) / attack;
+  dt >= 1 ? (
+    envelope = 1;
+  ) : (
+    shaped_dt = apply_shape(dt, attack_shape);
+    envelope = attack_base + (1 - attack_base) * shaped_dt;
+  );
+) : phase == 2 ? ( // Release
+  dt = (current_time - release_start) / release;
+  dt >= 1 ? (
+    phase = 0;
+    envelope = 0;
+  ) : (
+    shaped_dt = apply_shape(dt, release_shape);
+    envelope = release_base * (1 - shaped_dt);
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

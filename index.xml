@@ -365,6 +365,17 @@ A collection of professional envelope generators for modulation and amplitude sh
         <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
       </version>
+      <version name="1.2" author="Taal">
+        <changelog><![CDATA[- Added simple AR envelope generator
+- Added linear/exponential envelope shapes
+- Added legato mode support]]></changelog>
+        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
+      </version>
     </reapack>
   </category>
 </index>

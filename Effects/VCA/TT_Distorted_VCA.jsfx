@@ -1,0 +1,107 @@
+desc: TaalTools Distorted VCA
+author: Taal
+version: 1.0
+
+slider1:0.5<0,1,0.01>Input Gain
+slider2:0<0,5,1{Tube,Fuzz,Clipper,Waveshaper,Rectifier,Crusher}>Drive Type
+slider3:0.7<0,1,0.01>Drive Amount
+slider4:0.3<0,1,0.01>Tone
+slider5:0.5<0,1,0.01>Mix
+slider6:0<0,1,1{Mono,Stereo}>Process Mode
+slider7:0<-24,24,0.1>Output (dB)
+
+@init
+prev_l = prev_r = 0;
+dc_block_l = dc_block_r = 0;
+
+function tube_drive(x, drive) local(out) (
+  drive = 1 + drive * 8;
+  out = x * drive;
+  out = out / (1 + abs(out));
+  out += 0.1 * out * out; // Add even harmonics
+  out;
+);
+
+function fuzz_drive(x, drive) local(out) (
+  x *= (1 + drive * 10);
+  x = x >= 0 ? 1 - exp(-x) : -1 + exp(x);
+  x * 0.8;
+);
+
+function clip_drive(x, drive) local(threshold) (
+  threshold = 1/(1 + drive * 5);
+  max(min(x * (1 + drive * 5), threshold), -threshold);
+);
+
+function shape_drive(x, drive) local(out) (
+  out = sin(x * $pi * (1 + drive * 3));
+  out *= 1 + drive;
+  out / (1 + drive * 0.5);
+);
+
+function rectify_drive(x, drive) local(pos, neg) (
+  pos = max(x, 0) * (1 + drive);
+  neg = min(x, 0) * (1 - drive * 0.7);
+  pos + neg;
+);
+
+function crush_drive(x, drive) local(bits, step) (
+  bits = 16 - drive * 12;
+  step = pow(2, -bits);
+  floor(x/step + 0.5) * step;
+);
+
+@slider
+output_vol = 10^(slider7/20);
+tone_factor = slider4 * 0.9 + 0.1; // 0.1 to 1.0 range
+
+@sample
+// Input stage with gain
+in_l = spl0 * slider1;
+in_r = spl1 * slider1;
+
+// Apply selected drive type
+slider2 == 0 ? (
+  // Tube
+  dist_l = tube_drive(in_l, slider3);
+  dist_r = tube_drive(in_r, slider3);
+) : slider2 == 1 ? (
+  // Fuzz
+  dist_l = fuzz_drive(in_l, slider3);
+  dist_r = fuzz_drive(in_r, slider3);
+) : slider2 == 2 ? (
+  // Clipper
+  dist_l = clip_drive(in_l, slider3);
+  dist_r = clip_drive(in_r, slider3);
+) : slider2 == 3 ? (
+  // Waveshaper
+  dist_l = shape_drive(in_l, slider3);
+  dist_r = shape_drive(in_r, slider3);
+) : slider2 == 4 ? (
+  // Rectifier
+  dist_l = rectify_drive(in_l, slider3);
+  dist_r = rectify_drive(in_r, slider3);
+) : (
+  // Crusher
+  dist_l = crush_drive(in_l, slider3);
+  dist_r = crush_drive(in_r, slider3);
+);
+
+// Tone control (simple lowpass)
+dist_l = dist_l * tone_factor + prev_l * (1 - tone_factor);
+dist_r = dist_r * tone_factor + prev_r * (1 - tone_factor);
+prev_l = dist_l;
+prev_r = dist_r;
+
+// DC blocking
+dc_block_l += 0.001 * (dist_l - dc_block_l);
+dc_block_r += 0.001 * (dist_r - dc_block_r);
+dist_l -= dc_block_l;
+dist_r -= dc_block_r;
+
+// Mix
+out_l = in_l * (1 - slider5) + dist_l * slider5;
+out_r = slider6 ? (in_r * (1 - slider5) + dist_r * slider5) : out_l;
+
+spl0 = out_l * output_vol;
+spl1 = out_r * output_vol;

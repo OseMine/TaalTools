@@ -17,6 +17,13 @@ grain_size = 1024;
 grain_buffer = 0;
 memset(grain_buffer, 0, grain_size);
 
+// Custom tanh implementation
+function fast_tanh(x) local(x2,a) (
+  x2 = x * x;
+  a = x * (1 + x2 * (0.3333333333 + x2 * 0.133333333));
+  a / sqrt(1 + x2);
+);
+
 function wave_fold(x, amount) local(out) (
   out = sin(x * $pi * (1 + amount * 8));
   out * (1 + amount);
@@ -80,8 +87,8 @@ slider2 == 0 ? (
 
 // Apply extreme mode
 slider6 ? (
-  out_l = tanh(out_l * 5) * 0.8;
-  out_r = tanh(out_r * 5) * 0.8;
+  out_l = fast_tanh(out_l * 5) * 0.8;
+  out_r = fast_tanh(out_r * 5) * 0.8;
 );
 
 spl0 = out_l * output_vol;

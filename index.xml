@@ -147,5 +147,25 @@ A flexible formula-based synthesizer that can create sounds based on mathematica
         <source file="Effects/Formula_Synthesizer.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Formula_Synthesizer.jsfx</source>
       </version>
     </reapack>
+    <reapack name="Vintage Analog Synthesizer" type="effect" desc="Classic Analog-Style Synthesizer">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Vintage Analog Synthesizer
+
+A faithful recreation of classic analog synthesizer sounds with hardware-like characteristics.
+
+## Features
+- Two oscillators with classic waveforms (Saw, Square, Sine, Triangle, Noise)
+- Analog-style drift and imperfections
+- State variable filter (LP/BP/HP)
+- Drive control for analog-style saturation
+- True stereo output with subtle stereo width
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Vintage_Analog_Synth.jsfx</source>
+      </version>
+    </reapack>
   </category>
 </index>

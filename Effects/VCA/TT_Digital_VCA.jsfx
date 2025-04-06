@@ -1,0 +1,67 @@
+desc: TaalTools Digital VCA
+author: Taal
+version: 1.0
+
+slider1:0.5<0,1,0.01>Input Gain
+slider2:8<1,16,1>Bit Depth
+slider3:1<0.01,1,0.01>Sample Rate
+slider4:0<0,1,0.01>Digital Noise
+slider5:0<0,4,1{Off,Light,Medium,Heavy,Destroy}>Glitch Mode
+slider6:0<0,1,0.01>Aliasing
+slider7:0<-24,24,0.1>Output (dB)
+
+@init
+sr_counter = 0;
+prev_sample = 0;
+glitch_phase = 0;
+buffer_size = 4096;
+buffer = 0;
+memset(buffer, 0, buffer_size);
+buf_pos = 0;
+
+function bit_crush(x, bits) (
+  step = pow(2, -bits);
+  floor(x/step + 0.5) * step;
+);
+
+@slider
+output_vol = 10^(slider7/20);
+glitch_amount = slider5 * 0.25;
+
+@sample
+// Add digital noise
+noise = (rand(2)-1) * slider4;
+
+// Sample rate reduction
+sr_counter += slider3;
+sr_counter >= 1 ? (
+  sr_counter -= 1;
+  prev_sample = spl0;
+);
+
+// Store in buffer for glitch effects
+buffer[buf_pos] = spl0;
+buf_pos = (buf_pos + 1) % buffer_size;
+
+// Apply glitch effects
+glitch_phase += 0.1;
+glitch_pos = floor(sin(glitch_phase) * buffer_size * glitch_amount);
+glitch_sample = buffer[(buf_pos + glitch_pos) % buffer_size];
+
+// Process left channel
+out_l = spl0 * slider1;
+out_l = bit_crush(out_l, slider2);
+out_l = out_l * (1-glitch_amount) + glitch_sample * glitch_amount;
+
+// Add aliasing
+aliasing = slider6 * sin(out_l * 100) * 0.2;
+out_l += aliasing;
+
+// Process right channel similarly
+out_r = spl1 * slider1;
+out_r = bit_crush(out_r, slider2);
+out_r = out_r * (1-glitch_amount) + glitch_sample * glitch_amount;
+out_r += aliasing;
+
+spl0 = (out_l + noise) * output_vol;
+spl1 = (out_r + noise) * output_vol;

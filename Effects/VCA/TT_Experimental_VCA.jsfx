@@ -1,0 +1,88 @@
+desc: TaalTools Experimental VCA
+author: Taal
+version: 1.0
+
+slider1:0.5<0,1,0.01>Input Gain
+slider2:0<0,6,1{Wave Folder,Ring Mod,Phase Distortion,Granular,Chaos,Fractal,Texture}>Effect Type
+slider3:0.5<0,1,0.01>Effect Amount
+slider4:0.2<0,1,0.01>Modulation Rate
+slider5:0.5<0,1,0.01>Modulation Depth
+slider6:0<0,1,1{Normal,Extreme}>Mode
+slider7:0<-24,24,0.1>Output (dB)
+
+@init
+mod_phase = 0;
+grain_pos = 0;
+grain_size = 1024;
+grain_buffer = 0;
+memset(grain_buffer, 0, grain_size);
+
+function wave_fold(x, amount) local(out) (
+  out = sin(x * $pi * (1 + amount * 8));
+  out * (1 + amount);
+);
+
+function ring_mod(x, freq, depth) (
+  x * (1 + sin(freq) * depth);
+);
+
+function phase_distort(x, amount) (
+  sin(x + sin(x * 2) * amount);
+);
+
+@slider
+output_vol = 10^(slider7/20);
+
+@sample
+// Update modulation
+mod_phase += slider4 * 0.1;
+mod_phase >= 2*$pi ? mod_phase -= 2*$pi;
+mod = sin(mod_phase) * slider5;
+
+// Process based on selected effect
+slider2 == 0 ? (
+  // Wave Folder
+  out_l = wave_fold(spl0 * slider1, slider3);
+  out_r = wave_fold(spl1 * slider1, slider3);
+) : slider2 == 1 ? (
+  // Ring Modulation
+  out_l = ring_mod(spl0 * slider1, mod_phase * (1 + slider3 * 10), slider3);
+  out_r = ring_mod(spl1 * slider1, mod_phase * (1 + slider3 * 10), slider3);
+) : slider2 == 2 ? (
+  // Phase Distortion
+  out_l = phase_distort(spl0 * slider1, slider3);
+  out_r = phase_distort(spl1 * slider1, slider3);
+) : slider2 == 3 ? (
+  // Granular
+  grain_buffer[grain_pos] = (spl0 + spl1) * 0.5;
+  grain_pos = (grain_pos + 1) % grain_size;
+  out_l = out_r = grain_buffer[(grain_pos + floor(mod * grain_size)) % grain_size];
+) : slider2 == 4 ? (
+  // Chaos
+  out_l = sin(spl0 * slider1 * (1 + mod) * 100) * slider3;
+  out_r = sin(spl1 * slider1 * (1 + mod) * 100) * slider3;
+) : slider2 == 5 ? (
+  // Fractal
+  out_l = spl0 * slider1;
+  out_r = spl1 * slider1;
+  amt = slider3 * 3;
+  i = 1;
+  while(i <= 4) (
+    out_l += sin(out_l * i) * amt / i;
+    out_r += sin(out_r * i) * amt / i;
+    i += 1;
+  );
+) : (
+  // Texture
+  out_l = spl0 * slider1 * (1 + sin(mod_phase * 1.5) * slider3);
+  out_r = spl1 * slider1 * (1 + sin(mod_phase * 1.7) * slider3);
+);
+
+// Apply extreme mode
+slider6 ? (
+  out_l = tanh(out_l * 5) * 0.8;
+  out_r = tanh(out_r * 5) * 0.8;
+);
+
+spl0 = out_l * output_vol;
+spl1 = out_r * output_vol;

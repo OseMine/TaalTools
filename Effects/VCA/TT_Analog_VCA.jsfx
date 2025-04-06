@@ -1,0 +1,54 @@
+desc: TaalTools Analog VCA
+author: Taal
+version: 1.0
+
+slider1:0.5<0,1,0.01>Input Gain
+slider2:0.3<0,1,0.01>Tube Drive
+slider3:0.2<0,1,0.01>Warmth
+slider4:0.1<0,1,0.01>Drift Amount
+slider5:0.5<0,10,0.1>Drift Rate
+slider6:0<0,1,1{Off,On}>Circuit Age
+slider7:0<-24,24,0.1>Output (dB)
+
+@init
+drift_phase = 0;
+prev_sampleL = prev_sampleR = 0;
+age_factor = 1.0;
+
+function tube_distortion(x, drive) local(out) (
+  drive = 1 + drive * 5;
+  out = x * drive;
+  out = out / (1 + abs(out));
+  // Add even harmonics
+  out += 0.2 * out * out;
+  // Add warmth
+  out *= 1 + slider3 * 0.3;
+  out;
+);
+
+@slider
+age_factor = slider6 ? 0.7 : 1.0; // Aged circuit has less high end
+output_vol = 10^(slider7/20);
+
+@sample
+// Calculate drift modulation
+drift_phase += slider5 * 0.001;
+drift_phase >= 2*$pi ? drift_phase -= 2*$pi;
+drift_mod = 1 + sin(drift_phase) * slider4;
+
+// Apply input gain with tube characteristics
+in_l = tube_distortion(spl0 * slider1 * drift_mod, slider2);
+in_r = tube_distortion(spl1 * slider1 * drift_mod, slider2);
+
+// Add circuit age effects and noise
+age_noise = slider6 ? (rand(2)-1) * 0.01 : 0;
+
+// Add analog warmth (subtle low pass)
+out_l = in_l * 0.7 + prev_sampleL * 0.3 * age_factor + age_noise;
+out_r = in_r * 0.7 + prev_sampleR * 0.3 * age_factor + age_noise;
+
+prev_sampleL = out_l;
+prev_sampleR = out_r;
+
+spl0 = out_l * output_vol;
+spl1 = out_r * output_vol;

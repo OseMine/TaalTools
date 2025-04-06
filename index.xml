@@ -418,6 +418,7 @@ A collection of professional envelope generators for modulation and amplitude sh
         <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
       </version>
       <version name="1.6" author="Taal">
         <changelog><![CDATA[- Added Distorted VCA with multiple drive types
@@ -433,19 +434,6 @@ A collection of professional envelope generators for modulation and amplitude sh
         <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
-        
-        <!-- Filter Files -->
-        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
-        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
-        <source file="Effects/Filters/TT_Butterworth_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Butterworth_Filter.jsfx</source>
-        <source file="Effects/Filters/Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Peak_Following_Filter.jsfx</source>
-        <source file="Effects/Filters/Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Resonant_LP.jsfx</source>
-        <source file="Effects/Filters/Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Three_Band_Peak_Filter.jsfx</source>
-        
-        <!-- Synth Files -->
-        <source file="Effects/Formula_Synthesizer.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Formula_Synthesizer.jsfx</source>
-        <source file="Effects/Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Vintage_Analog_Synth.jsfx</source>
-        <source file="Effects/VA_Synthesizer_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VA_Synthesizer_Extended.jsfx</source>
         
         <!-- VCA Files -->
         <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>

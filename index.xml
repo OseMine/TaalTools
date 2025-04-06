@@ -230,5 +230,83 @@ High-quality digital filter collection including State Variable, Butterworth and
         <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
       </version>
     </reapack>
+
+    <reapack name="Peak Following Filter" type="effect" desc="Spectral Peak-Following Filter">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Peak Following Filter
+
+A spectral filter that automatically follows frequency peaks in real-time.
+
+## Features
+- Automatic peak detection and following
+- Variable FFT size (64-4096)
+- Adjustable filter width and slope
+- Independent peak/non-peak gain control
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <source file="Effects/Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Peak_Following_Filter.jsfx</source>
+      </version>
+    </reapack>
+
+    <reapack name="Resonant LP" type="effect" desc="Classic Resonant Lowpass Filter">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Resonant Lowpass Filter
+
+A classic resonant lowpass filter with natural analog-style characteristics.
+
+## Features
+- 24dB/oct slope
+- Self-oscillating resonance
+- Full stereo processing
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <source file="Effects/Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Resonant_LP.jsfx</source>
+      </version>
+    </reapack>
+
+    <reapack name="3-Band Peak Filter" type="effect" desc="Multiband Peak Filter">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - 3-Band Peak Filter
+
+Professional 3-band peak filter with HP/LP sections and saturation.
+
+## Features
+- 3 independent peak filters
+- HP and LP filter sections
+- Two filter types (PF-3A/PF-3B)
+- Saturation and oversampling
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <source file="Effects/Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Three_Band_Peak_Filter.jsfx</source>
+      </version>
+    </reapack>
+
+    <reapack name="Classic Filters Collection" type="effect" desc="Collection of Classic Filter Types">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - Classic Filter Collection
+
+A comprehensive collection of professional filter types.
+
+## Features
+- Butterworth Filter (12-72dB/oct)
+- Resonant LP Filter
+- Peak Following Filter
+- Full stereo processing
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/TT_Butterworth_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Butterworth_Filter.jsfx</source>
+      </version>
+    </reapack>
+
   </category>
 </index>

@@ -126,386 +126,63 @@ Collection of MIDI triggers for IK Multimedia MOD Drum.
   </category>
   
   <category name="Effects">
-    <reapack name="Formula Synthesizer" type="effect" desc="Formula-based JSFX Synthesizer">
+    <reapack name="Synth Collection" type="effect" desc="TaalTools Synthesizer Collection">
       <metadata>
         <description><![CDATA[
-# TaalTools - Formula Synthesizer
+# TaalTools Synthesizer Collection
 
-A flexible formula-based synthesizer that can create sounds based on mathematical expressions.
-
-## Features
-- Formula-based synthesis engine
-- Built-in and custom formulas support
-- MIDI note input support
-- Octave shifting
-- Amplitude control
-- Real-time formula switching
-]]></description>
-      </metadata>
-      <version name="2" author="Taal">
-        <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="Vintage Analog Synthesizer" type="effect" desc="Classic Analog-Style Synthesizer">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - Vintage Analog Synthesizer
-
-A faithful recreation of classic analog synthesizer sounds with hardware-like characteristics.
+A collection of professional synthesizers including formula-based, vintage analog and extended VA.
 
 ## Features
-- Two oscillators with classic waveforms (Saw, Square, Sine, Triangle, Noise)
-- Analog-style drift and imperfections
-- State variable filter (LP/BP/HP)
-- Drive control for analog-style saturation
-- True stereo output with subtle stereo width
-]]></description>
-      </metadata>
-      <version name="1.1" author="Taal">
-        <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="VA Synthesizer Extended" type="effect" desc="Extended Vintage-Style Synthesizer">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - VA Synthesizer Extended
-
-An extended version of the vintage analog synthesizer with additional waveforms and features.
-
-## Features
-- Classic waveforms (Saw, Square, Sine, Triangle, Noise)
-- Additional waveforms: Pulse (with variable width), SuperSaw, Hard Sync
-- Analog-style saturation and warmth
-- MIDI responsive with velocity
-- Sub oscillator with adjustable mix
+- Formula Synthesizer with custom expressions
+- Vintage Analog with classic waveforms
+- VA Extended with additional features
 ]]></description>
       </metadata>
       <version name="1.0" author="Taal">
-        <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
         <source file="Effects/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_VA_Synth_Extended.jsfx</source>
       </version>
     </reapack>
-    <reapack name="Analog Filters" type="effect" desc="Classic Analog Filter Collection">
+    
+    <reapack name="Filter Collection" type="effect" desc="TaalTools Filter Collection">
       <metadata>
         <description><![CDATA[
-# TaalTools - Analog Filters Collection
+# TaalTools Filter Collection
 
-Collection of classic analog-style filters with LP/HP/BP modes.
-
-## Features
-- ARP4075 filter emulation
-- Moog ladder filter
-- Roland 4-pole filter
-- Multiple filter modes (LP/HP/BP)
-- Variable resonance
-- Full stereo processing
-]]></description>
-      </metadata>
-      <version name="1.0" author="Taal">
-        <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
-      </version>
-      <version name="1.1" author="Taal">
-        <changelog><![CDATA[- Fixed conditional syntax
-- Improved filter mode switching
-- Added better intermediate variable handling]]></changelog>
-        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
-      </version>
-      <version name="1.3" author="Taal">
-        <changelog><![CDATA[- Added Apple 2-pole filter
-- Added Moog 4-pole classic filter
-- Added 12-pole filter implementation
-- Improved filter routing and processing]]></changelog>
-        <source file="Effects/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Analog_Filters.jsfx</source>
-      </version>
-      <version name="1.4" author="Taal">
-        <changelog><![CDATA[- Added Apple 2-pole filter algorithms
-- Added Moog 4-pole classic filter algorithms
-- Added proper drive processing for all filters
-- Added 2x oversampling for all filter types
-- Fixed filter type switching and mode handling]]></changelog>
-        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
-      </version>
-    </reapack>
-
-    <reapack name="Digital Filters" type="effect" desc="Modern Digital Filter Collection">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - Digital Filter Collection
-
-High-quality digital filter collection including State Variable, Butterworth and Biquad filters.
+A collection of professional filters including analog, digital and specialty types.
 
 ## Features
-- State Variable Filter (12dB/oct)
-- Butterworth Filter (24dB/oct)
-- Biquad Filter (12dB/oct)
-- Multiple filter modes (LP/HP/BP)
-- Variable resonance
-- Full stereo processing
-]]></description>
-      </metadata>
-      <version name="1.0" author="Taal">
-        <changelog><![CDATA[Initial Release]]></changelog>
-        <source file="Effects/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TT_Digital_Filters.jsfx</source>
-      </version>
-      <version name="1.1" author="Taal">
-        <changelog><![CDATA[- Fixed biquad parameter handling
-- Improved state variable filter processing
-- Better filter mode switching]]></changelog>
-        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
-      </version>
-    </reapack>
-
-    <reapack name="Peak Following Filter" type="effect" desc="Spectral Peak-Following Filter">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - Peak Following Filter
-
-A spectral filter that automatically follows frequency peaks in real-time.
-
-## Features
-- Automatic peak detection and following
-- Variable FFT size (64-4096)
-- Adjustable filter width and slope
-- Independent peak/non-peak gain control
-]]></description>
-      </metadata>
-      <version name="1.0" author="Taal">
-        <source file="Effects/Filters/Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Peak_Following_Filter.jsfx</source>
-      </version>
-    </reapack>
-
-    <reapack name="Resonant LP" type="effect" desc="Classic Resonant Lowpass Filter">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - Resonant Lowpass Filter
-
-A classic resonant lowpass filter with natural analog-style characteristics.
-
-## Features
-- 24dB/oct slope
-- Self-oscillating resonance
-- Full stereo processing
-]]></description>
-      </metadata>
-      <version name="1.0" author="Taal">
-        <source file="Effects/Filters/Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Resonant_LP.jsfx</source>
-      </version>
-    </reapack>
-
-    <reapack name="3-Band Peak Filter" type="effect" desc="Multiband Peak Filter">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - 3-Band Peak Filter
-
-Professional 3-band peak filter with HP/LP sections and saturation.
-
-## Features
-- 3 independent peak filters
-- HP and LP filter sections
-- Two filter types (PF-3A/PF-3B)
-- Saturation and oversampling
-]]></description>
-      </metadata>
-      <version name="1.0" author="Taal">
-        <source file="Effects/Filters/Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/Three_Band_Peak_Filter.jsfx</source>
-      </version>
-    </reapack>
-
-    <reapack name="Classic Filters Collection" type="effect" desc="Collection of Classic Filter Types">
-      <metadata>
-        <description><![CDATA[
-# TaalTools - Classic Filter Collection
-
-A comprehensive collection of professional filter types.
-
-## Features
-- Butterworth Filter (12-72dB/oct)
-- Resonant LP Filter
-- Peak Following Filter
-- Full stereo processing
+- Classic analog filter emulations
+- Modern digital filter designs
+- Specialty filters like peak following
 ]]></description>
       </metadata>
       <version name="1.0" author="Taal">
         <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
         <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
-        <source file="Effects/Filters/TT_Butterworth_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Butterworth_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
+        <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
       </version>
     </reapack>
-
-    <reapack name="Envelope Generators" type="effect" desc="Collection of Envelope Generators">
+    
+    <reapack name="VCA Collection" type="effect" desc="TaalTools VCA Collection">
       <metadata>
         <description><![CDATA[
-# TaalTools Envelope Generators
+# TaalTools VCA Collection
 
-A collection of professional envelope generators for modulation and amplitude shaping.
+Professional VCA processors with analog modeling and creative effects.
 
 ## Features
-- ADSR Envelope with legato mode
-- Multi-stage envelope (2-6 stages)
-- Curve-based envelope with custom curve shapes
-- MIDI responsive
-- Full output level control
+- Analog VCA with tube warmth
+- Digital VCA with modern features
+- Experimental VCA with unique effects
+- Distorted VCA with multiple modes
 ]]></description>
       </metadata>
-      <version name="1.0" author="Taal">
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-      </version>
-      <version name="1.1" author="Taal">
-        <changelog><![CDATA[- Added DX7-style envelope generator with rate/level parameters
-- Added Korg DW-8000 style envelope with delay and break point
-- Added key tracking support for DW-8000 envelope]]></changelog>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-      </version>
-      <version name="1.2" author="Taal">
-        <changelog><![CDATA[- Added simple AR envelope generator
-- Added linear/exponential envelope shapes
-- Added legato mode support]]></changelog>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-      </version>
-      <version name="1.3" author="Taal">
-        <changelog><![CDATA[- Added DAHDSR envelope generator
-- Added curve shaping for Attack/Decay/Release
-- Added flexible Hold stage timing]]></changelog>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
-      </version>
-      <version name="1.4" author="Taal">
-        <changelog><![CDATA[- Added Gate envelope generator
-- Added RMS/Peak detection modes
-- Added hysteresis control
-- Added adjustable hold time]]></changelog>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
-      </version>
-      <version name="1.5" author="Taal">
-        <changelog><![CDATA[- Added Analog VCA with tube distortion and drift
-- Added Digital VCA with bit crushing and glitch effects
-- Added Experimental VCA with unique modulation effects
-- Added circuit aging simulation]]></changelog>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-      </version>
-      <version name="1.6" author="Taal">
-        <changelog><![CDATA[- Added Distorted VCA with multiple drive types
-- Added tube, fuzz, clipper, waveshaper, rectifier modes
-- Added tone control and stereo processing options
-- Added DC blocking for cleaner output
-- Added classic distortion algorithms from Cockos
-- Added improved saturation and compression algorithms
-- Added analog-style DC blocker implementation]]></changelog>
-        <!-- Envelope Files -->
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
-        
-        <!-- VCA Files -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-      </version>
-      <version name="1.7" author="Taal">
-        <changelog><![CDATA[- Added both classic and modern distortion algorithms
-- Added Classic, Retro and NOOO style distortion modes
-- Added improved tone shaping and mixing options
-- Preserved original tube, fuzz and crusher algorithms
-- Added DC blocking with variable cutoff
-- Optimized signal path and gain staging]]></changelog>
-        <!-- Envelope Files -->
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
-        
-        <!-- VCA Files -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-      </version>
-      <version name="1.8" author="Taal">
-        <changelog><![CDATA[- Fixed package conflicts by removing duplicate filter references
-- Updated distortion algorithms paths and organization
-- Improved DC blocking implementation
-- Added better gain compensation]]></changelog>
-        <!-- Envelope Files -->
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
-        
-        <!-- VCA Files -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-      </version>
-      <version name="1.9" author="Taal">
-        <changelog><![CDATA[- Removed conflicting filter package dependencies
-- Fixed file path conflicts
-- Removed unavailable synthesizer files
-- Added timeout handling for envelope files
-- Optimized package structure]]></changelog>
-        <!-- VCA Files Only -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-      </version>
       <version name="2.0" author="Taal">
-        <changelog><![CDATA[- Major restructuring to resolve package conflicts
-- Removed duplicate filter packages
-- Updated file organization structure
-- Improved effect routing and processing]]></changelog>
-        <!-- Core Effects Only -->
         <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>

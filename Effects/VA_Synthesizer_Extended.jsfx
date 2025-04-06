@@ -28,6 +28,49 @@ function saturate(x) local(out) (
   min(max(out, -1), 1);
 );
 
+function generate_saw(p) local(out, i) (
+  out = 0;
+  // Pure additive synthesis with natural harmonics series
+  i = 1;
+  while(i <= num_harmonics) (
+    out += sin(p * i) / i;  // Pure 1/n rolloff
+    i += 1;
+  );
+  out = out * 0.5; // Normalize
+  saturate(out);
+);
+
+function generate_square(p) local(out, i, amp) (
+  out = 0;
+  // Enhanced odd harmonics with strong presence
+  i = 1;
+  while(i <= num_harmonics) (
+    n = 2*i - 1;  // Odd harmonics only
+    amp = 1/n * pow(brightness, (i-1) * 0.3);  // Slower rolloff
+    out += sin(p * n) * amp;
+    i += 1;
+  );
+  out = out * 0.7;  // Normalize
+  saturate(out * 1.4);
+);
+
+function generate_triangle(p) local(out, i) (
+  out = 0;
+  i = 1;
+  while(i <= num_harmonics) (
+    n = 2*i - 1;
+    amp = pow(-1, i-1) / (n * n);
+    out += sin(p * n) * amp;
+    i += 1;
+  );
+  out = out * 1.2;  // Boost volume slightly
+  saturate(out);
+);
+
+function generate_sine(p) (
+  sin(p);
+);
+
 function generate_pulse(p, width) local(out, i) (
   out = 0;
   i = 1;
@@ -64,10 +107,28 @@ function generate_hardsync(p) local(out, sync_phase) (
   saturate(out * 1.2);
 );
 
-// ...existing saw, square, sine, triangle functions...
-
 @block
-// ...existing MIDI code...
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  
+  status == $x90 && msg3 > 0 ? (
+    note_on = 1;
+    vel = msg3/127;
+    slider1 = msg2;
+    current_freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
+  );
+  
+  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
+    note_on = 0;
+  );
+  
+  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+);
+
+// Update frequency when sliders change
+note_on ? (
+  current_freq = 440 * pow(2, (slider1 + slider4 + slider5/100 + slider6*12 - 69) / 12);
+);
 
 @sample
 phase += current_freq * 2 * $pi / srate;

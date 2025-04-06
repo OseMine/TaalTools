@@ -1,0 +1,113 @@
+desc: TaalTools DW8000-Style Envelope
+author: Taal
+version: 1.0
+
+slider1:0<0,100,1>Delay Time (ms)
+slider2:100<1,1000,1>Attack Time (ms)
+slider3:1<0,1,0.01>Break Point Level
+slider4:200<1,1000,1>Decay 1 Time (ms)
+slider5:0.7<0,1,0.01>Sustain Level
+slider6:500<1,5000,1>Decay 2 Time (ms)
+slider7:300<1,2000,1>Release Time (ms)
+slider8:0<0,1,1{Off,On}>Key Track (Decay)
+slider9:0<0,1,1{Off,On}>Key Track (Release)
+slider10:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0; // 0=off, 1=delay, 2=attack, 3=decay1, 4=decay2, 5=release
+output_vol = 1;
+note_on = 0;
+last_note = 60; // Middle C default
+
+// DW-8000 key tracking
+function get_key_scaling(note) local(scale) (
+  scale = (note - 60) / 24; // Scale factor based on distance from middle C
+  scale = min(max(scale, -1), 1); // Limit range
+  1 + scale * 0.5; // 50% scaling range
+);
+
+@slider
+output_vol = 10^(slider10/20);
+delay_time = slider1 * 0.001;
+attack_time = slider2 * 0.001;
+break_level = slider3;
+decay1_time = slider4 * 0.001;
+sustain_level = slider5;
+decay2_time = slider6 * 0.001;
+release_time = slider7 * 0.001;
+key_track_decay = slider8;
+key_track_release = slider9;
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 > 0 ? ( // Note On
+    phase = 1;
+    stage_start = time_precise();
+    stage_start_level = envelope;
+    note_on = 1;
+    last_note = msg2;
+    vel = msg3/127;
+    
+    // Apply key tracking
+    key_track_decay ? (
+      decay_scale = get_key_scaling(last_note);
+      decay1_time = slider4 * 0.001 * decay_scale;
+      decay2_time = slider6 * 0.001 * decay_scale;
+    );
+    key_track_release ? (
+      release_time = slider7 * 0.001 * get_key_scaling(last_note);
+    );
+  );
+  status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    release_start = time_precise();
+    release_level = envelope;
+    phase = 5;
+    note_on = 0;
+  );
+  midisend(offset,msg1,msg2,msg3);
+);
+
+@sample
+current_time = time_precise();
+
+phase == 1 ? ( // Delay
+  dt = (current_time - stage_start) / delay_time;
+  dt >= 1 ? (
+    phase = 2;
+    stage_start = current_time;
+  );
+) : phase == 2 ? ( // Attack
+  dt = (current_time - stage_start) / attack_time;
+  dt >= 1 ? (
+    phase = 3;
+    stage_start = current_time;
+    envelope = break_level;
+  ) : (
+    envelope = stage_start_level + (break_level - stage_start_level) * dt;
+  );
+) : phase == 3 ? ( // Decay 1
+  dt = (current_time - stage_start) / decay1_time;
+  dt >= 1 ? (
+    phase = 4;
+    stage_start = current_time;
+    envelope = sustain_level;
+  ) : (
+    envelope = break_level + (sustain_level - break_level) * dt;
+  );
+) : phase == 4 ? ( // Decay 2
+  dt = (current_time - stage_start) / decay2_time;
+  envelope = sustain_level * (1 - dt * 0.1); // Gentle decay
+) : phase == 5 ? ( // Release
+  dt = (current_time - release_start) / release_time;
+  dt >= 1 ? (
+    phase = 0;
+    envelope = 0;
+  ) : (
+    envelope = release_level * (1 - dt);
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

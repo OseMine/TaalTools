@@ -1,0 +1,114 @@
+desc: TaalTools DX7-Style Envelope
+author: Taal
+version: 1.0
+
+slider1:70<0,99,1>Rate 1 
+slider2:99<0,99,1>Level 1
+slider3:80<0,99,1>Rate 2
+slider4:85<0,99,1>Level 2
+slider5:60<0,99,1>Rate 3
+slider6:75<0,99,1>Level 3
+slider7:50<0,99,1>Rate 4 (Release)
+slider8:0<0,99,1>Level 4
+slider9:0<0,1,1{Off,On}>Legato Mode
+slider10:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0; // 0=off, 1=r1, 2=r2, 3=r3, 4=r4
+output_vol = 1;
+note_on = 0;
+
+// DX7 rate to time conversion (roughly exponential)
+function dx7_rate_to_time(rate) local(time) (
+  rate = min(max(rate, 0), 99);
+  time = pow(0.5, (rate - 50) / 12); // Exponential scaling
+  time * 3; // Scale to reasonable range
+);
+
+// DX7 level scaling (0-99 to 0-1, with exponential curve)
+function dx7_level_to_amp(level) (
+  level = min(max(level, 0), 99);
+  pow(level/99, 1.661); // Match DX7's roughly logarithmic level curve
+);
+
+@slider
+output_vol = 10^(slider10/20);
+legato = slider9;
+
+// Convert DX7 rates to times
+r1_time = dx7_rate_to_time(slider1);
+r2_time = dx7_rate_to_time(slider3);
+r3_time = dx7_rate_to_time(slider5);
+r4_time = dx7_rate_to_time(slider7);
+
+// Convert DX7 levels to amplitudes
+l1_amp = dx7_level_to_amp(slider2);
+l2_amp = dx7_level_to_amp(slider4);
+l3_amp = dx7_level_to_amp(slider6);
+l4_amp = dx7_level_to_amp(slider8);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  status = msg1 & $xF0;
+  status == $x90 && msg3 > 0 ? ( // Note On
+    !note_on || !legato ? (
+      phase = 1;
+      stage_start = time_precise();
+      stage_start_level = envelope;
+    );
+    note_on += 1;
+    vel = msg3/127;
+  );
+  status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
+    note_on -= 1;
+    note_on <= 0 ? (
+      release_start = time_precise();
+      release_level = envelope;
+      phase = 4;
+      note_on = 0;
+    );
+  );
+  midisend(offset,msg1,msg2,msg3);
+);
+
+@sample
+current_time = time_precise();
+
+phase == 1 ? ( // Rate 1
+  dt = (current_time - stage_start) / r1_time;
+  dt >= 1 ? (
+    phase = 2;
+    stage_start = current_time;
+    envelope = l1_amp;
+  ) : (
+    envelope = stage_start_level + (l1_amp - stage_start_level) * dt;
+  );
+) : phase == 2 ? ( // Rate 2
+  dt = (current_time - stage_start) / r2_time;
+  dt >= 1 ? (
+    phase = 3;
+    stage_start = current_time;
+    envelope = l2_amp;
+  ) : (
+    envelope = l1_amp + (l2_amp - l1_amp) * dt;
+  );
+) : phase == 3 ? ( // Rate 3
+  dt = (current_time - stage_start) / r3_time;
+  dt >= 1 ? (
+    envelope = l3_amp;
+  ) : (
+    envelope = l2_amp + (l3_amp - l2_amp) * dt;
+  );
+) : phase == 4 ? ( // Rate 4 (Release)
+  dt = (current_time - release_start) / r4_time;
+  dt >= 1 ? (
+    phase = 0;
+    envelope = l4_amp;
+  ) : (
+    envelope = release_level + (l4_amp - release_level) * dt;
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

@@ -167,5 +167,25 @@ A faithful recreation of classic analog synthesizer sounds with hardware-like ch
         <source file="Effects/Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Vintage_Analog_Synth.jsfx</source>
       </version>
     </reapack>
+    <reapack name="VA Synthesizer Extended" type="effect" desc="Extended Vintage-Style Synthesizer">
+      <metadata>
+        <description><![CDATA[
+# TaalTools - VA Synthesizer Extended
+
+An extended version of the vintage analog synthesizer with additional waveforms and features.
+
+## Features
+- Classic waveforms (Saw, Square, Sine, Triangle, Noise)
+- Additional waveforms: Pulse (with variable width), SuperSaw, Hard Sync
+- Analog-style saturation and warmth
+- MIDI responsive with velocity
+- Sub oscillator with adjustable mix
+]]></description>
+      </metadata>
+      <version name="1.0" author="Taal">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source file="Effects/VA_Synthesizer_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VA_Synthesizer_Extended.jsfx</source>
+      </version>
+    </reapack>
   </category>
 </index>

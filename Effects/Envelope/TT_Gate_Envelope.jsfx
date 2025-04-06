@@ -1,0 +1,106 @@
+desc: TaalTools Gate Envelope
+author: Taal
+version: 1.0
+
+slider1:-40<-80,0,1>Threshold (dB)
+slider2:1<0,100,0.1>Attack (ms)
+slider3:20<0,1000,1>Hold (ms)
+slider4:100<1,1000,1>Release (ms)
+slider5:2<0,20,0.1>Hysteresis (dB)
+slider6:0<0,1,1{Peak,RMS}>Detection Mode
+slider7:20<1,100,1>RMS Window (ms)
+slider8:0<-24,24,0.1>Output (dB)
+
+@init
+envelope = 0;
+phase = 0; // 0=closed, 1=attack, 2=hold, 3=release
+output_vol = 1;
+hold_samples = 0;
+rms_buffer_size = ceil(0.1 * srate); // 100ms max window
+rms_buffer = 0;
+memset(rms_buffer, 0, rms_buffer_size);
+rms_pos = 0;
+rms_sum = 0;
+
+function get_level(l, r) local(level) (
+  level = slider6 ? (
+    // RMS mode
+    rms_sum -= rms_buffer[rms_pos];
+    level = (l*l + r*r) * 0.5;
+    rms_buffer[rms_pos] = level;
+    rms_sum += level;
+    rms_pos = (rms_pos + 1) % ceil(slider7 * srate * 0.001);
+    sqrt(rms_sum / ceil(slider7 * srate * 0.001));
+  ) : (
+    // Peak mode
+    max(abs(l), abs(r));
+  );
+  
+  level = 20 * log10(max(level, 10^-30));
+  level;
+);
+
+@slider
+threshold = slider1;
+attack = slider2 * 0.001;
+hold = slider3 * 0.001;
+release = slider4 * 0.001;
+hysteresis = slider5;
+output_vol = 10^(slider8/20);
+
+attack_coef = exp(-1/(attack * srate));
+release_coef = exp(-1/(release * srate));
+
+@sample
+level = get_level(spl0, spl1);
+
+phase == 0 ? ( // Closed
+  level > threshold ? (
+    phase = 1;
+    attack_start = time_precise();
+    attack_base = envelope;
+  );
+) : phase == 1 ? ( // Attack
+  level < threshold - hysteresis ? (
+    phase = 3;
+    release_start = time_precise();
+    release_base = envelope;
+  ) : (
+    dt = (time_precise() - attack_start) / attack;
+    dt >= 1 ? (
+      phase = 2;
+      hold_start = time_precise();
+      envelope = 1;
+    ) : (
+      envelope = attack_base + (1 - attack_base) * (1 - attack_coef^(dt * srate));
+    );
+  );
+) : phase == 2 ? ( // Hold
+  level < threshold - hysteresis ? (
+    phase = 3;
+    release_start = time_precise();
+    release_base = envelope;
+  ) : (
+    dt = (time_precise() - hold_start) / hold;
+    dt >= 1 ? (
+      envelope = 1;
+    );
+  );
+) : phase == 3 ? ( // Release
+  level > threshold ? (
+    phase = 1;
+    attack_start = time_precise();
+    attack_base = envelope;
+  ) : (
+    dt = (time_precise() - release_start) / release;
+    dt >= 1 ? (
+      phase = 0;
+      envelope = 0;
+    ) : (
+      envelope = release_base * release_coef^(dt * srate);
+    );
+  );
+);
+
+spl0 *= envelope * output_vol;
+spl1 *= envelope * output_vol;

@@ -388,6 +388,20 @@ A collection of professional envelope generators for modulation and amplitude sh
         <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
         <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
       </version>
+      <version name="1.4" author="Taal">
+        <changelog><![CDATA[- Added Gate envelope generator
+- Added RMS/Peak detection modes
+- Added hysteresis control
+- Added adjustable hold time]]></changelog>
+        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
+      </version>
     </reapack>
   </category>
 </index>

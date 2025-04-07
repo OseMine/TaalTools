@@ -1,19 +1,44 @@
 desc: TaalTools Distorted VCA
 author: Taal
-version: 1.0
+version: 1.3
 
 slider1:0.5<0,1,0.01>Input Gain
-slider2:0<0,11,1{Classic,Fuzz,Retro,Simple,Waveshaper,NOOO,Tube,Hard Fuzz,Clipper,Old Waveshaper,Rectifier,Crusher}>Drive Type
+slider2:0<0,15,1{Classic,Fuzz,Retro,Simple,Waveshaper,NOOO,Tube,Hard Fuzz,Clipper,Old Waveshaper,Rectifier,Crusher,Multi Type 1,Multi Type 2,Multi Type 3,Hard Waveshaper}>Drive Type
 slider3:0.7<0,1,0.01>Drive Amount
 slider4:0.3<0,1,0.01>Tone
 slider5:0.5<0,1,0.01>Mix
 slider6:0<0,1,1{Mono,Stereo}>Process Mode
 slider7:0<-24,24,0.1>Output (dB)
+slider8:0<0,1,1{Off,On}>Oversample (x2) (Multi & Hard only)
+slider9:0<0,1,1{Off,On}>Limiter (Multi & Hard only)
+slider10:0<0,1,0.01>Muffle (Multi & Hard only)
 
 @init
 prev_l = prev_r = 0;
 dc_block_l = dc_block_r = 0;
 DCcoef = exp(-2 * $pi * 25/srate);
+
+// Multi Waveshaper constants
+c1 = 1;
+c2 = -0.75;
+c3 = 0.17;
+fgain = 4.1;
+
+//fir bandlimit
+bl_c1 = 0.52;
+bl_c2 = 0.54;
+bl_c3 = -0.02;
+
+// Initialize variables for oversampling
+bl1_l1 = bl1_r1 = bl1_l2 = bl1_r2 = 0;
+bl2_l1 = bl2_r1 = bl2_l2 = bl2_r2 = 0;
+bl3_l1 = bl3_r1 = bl3_l2 = bl3_r2 = 0;
+bl1_1 = bl1_2 = bl2_1 = bl2_2 = bl3_1 = bl3_2 = 0;
+ps_out2l = ps_out2r = ps_out2 = 0;
+o_out2l = o_out2r = o_out2 = 0;
+s1l = s2l = s3l = s1r = s2r = s3r = 0;
+s1 = s2 = s3 = 0;
+lp_output_l = lp_output_r = lp_output = 0;
 
 // Classic distortion
 function classic_drive(x, drive) local(preamp,soft,maxv,t,s,diff) (
@@ -102,9 +127,48 @@ function crush_drive(x, drive) local(bits, step) (
   floor(x/step + 0.5) * step;
 );
 
+// Multi Waveshaper Type 1
+function multi_type1_drive(x, drive_k) (
+  (1+drive_k)*x/(1+drive_k*abs(x));
+);
+
+// Multi Waveshaper Type 2
+function multi_type2_drive(x, pi_drive, sin_pi_drive) (
+  sin(pi_drive*x)*1/sin_pi_drive;
+);
+
+// Multi Waveshaper Type 3
+function multi_type3_drive(x, drive1, drvc) (
+  (x)*(abs((x)) + drive1)/((x)^2 + (drive1-1)*abs((x)) + 1)*(drive1/drvc);
+);
+
+// Hard Waveshaper (from Waveshaping Distortion by LOSER)
+function hard_waveshaper_drive(x, drive) (
+  hdistr = min(drive, 0.999);
+  foo = 2*hdistr/(1-hdistr);
+  (1+foo)*x/(1+foo*abs(x));
+);
+
 @slider
 output_vol = 10^(slider7/20);
 tone_factor = slider4 * 0.9 + 0.1;
+
+// Multi Waveshaper parameters
+drive1 = 1 + slider3 * 100 / 35;
+drvc = 1.5;
+drive2 = slider3 * 100 / 99 - 0.07;
+drv2_k = drive2/(1-drive2);
+pi_drv2 = $pi * drive2;
+sin_pi_drv2 = sin($pi * drive2);
+
+// Initialize muffle filter if needed
+slider10 > 0 ? (
+  muffle = 20000 - (slider10 * 100 + 9000);
+  lp_cut = 2 * $pi * muffle;
+  lp_n = 1/(lp_cut + 2 * srate);
+  lp_b1 = (2 * srate - lp_cut) * lp_n;
+  lp_a0 = lp_a1 = lp_cut * lp_n;
+);
 
 @sample
 // Input stage with gain
@@ -112,59 +176,232 @@ in_l = spl0 * slider1;
 in_r = spl1 * slider1;
 
 // Apply selected drive type
-slider2 == 0 ? (
-  // Classic
-  dist_l = classic_drive(in_l, slider3);
-  dist_r = classic_drive(in_r, slider3);
-) : slider2 == 1 ? (
-  // Fuzz
-  dist_l = fuzz_drive(in_l, slider3);
-  dist_r = fuzz_drive(in_r, slider3);
-) : slider2 == 2 ? (
-  // Retro
-  dist_l = retro_drive(in_l, slider3);
-  dist_r = retro_drive(in_r, slider3);
-) : slider2 == 3 ? (
-  // Simple
-  dist_l = simple_drive(in_l, slider3);
-  dist_r = simple_drive(in_r, slider3);
-) : slider2 == 4 ? (
-  // Waveshaper
-  dist_l = 2/(1+exp(-2*in_l*slider3)) - 1;
-  dist_r = 2/(1+exp(-2*in_r*slider3)) - 1;
-) : slider2 == 5 ? (
-  // NOOO
-  dist_l = nooo_drive(in_l, slider3);
-  dist_r = nooo_drive(in_r, slider3);
-) : slider2 == 6 ? (
-  // Tube
-  dist_l = tube_drive(in_l, slider3);
-  dist_r = tube_drive(in_r, slider3);
-) : slider2 == 7 ? (
-  // Hard Fuzz
-  dist_l = hard_fuzz_drive(in_l, slider3);
-  dist_r = hard_fuzz_drive(in_r, slider3);
-) : slider2 == 8 ? (
-  // Clipper
-  dist_l = clip_drive(in_l, slider3);
-  dist_r = clip_drive(in_r, slider3);
-) : slider2 == 9 ? (
-  // Old Waveshaper
-  dist_l = old_wave_drive(in_l, slider3);
-  dist_r = old_wave_drive(in_r, slider3);
-) : slider2 == 10 ? (
-  // Rectifier
-  dist_l = rectify_drive(in_l, slider3);
-  dist_r = rectify_drive(in_r, slider3);
+slider2 < 12 ? (
+  // Original distortion types
+  slider2 == 0 ? (
+    // Classic
+    dist_l = classic_drive(in_l, slider3);
+    dist_r = classic_drive(in_r, slider3);
+  ) : slider2 == 1 ? (
+    // Fuzz
+    dist_l = fuzz_drive(in_l, slider3);
+    dist_r = fuzz_drive(in_r, slider3);
+  ) : slider2 == 2 ? (
+    // Retro
+    dist_l = retro_drive(in_l, slider3);
+    dist_r = retro_drive(in_r, slider3);
+  ) : slider2 == 3 ? (
+    // Simple
+    dist_l = simple_drive(in_l, slider3);
+    dist_r = simple_drive(in_r, slider3);
+  ) : slider2 == 4 ? (
+    // Waveshaper
+    dist_l = 2/(1+exp(-2*in_l*slider3)) - 1;
+    dist_r = 2/(1+exp(-2*in_r*slider3)) - 1;
+  ) : slider2 == 5 ? (
+    // NOOO
+    dist_l = nooo_drive(in_l, slider3);
+    dist_r = nooo_drive(in_r, slider3);
+  ) : slider2 == 6 ? (
+    // Tube
+    dist_l = tube_drive(in_l, slider3);
+    dist_r = tube_drive(in_r, slider3);
+  ) : slider2 == 7 ? (
+    // Hard Fuzz
+    dist_l = hard_fuzz_drive(in_l, slider3);
+    dist_r = hard_fuzz_drive(in_r, slider3);
+  ) : slider2 == 8 ? (
+    // Clipper
+    dist_l = clip_drive(in_l, slider3);
+    dist_r = clip_drive(in_r, slider3);
+  ) : slider2 == 9 ? (
+    // Old Waveshaper
+    dist_l = old_wave_drive(in_l, slider3);
+    dist_r = old_wave_drive(in_r, slider3);
+  ) : slider2 == 10 ? (
+    // Rectifier
+    dist_l = rectify_drive(in_l, slider3);
+    dist_r = rectify_drive(in_r, slider3);
+  ) : (
+    // Crusher
+    dist_l = crush_drive(in_l, slider3);
+    dist_r = crush_drive(in_r, slider3);
+  );
 ) : (
-  // Crusher
-  dist_l = crush_drive(in_l, slider3);
-  dist_r = crush_drive(in_r, slider3);
+  // New Multi Waveshaper and Hard Waveshaper types
+  multi_type = slider2 - 12; // 0, 1, 2, 3 for Type 1, Type 2, Type 3, Hard
+  
+  // Mono or stereo processing
+  slider6 == 0 ? (
+    // Mono processing
+    in = (in_l + in_r) / 2;
+    
+    // Process with or without oversampling
+    slider8 == 1 ? (
+      // With oversampling
+      // Power series in
+      ps_out1 = 0.5 * (in + ps_out2);
+      ps_out2 = 0.5 * ps_out1;
+      
+      // Apply drive based on type
+      multi_type == 0 ? (
+        o_in1 = multi_type1_drive(ps_out1, drv2_k);
+        o_in2 = multi_type1_drive(ps_out2, drv2_k);
+      ) : multi_type == 1 ? (
+        o_in1 = multi_type2_drive(ps_out1, pi_drv2, sin_pi_drv2);
+        o_in2 = multi_type2_drive(ps_out2, pi_drv2, sin_pi_drv2);
+      ) : multi_type == 2 ? (
+        o_in1 = multi_type3_drive(ps_out1, drive1, drvc);
+        o_in2 = multi_type3_drive(ps_out2, drive1, drvc);
+      ) : (
+        o_in1 = hard_waveshaper_drive(ps_out1, slider3);
+        o_in2 = hard_waveshaper_drive(ps_out2, slider3);
+      );
+      
+      // Bandlimit
+      bl3_1 = bl2_1;
+      bl3_2 = bl2_2;
+      
+      bl2_1 = bl1_1;
+      bl2_2 = bl1_2;
+      
+      bl1_1 = o_in1;
+      bl1_2 = o_in2;
+      
+      bl_out1 = (bl1_1 * bl_c1 + bl2_1 * bl_c2 + bl3_1 * bl_c3);
+      bl_out2 = (bl1_2 * bl_c1 + bl2_2 * bl_c2 + bl3_2 * bl_c3);
+      
+      // Power series out
+      o_out1 = 0.5 * (bl_out1 + o_out2);
+      o_out2 = 0.5 * (bl_out2 + o_out1);
+      
+      // FIR restoration
+      s3 = s2;
+      s2 = s1;
+      s1 = o_out1;
+      
+      dist_l = dist_r = (s1 * c1 + s2 * c2 + s3 * c3) * fgain;
+    ) : (
+      // Without oversampling
+      multi_type == 0 ? (
+        dist_l = dist_r = multi_type1_drive(in, drv2_k);
+      ) : multi_type == 1 ? (
+        dist_l = dist_r = multi_type2_drive(in, pi_drv2, sin_pi_drv2);
+      ) : multi_type == 2 ? (
+        dist_l = dist_r = multi_type3_drive(in, drive1, drvc);
+      ) : (
+        dist_l = dist_r = hard_waveshaper_drive(in, slider3);
+      );
+    );
+  ) : (
+    // Stereo processing
+    slider8 == 1 ? (
+      // With oversampling
+      // Power series in
+      ps_out1l = 0.5 * (in_l + ps_out2l);
+      ps_out2l = 0.5 * ps_out1l;
+      
+      ps_out1r = 0.5 * (in_r + ps_out2r);
+      ps_out2r = 0.5 * ps_out1r;
+      
+      // Apply drive based on type
+      multi_type == 0 ? (
+        o_in1l = multi_type1_drive(ps_out1l, drv2_k);
+        o_in2l = multi_type1_drive(ps_out2l, drv2_k);
+        o_in1r = multi_type1_drive(ps_out1r, drv2_k);
+        o_in2r = multi_type1_drive(ps_out2r, drv2_k);
+      ) : multi_type == 1 ? (
+        o_in1l = multi_type2_drive(ps_out1l, pi_drv2, sin_pi_drv2);
+        o_in2l = multi_type2_drive(ps_out2l, pi_drv2, sin_pi_drv2);
+        o_in1r = multi_type2_drive(ps_out1r, pi_drv2, sin_pi_drv2);
+        o_in2r = multi_type2_drive(ps_out2r, pi_drv2, sin_pi_drv2);
+      ) : multi_type == 2 ? (
+        o_in1l = multi_type3_drive(ps_out1l, drive1, drvc);
+        o_in2l = multi_type3_drive(ps_out2l, drive1, drvc);
+        o_in1r = multi_type3_drive(ps_out1r, drive1, drvc);
+        o_in2r = multi_type3_drive(ps_out2r, drive1, drvc);
+      ) : (
+        o_in1l = hard_waveshaper_drive(ps_out1l, slider3);
+        o_in2l = hard_waveshaper_drive(ps_out2l, slider3);
+        o_in1r = hard_waveshaper_drive(ps_out1r, slider3);
+        o_in2r = hard_waveshaper_drive(ps_out2r, slider3);
+      );
+      
+      // Bandlimit
+      bl3_l1 = bl2_l1;
+      bl3_r1 = bl2_r1;
+      bl3_l2 = bl2_l2;
+      bl3_r2 = bl2_r2;
+      
+      bl2_l1 = bl1_l1;
+      bl2_r1 = bl1_r1;
+      bl2_l2 = bl1_l2;
+      bl2_r2 = bl1_r2;
+      
+      bl1_l1 = o_in1l;
+      bl1_r1 = o_in1r;
+      bl1_l2 = o_in2l;
+      bl1_r2 = o_in2r;
+      
+      bl_out1l = (bl1_l1 * bl_c1 + bl2_l1 * bl_c2 + bl3_l1 * bl_c3);
+      bl_out1r = (bl1_r1 * bl_c1 + bl2_r1 * bl_c2 + bl3_r1 * bl_c3);
+      bl_out2l = (bl1_l2 * bl_c1 + bl2_l2 * bl_c2 + bl3_l2 * bl_c3);
+      bl_out2r = (bl1_r2 * bl_c1 + bl2_r2 * bl_c2 + bl3_r2 * bl_c3);
+      
+      // Power series out
+      o_out1l = 0.5 * (bl_out1l + o_out2l);
+      o_out2l = 0.5 * (bl_out2l + o_out1l);
+      
+      o_out1r = 0.5 * (bl_out1r + o_out2r);
+      o_out2r = 0.5 * (bl_out2r + o_out1r);
+      
+      // FIR restoration
+      s3l = s2l;
+      s3r = s2r;
+      s2l = s1l;
+      s2r = s1r;
+      s1l = o_out1l;
+      s1r = o_out1r;
+      
+      dist_l = (s1l * c1 + s2l * c2 + s3l * c3) * fgain;
+      dist_r = (s1r * c1 + s2r * c2 + s3r * c3) * fgain;
+    ) : (
+      // Without oversampling
+      multi_type == 0 ? (
+        dist_l = multi_type1_drive(in_l, drv2_k);
+        dist_r = multi_type1_drive(in_r, drv2_k);
+      ) : multi_type == 1 ? (
+        dist_l = multi_type2_drive(in_l, pi_drv2, sin_pi_drv2);
+        dist_r = multi_type2_drive(in_r, pi_drv2, sin_pi_drv2);
+      ) : multi_type == 2 ? (
+        dist_l = multi_type3_drive(in_l, drive1, drvc);
+        dist_r = multi_type3_drive(in_r, drive1, drvc);
+      ) : (
+        dist_l = hard_waveshaper_drive(in_l, slider3);
+        dist_r = hard_waveshaper_drive(in_r, slider3);
+      );
+    );
+  );
+  
+  // Apply muffle if enabled
+  slider10 > 0 ? (
+    // Apply lowpass filter
+    lp_output_l = dist_l * lp_a0 + dist_l * lp_a1 + lp_output_l * lp_b1;
+    lp_output_r = dist_r * lp_a0 + dist_r * lp_a1 + lp_output_r * lp_b1;
+    dist_l = lp_output_l;
+    dist_r = lp_output_r;
+  );
+  
+  // Apply limiter if enabled
+  slider9 == 1 ? (
+    dist_l = min(max(dist_l, -0.98), 0.98);
+    dist_r = min(max(dist_r, -0.98), 0.98);
+  );
 );
 
 // Tone control (simple lowpass)
 dist_l = dist_l * tone_factor + prev_l * (1 - tone_factor);
-dist_r = dist_l * tone_factor + prev_r * (1 - tone_factor);
+dist_r = dist_r * tone_factor + prev_r * (1 - tone_factor);
 prev_l = dist_l;
 prev_r = dist_r;
 

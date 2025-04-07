@@ -139,6 +139,30 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Advanced VCA processors
 ]]></description>
       </metadata>
+      <version name="2.2" author="Taal">
+        <changelog><![CDATA[- Enhanced Distorted VCA with Multi Waveshaper types
+- Added three waveshaper types from Multi Waveshaper plugin
+- Added Hard Waveshaper type
+- Implemented muffle feature for high-frequency attenuation
+- Added oversampling and limiter options for new waveshaper types]]></changelog>
+        <!-- Synth Collection -->
+        <source file="Effects/TaalTools/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Synth/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/TaalTools/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Synth/TT_Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/TaalTools/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Synth/TT_VA_Synth_Extended.jsfx</source>
+
+        <!-- Filter Collection -->
+        <source file="Effects/TaalTools/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Peak_Following_Filter.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Resonant_LP.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
+
+        <!-- VCA Collection -->
+        <source file="Effects/TaalTools/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Analog_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Digital_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Experimental_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Distorted_VCA.jsfx</source>
+      </version>
       <version name="2.1" author="Taal">
         <changelog><![CDATA[- Reorganized effects into proper categories
 - Fixed file path conflicts

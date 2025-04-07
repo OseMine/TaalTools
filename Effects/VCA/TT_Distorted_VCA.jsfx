@@ -416,7 +416,7 @@ in_l = spl0 * slider1;
 in_r = spl1 * slider1;
 
 // Apply selected drive type
-slider2 < 17 ? (
+slider2 <= 11 ? (
   // Original distortion types
   slider2 == 0 ? (
     // Classic
@@ -462,162 +462,169 @@ slider2 < 17 ? (
     // Rectifier
     dist_l = rectify_drive(in_l, slider3);
     dist_r = rectify_drive(in_r, slider3);
-  ) : slider2 == 11 ? (
+  ) : (
     // Crusher
     dist_l = crush_drive(in_l, slider3);
     dist_r = crush_drive(in_r, slider3);
-  ) : slider2 == 16 ? (
-    // Retro Fuzz
-    dist_l = retro_fuzz_drive_rf(in_l, slider3);
-    dist_r = retro_fuzz_drive_rf(in_r, slider3);
-  ) : slider2 == 17 ? (
-    // Retro Overdrive
-    dist_l = retro_overdrive_drive(in_l, slider3);
-    dist_r = retro_overdrive_drive(in_r, slider3);
-  ) : (
-    // Multi Types 1-3 (12-14)
-    multi_type = slider2 - 12; // 0, 1, 2 for Type 1, Type 2, Type 3
+  );
+) : slider2 >= 12 && slider2 <= 14 ? (
+  // Multi Types 1-3 (12-14)
+  multi_type = slider2 - 12; // 0, 1, 2 for Type 1, Type 2, Type 3
+  
+  // Mono or stereo processing
+  slider6 == 0 ? (
+    // Mono processing
+    in = (in_l + in_r) / 2;
     
-    // Mono or stereo processing
-    slider6 == 0 ? (
-      // Mono processing
-      in = (in_l + in_r) / 2;
+    // Process with or without oversampling
+    slider8 == 1 ? (
+      // With oversampling
+      // Power series in
+      ps_out1 = 0.5 * (in + ps_out2);
+      ps_out2 = 0.5 * ps_out1;
       
-      // Process with or without oversampling
-      slider8 == 1 ? (
-        // With oversampling
-        // Power series in
-        ps_out1 = 0.5 * (in + ps_out2);
-        ps_out2 = 0.5 * ps_out1;
-        
-        // Apply drive based on type
-        multi_type == 0 ? (
-          o_in1 = multi_type1_drive(ps_out1, drv2_k);
-          o_in2 = multi_type1_drive(ps_out2, drv2_k);
-        ) : multi_type == 1 ? (
-          o_in1 = multi_type2_drive(ps_out1, pi_drv2, sin_pi_drv2);
-          o_in2 = multi_type2_drive(ps_out2, pi_drv2, sin_pi_drv2);
-        ) : (
-          o_in1 = multi_type3_drive(ps_out1, drive1, drvc);
-          o_in2 = multi_type3_drive(ps_out2, drive1, drvc);
-        );
-        
-        // Bandlimit
-        bl3_1 = bl2_1;
-        bl3_2 = bl2_2;
-        
-        bl2_1 = bl1_1;
-        bl2_2 = bl1_2;
-        
-        bl1_1 = o_in1;
-        bl1_2 = o_in2;
-        
-        bl_out1 = (bl1_1 * bl_c1 + bl2_1 * bl_c2 + bl3_1 * bl_c3);
-        bl_out2 = (bl1_2 * bl_c1 + bl2_2 * bl_c2 + bl3_2 * bl_c3);
-        
-        // Power series out
-        o_out1 = 0.5 * (bl_out1 + o_out2);
-        o_out2 = 0.5 * (bl_out2 + o_out1);
-        
-        // FIR restoration
-        s3 = s2;
-        s2 = s1;
-        s1 = o_out1;
-        
-        dist_l = dist_r = (s1 * c1 + s2 * c2 + s3 * c3) * fgain;
+      // Apply drive based on type
+      multi_type == 0 ? (
+        o_in1 = multi_type1_drive(ps_out1, drv2_k);
+        o_in2 = multi_type1_drive(ps_out2, drv2_k);
+      ) : multi_type == 1 ? (
+        o_in1 = multi_type2_drive(ps_out1, pi_drv2, sin_pi_drv2);
+        o_in2 = multi_type2_drive(ps_out2, pi_drv2, sin_pi_drv2);
       ) : (
-        // Without oversampling
-        multi_type == 0 ? (
-          dist_l = dist_r = multi_type1_drive(in, drv2_k);
-        ) : multi_type == 1 ? (
-          dist_l = dist_r = multi_type2_drive(in, pi_drv2, sin_pi_drv2);
-        ) : (
-          dist_l = dist_r = multi_type3_drive(in, drive1, drvc);
-        );
+        o_in1 = multi_type3_drive(ps_out1, drive1, drvc);
+        o_in2 = multi_type3_drive(ps_out2, drive1, drvc);
       );
+      
+      // Bandlimit
+      bl3_1 = bl2_1;
+      bl3_2 = bl2_2;
+      
+      bl2_1 = bl1_1;
+      bl2_2 = bl1_2;
+      
+      bl1_1 = o_in1;
+      bl1_2 = o_in2;
+      
+      bl_out1 = (bl1_1 * bl_c1 + bl2_1 * bl_c2 + bl3_1 * bl_c3);
+      bl_out2 = (bl1_2 * bl_c1 + bl2_2 * bl_c2 + bl3_2 * bl_c3);
+      
+      // Power series out
+      o_out1 = 0.5 * (bl_out1 + o_out2);
+      o_out2 = 0.5 * (bl_out2 + o_out1);
+      
+      // FIR restoration
+      s3 = s2;
+      s2 = s1;
+      s1 = o_out1;
+      
+      dist_l = dist_r = (s1 * c1 + s2 * c2 + s3 * c3) * fgain;
     ) : (
-      // Stereo processing
-      slider8 == 1 ? (
-        // With oversampling
-        // Power series in
-        ps_out1l = 0.5 * (in_l + ps_out2l);
-        ps_out2l = 0.5 * ps_out1l;
-        
-        ps_out1r = 0.5 * (in_r + ps_out2r);
-        ps_out2r = 0.5 * ps_out1r;
-        
-        // Apply drive based on type
-        multi_type == 0 ? (
-          o_in1l = multi_type1_drive(ps_out1l, drv2_k);
-          o_in2l = multi_type1_drive(ps_out2l, drv2_k);
-          o_in1r = multi_type1_drive(ps_out1r, drv2_k);
-          o_in2r = multi_type1_drive(ps_out2r, drv2_k);
-        ) : multi_type == 1 ? (
-          o_in1l = multi_type2_drive(ps_out1l, pi_drv2, sin_pi_drv2);
-          o_in2l = multi_type2_drive(ps_out2l, pi_drv2, sin_pi_drv2);
-          o_in1r = multi_type2_drive(ps_out1r, pi_drv2, sin_pi_drv2);
-          o_in2r = multi_type2_drive(ps_out2r, pi_drv2, sin_pi_drv2);
-        ) : (
-          o_in1l = multi_type3_drive(ps_out1l, drive1, drvc);
-          o_in2l = multi_type3_drive(ps_out2l, drive1, drvc);
-          o_in1r = multi_type3_drive(ps_out1r, drive1, drvc);
-          o_in2r = multi_type3_drive(ps_out2r, drive1, drvc);
-        );
-        
-        // Bandlimit
-        bl3_l1 = bl2_l1;
-        bl3_r1 = bl2_r1;
-        bl3_l2 = bl2_l2;
-        bl3_r2 = bl2_r2;
-        
-        bl2_l1 = bl1_l1;
-        bl2_r1 = bl1_r1;
-        bl2_l2 = bl1_l2;
-        bl2_r2 = bl1_r2;
-        
-        bl1_l1 = o_in1l;
-        bl1_r1 = o_in1r;
-        bl1_l2 = o_in2l;
-        bl1_r2 = o_in2r;
-        
-        bl_out1l = (bl1_l1 * bl_c1 + bl2_l1 * bl_c2 + bl3_l1 * bl_c3);
-        bl_out1r = (bl1_r1 * bl_c1 + bl2_r1 * bl_c2 + bl3_r1 * bl_c3);
-        bl_out2l = (bl1_l2 * bl_c1 + bl2_l2 * bl_c2 + bl3_l2 * bl_c3);
-        bl_out2r = (bl1_r2 * bl_c1 + bl2_r2 * bl_c2 + bl3_r2 * bl_c3);
-        
-        // Power series out
-        o_out1l = 0.5 * (bl_out1l + o_out2l);
-        o_out2l = 0.5 * (bl_out2l + o_out1l);
-        
-        o_out1r = 0.5 * (bl_out1r + o_out2r);
-        o_out2r = 0.5 * (bl_out2r + o_out1r);
-        
-        // FIR restoration
-        s3l = s2l;
-        s3r = s2r;
-        s2l = s1l;
-        s2r = s1r;
-        s1l = o_out1l;
-        s1r = o_out1r;
-        
-        dist_l = (s1l * c1 + s2l * c2 + s3l * c3) * fgain;
-        dist_r = (s1r * c1 + s2r * c2 + s3r * c3) * fgain;
+      // Without oversampling
+      multi_type == 0 ? (
+        dist_l = dist_r = multi_type1_drive(in, drv2_k);
+      ) : multi_type == 1 ? (
+        dist_l = dist_r = multi_type2_drive(in, pi_drv2, sin_pi_drv2);
       ) : (
-        // Without oversampling
-        multi_type == 0 ? (
-          dist_l = multi_type1_drive(in_l, drv2_k);
-          dist_r = multi_type1_drive(in_r, drv2_k);
-        ) : multi_type == 1 ? (
-          dist_l = multi_type2_drive(in_l, pi_drv2, sin_pi_drv2);
-          dist_r = multi_type2_drive(in_r, pi_drv2, sin_pi_drv2);
-        ) : (
-          dist_l = multi_type3_drive(in_l, drive1, drvc);
-          dist_r = multi_type3_drive(in_r, drive1, drvc);
-        );
+        dist_l = dist_r = multi_type3_drive(in, drive1, drvc);
+      );
+    );
+  ) : (
+    // Stereo processing
+    slider8 == 1 ? (
+      // With oversampling
+      // Power series in
+      ps_out1l = 0.5 * (in_l + ps_out2l);
+      ps_out2l = 0.5 * ps_out1l;
+      
+      ps_out1r = 0.5 * (in_r + ps_out2r);
+      ps_out2r = 0.5 * ps_out1r;
+      
+      // Apply drive based on type
+      multi_type == 0 ? (
+        o_in1l = multi_type1_drive(ps_out1l, drv2_k);
+        o_in2l = multi_type1_drive(ps_out2l, drv2_k);
+        o_in1r = multi_type1_drive(ps_out1r, drv2_k);
+        o_in2r = multi_type1_drive(ps_out2r, drv2_k);
+      ) : multi_type == 1 ? (
+        o_in1l = multi_type2_drive(ps_out1l, pi_drv2, sin_pi_drv2);
+        o_in2l = multi_type2_drive(ps_out2l, pi_drv2, sin_pi_drv2);
+        o_in1r = multi_type2_drive(ps_out1r, pi_drv2, sin_pi_drv2);
+        o_in2r = multi_type2_drive(ps_out2r, pi_drv2, sin_pi_drv2);
+      ) : (
+        o_in1l = multi_type3_drive(ps_out1l, drive1, drvc);
+        o_in2l = multi_type3_drive(ps_out2l, drive1, drvc);
+        o_in1r = multi_type3_drive(ps_out1r, drive1, drvc);
+        o_in2r = multi_type3_drive(ps_out2r, drive1, drvc);
+      );
+      
+      // Bandlimit
+      bl3_l1 = bl2_l1;
+      bl3_r1 = bl2_r1;
+      bl3_l2 = bl2_l2;
+      bl3_r2 = bl2_r2;
+      
+      bl2_l1 = bl1_l1;
+      bl2_r1 = bl1_r1;
+      bl2_l2 = bl1_l2;
+      bl2_r2 = bl1_r2;
+      
+      bl1_l1 = o_in1l;
+      bl1_r1 = o_in1r;
+      bl1_l2 = o_in2l;
+      bl1_r2 = o_in2r;
+      
+      bl_out1l = (bl1_l1 * bl_c1 + bl2_l1 * bl_c2 + bl3_l1 * bl_c3);
+      bl_out1r = (bl1_r1 * bl_c1 + bl2_r1 * bl_c2 + bl3_r1 * bl_c3);
+      bl_out2l = (bl1_l2 * bl_c1 + bl2_l2 * bl_c2 + bl3_l2 * bl_c3);
+      bl_out2r = (bl1_r2 * bl_c1 + bl2_r2 * bl_c2 + bl3_r2 * bl_c3);
+      
+      // Power series out
+      o_out1l = 0.5 * (bl_out1l + o_out2l);
+      o_out2l = 0.5 * (bl_out2l + o_out1l);
+      
+      o_out1r = 0.5 * (bl_out1r + o_out2r);
+      o_out2r = 0.5 * (bl_out2r + o_out1r);
+      
+      // FIR restoration
+      s3l = s2l;
+      s3r = s2r;
+      s2l = s1l;
+      s2r = s1r;
+      s1l = o_out1l;
+      s1r = o_out1r;
+      
+      dist_l = (s1l * c1 + s2l * c2 + s3l * c3) * fgain;
+      dist_r = (s1r * c1 + s2r * c2 + s3r * c3) * fgain;
+    ) : (
+      // Without oversampling
+      multi_type == 0 ? (
+        dist_l = multi_type1_drive(in_l, drv2_k);
+        dist_r = multi_type1_drive(in_r, drv2_k);
+      ) : multi_type == 1 ? (
+        dist_l = multi_type2_drive(in_l, pi_drv2, sin_pi_drv2);
+        dist_r = multi_type2_drive(in_r, pi_drv2, sin_pi_drv2);
+      ) : (
+        dist_l = multi_type3_drive(in_l, drive1, drvc);
+        dist_r = multi_type3_drive(in_r, drive1, drvc);
       );
     );
   );
-) : (
+  
+  // Apply muffle if enabled
+  slider10 > 0 ? (
+    // Apply lowpass filter
+    lp_output_l = dist_l * lp_a0 + dist_l * lp_a1 + lp_output_l * lp_b1;
+    lp_output_r = dist_r * lp_a0 + dist_r * lp_a1 + lp_output_r * lp_b1;
+    dist_l = lp_output_l;
+    dist_r = lp_output_r;
+  );
+  
+  // Apply limiter if enabled
+  slider9 == 1 ? (
+    dist_l = min(max(dist_l, -0.98), 0.98);
+    dist_r = min(max(dist_r, -0.98), 0.98);
+  );
+) : slider2 == 15 ? (
   // Hard Waveshaper (15)
   // Mono or stereo processing
   slider6 == 0 ? (
@@ -738,6 +745,14 @@ slider2 < 17 ? (
     dist_l = min(max(dist_l, -0.98), 0.98);
     dist_r = min(max(dist_r, -0.98), 0.98);
   );
+) : slider2 == 16 ? (
+  // Retro Fuzz
+  dist_l = retro_fuzz_drive_rf(in_l, slider3);
+  dist_r = retro_fuzz_drive_rf(in_r, slider3);
+) : (
+  // Retro Overdrive
+  dist_l = retro_overdrive_drive(in_l, slider3);
+  dist_r = retro_overdrive_drive(in_r, slider3);
 );
 
 // Tone control (simple lowpass)

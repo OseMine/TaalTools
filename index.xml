@@ -18,7 +18,7 @@ Ideal for studio drum recordings with standardized input configurations.
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/TaalTools/scripts/Drums_MultiChannelSplitter.lua">https://github.com/OseMine/TaalTools/blob/main/Scripts/TaalTools/scripts/Drums_MultiChannelSplitter.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/Drums_MultiChannelSplitter.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/Drums_MultiChannelSplitter.lua</source>
       </version>
     </reapack>
     <reapack name="Bus Creator" type="script" desc="Bus Creator Utility">
@@ -36,7 +36,7 @@ Creates a bus track and automatically routes selected tracks to it.
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/TaalTools/scripts/Bus_Creator.lua">https://github.com/OseMine/TaalTools/blob/main/Scripts/TaalTools/scripts/Bus_Creator.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/Bus_Creator.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/Bus_Creator.lua</source>
       </version>
     </reapack>
     <reapack name="Volume Up" type="script" desc="Increase Volume Slightly">
@@ -54,7 +54,7 @@ Increases the volume of selected tracks by 0.5dB.
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/VolumeUp.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/VolumeUp.lua</source>
+        <source main="main" file="Scripts/VolumeUp.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/VolumeUp.lua</source>
       </version>
     </reapack>
     <reapack name="Volume Down" type="script" desc="Decrease Volume Slightly">
@@ -72,7 +72,7 @@ Decreases the volume of selected tracks by 0.5dB.
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/VolumeDown.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/VolumeDown.lua</source>
+        <source main="main" file="Scripts/VolumeDown.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/VolumeDown.lua</source>
       </version>
     </reapack>
     <reapack name="MIDI Trigger" type="script" desc="MIDI Note Trigger">
@@ -91,7 +91,7 @@ Triggers MIDI notes on the selected track. Perfect for creating custom drum pads
       </metadata>
       <version name="1.0" author="Taal">
         <changelog><![CDATA[Initial Release]]></changelog>
-        <source main="main" file="Scripts/TaalTools/scripts/MIDI_Trigger.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/MIDI_Trigger.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/MIDI_Trigger.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/MIDI_Trigger.lua</source>
       </version>
     </reapack>
     <reapack name="Drum Triggers" type="script" desc="MOD Drum MIDI Triggers">
@@ -108,19 +108,19 @@ Collection of MIDI triggers for IK Multimedia MOD Drum.
 ]]></description>
       </metadata>
       <version name="1.1" author="Taal">
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Kick.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Kick.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Snare.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Snare.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Open.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Open.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Crash1.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Crash1.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Crash2.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Crash2.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom1.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Tom1.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom2.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Tom2.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom3.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Tom3.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Ride.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Ride.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Cowbell.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Cowbell.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Clap.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Clap.lua</source>
-        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Splash3.lua">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Scripts/TaalTools/scripts/drumtrigger/Splash3.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Kick.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Kick.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Snare.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Snare.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Closed.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/HiHat_Open.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/HiHat_Open.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Crash1.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Crash1.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Crash2.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Crash2.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom1.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Tom1.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom2.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Tom2.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Tom3.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Tom3.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Ride.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Ride.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Cowbell.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Cowbell.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Clap.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Clap.lua</source>
+        <source main="main" file="Scripts/TaalTools/scripts/drumtrigger/Splash3.lua">https://github.com/OseMine/TaalTools/raw/main/Scripts/TaalTools/scripts/drumtrigger/Splash3.lua</source>
       </version>
     </reapack>
   </category>
@@ -144,22 +144,22 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Fixed file path conflicts
 - Improved package structure]]></changelog>
         <!-- Synth Collection -->
-        <source file="Effects/TaalTools/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/blob/main/Effects/TaalTools/Synth/TT_Formula_Synth.jsfx</source>
-        <source file="Effects/TaalTools/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/blob/main/Effects/TaalTools/Synth/TT_Vintage_Analog_Synth.jsfx</source>
-        <source file="Effects/TaalTools/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/blob/main/Effects/TaalTools/Synth/TT_VA_Synth_Extended.jsfx</source>
+        <source file="Effects/TaalTools/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Synth/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/TaalTools/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Synth/TT_Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/TaalTools/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Synth/TT_VA_Synth_Extended.jsfx</source>
 
         <!-- Filter Collection -->
-        <source file="Effects/TaalTools/Filters/TT_Analog_Filters.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/Filters/TT_Analog_Filters.jsfx</source>
-        <source file="Effects/TaalTools/Filters/TT_Digital_Filters.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/Filters/TT_Digital_Filters.jsfx</source>
-        <source file="Effects/TaalTools/Filters/TT_Peak_Following_Filter.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/Filters/TT_Peak_Following_Filter.jsfx</source>
-        <source file="Effects/TaalTools/Filters/TT_Resonant_LP.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/Filters/TT_Resonant_LP.jsfx</source>
-        <source file="Effects/TaalTools/Filters/TT_Three_Band_Peak_Filter.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Peak_Following_Filter.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Resonant_LP.jsfx</source>
+        <source file="Effects/TaalTools/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
 
         <!-- VCA Collection -->
-        <source file="Effects/TaalTools/VCA/TT_Analog_VCA.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/TaalTools/VCA/TT_Digital_VCA.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/TaalTools/VCA/TT_Experimental_VCA.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/TaalTools/VCA/TT_Distorted_VCA.jsfx">https://raw.githubusercontent.com/OseMine/TaalTools/refs/heads/main/Effects/TaalTools/VCA/TT_Distorted_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Analog_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Digital_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Experimental_VCA.jsfx</source>
+        <source file="Effects/TaalTools/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/TaalTools/VCA/TT_Distorted_VCA.jsfx</source>
       </version>
     </reapack>
   </category>

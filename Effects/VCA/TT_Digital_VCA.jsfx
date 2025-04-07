@@ -1,6 +1,6 @@
 desc: TaalTools Digital VCA
 author: Taal
-version: 1.0
+version: 1.1
 
 slider1:0.5<0,1,0.01>Input Gain
 slider2:8<1,16,1>Bit Depth
@@ -8,7 +8,9 @@ slider3:1<0.01,1,0.01>Sample Rate
 slider4:0<0,1,0.01>Digital Noise
 slider5:0<0,4,1{Off,Light,Medium,Heavy,Destroy}>Glitch Mode
 slider6:0<0,1,0.01>Aliasing
-slider7:0<-24,24,0.1>Output (dB)
+slider7:0.3<0,1,0.01>Digital Saturation
+slider8:0<0,3,1{Hard Clip,Soft Clip,Fold Back,Waveshaper}>Saturation Type
+slider9:0<-24,24,0.1>Output (dB)
 
 @init
 sr_counter = 0;
@@ -24,8 +26,41 @@ function bit_crush(x, bits) (
   floor(x/step + 0.5) * step;
 );
 
+function digital_saturation(x, amount, type) local(out, threshold) (
+  // Amplify input based on saturation amount
+  out = x * (1 + amount * 3);
+  
+  // Apply different saturation types
+  type == 0 ? (
+    // Hard Clip - digital style clipping at exactly the threshold
+    threshold = 1 - amount * 0.5;
+    out = min(max(out, -threshold), threshold);
+  ) : 
+  type == 1 ? (
+    // Soft Clip - smoother digital clipping with cubic function
+    threshold = 1 - amount * 0.3;
+    abs(out) > threshold ? (
+      out = sign(out) * (threshold + (abs(out) - threshold) / (1 + pow((abs(out) - threshold) * 3, 2)));
+    );
+  ) :
+  type == 2 ? (
+    // Fold Back - digital distortion that folds signal back
+    threshold = 1;
+    while (abs(out) > threshold) (
+      out = abs(out) > threshold ? sign(out) * (2 * threshold - abs(out)) : out;
+    );
+  ) : (
+    // Waveshaper - digital waveshaping
+    out = out / (1 + amount * abs(out) * 5);
+    // Add digital artifacts
+    out += amount * 0.1 * sin(out * 100);
+  );
+  
+  out;
+);
+
 @slider
-output_vol = 10^(slider7/20);
+output_vol = 10^(slider9/20);
 glitch_amount = slider5 * 0.25;
 
 @sample
@@ -53,6 +88,9 @@ out_l = spl0 * slider1;
 out_l = bit_crush(out_l, slider2);
 out_l = out_l * (1-glitch_amount) + glitch_sample * glitch_amount;
 
+// Apply digital saturation
+out_l = digital_saturation(out_l, slider7, slider8);
+
 // Add aliasing
 aliasing = slider6 * sin(out_l * 100) * 0.2;
 out_l += aliasing;
@@ -61,6 +99,10 @@ out_l += aliasing;
 out_r = spl1 * slider1;
 out_r = bit_crush(out_r, slider2);
 out_r = out_r * (1-glitch_amount) + glitch_sample * glitch_amount;
+
+// Apply digital saturation to right channel
+out_r = digital_saturation(out_r, slider7, slider8);
+
 out_r += aliasing;
 
 spl0 = (out_l + noise) * output_vol;

@@ -3,41 +3,96 @@ author: Taal
 version: 1.0
 changelog: Initial Release
 
-slider1:50<0,100,1>Echo Volume (%)
-slider2:50<0,100,1>Reverb Volume (%)
-slider3:50<0,100,1>Chorus Intensity (%)
-slider4:3<1,6,1{RE-101,RE-201,RE-301,RE-501}>Mode Selector
-slider5:250<50,1000,1>Delay Time (ms)
-slider6:0.5<0.1,2.0,0.01>Feedback Intensity
-slider7:0<0,1,1{Off,On}>Sync to Tempo
+slider1:100<0,200,1>Input Volume (%)
+slider3:50<0,100,1>Echo Volume (%)
+slider4:50<0,100,1>Reverb Volume (%)
+slider5:50<0,100,1>Chorus Intensity (%)
+slider6:3<1,6,1{RE-101,RE-201,RE-301,RE-501}>Mode Selector
+slider7:250<50,1000,1>Delay Time (ms)
+slider8:0.5<0.1,2.0,0.01>Feedback Intensity
+slider9:0<0,1,1{Off,On}>Sync to Tempo
+slider10:0<0,2,1{Chorus 1 (Mild),Chorus 2 (Rich),Chorus 1+2 (Leslie)}>Chorus Type
+slider2:100<0,200,1>Output Volume (%)
 
 @init
 // Initialisierung der Parameter
 mode = 3; // Standardmodus RE-201
 buffer_size = srate * 2; // 2 Sekunden Buffer
-delay_buffer = memalloc(buffer_size);
+delay_buffer = 0; // Initialize buffer at index 0
+memset(delay_buffer, 0, buffer_size * 2); // Clear buffer (stereo, so *2)
 buffer_index = 0;
 feedback_buffer = 0;
+time = 0; // Initialize time variable for chorus effect
+
+// Chorus parameters
+chorus_buffer_size = srate * 0.1; // 100ms chorus buffer
+chorus_buffer = buffer_size * 2; // Start after delay buffer
+memset(chorus_buffer, 0, chorus_buffer_size * 2); // Stereo chorus buffer
+chorus_pos = 0;
+chorus_phase1 = 0; // Separate phases for more complex modulation
+chorus_phase2 = 0;
+
+// Chorus presets
+// Chorus 1: 0.513 Hz, 0.00166-0.00535 sec delay, Stereo
+// Chorus 2: 0.863 Hz, 0.00166-0.00535 sec delay, Stereo
+// Chorus 1+2: 9.75 Hz, 0.0033-0.0037 sec delay, Mono
+chorus_rates = 0;
+chorus_rates[0] = 0.513; // Chorus 1 rate in Hz
+chorus_rates[1] = 0.863; // Chorus 2 rate in Hz
+chorus_rates[2] = 9.75;  // Chorus 1+2 rate in Hz
+
+chorus_min_delays = chorus_rates + 3;
+chorus_min_delays[0] = 0.00166 * srate; // Chorus 1 min delay in samples
+chorus_min_delays[1] = 0.00166 * srate; // Chorus 2 min delay in samples
+chorus_min_delays[2] = 0.0033 * srate;  // Chorus 1+2 min delay in samples
+
+chorus_max_delays = chorus_min_delays + 3;
+chorus_max_delays[0] = 0.00535 * srate; // Chorus 1 max delay in samples
+chorus_max_delays[1] = 0.00535 * srate; // Chorus 2 max delay in samples
+chorus_max_delays[2] = 0.0037 * srate;  // Chorus 1+2 max delay in samples
+
+// Chorus character parameters
+chorus_depths = chorus_max_delays + 3;
+chorus_depths[0] = 0.4;  // Chorus 1: mild depth
+chorus_depths[1] = 0.8;  // Chorus 2: deeper depth
+chorus_depths[2] = 1.0;  // Chorus 1+2: full depth
+
+chorus_feedback = chorus_depths + 3;
+chorus_feedback[0] = 0.1;  // Chorus 1: minimal feedback
+chorus_feedback[1] = 0.3;  // Chorus 2: moderate feedback
+chorus_feedback[2] = 0.5;  // Chorus 1+2: stronger feedback
 
 @slider
 // Aktualisierung der Parameter basierend auf Slider-Werten
-echo_volume = slider1 / 100;
-reverb_volume = slider2 / 100;
-chorus_intensity = slider3 / 100;
-mode_selector = slider4;
-delay_time_ms = slider5;
+input_volume = slider1 / 100;
+output_volume = slider2 / 100;
+echo_volume = slider3 / 100;
+reverb_volume = slider4 / 100;
+chorus_intensity = slider5 / 100;
+mode_selector = slider6;
+delay_time_ms = slider7;
 delay_samples = (delay_time_ms / 1000) * srate;
-feedback_intensity = slider6;
-sync_to_tempo = slider7;
+feedback_intensity = slider8;
+sync_to_tempo = slider9;
+chorus_type = slider10;
+
+// Update chorus parameters based on selected type
+chorus_rate = chorus_rates[chorus_type];
+chorus_min_delay = chorus_min_delays[chorus_type];
+chorus_max_delay = chorus_max_delays[chorus_type];
+chorus_depth = chorus_depths[chorus_type];
+chorus_fb = chorus_feedback[chorus_type];
+chorus_is_mono = chorus_type == 2; // Chorus 1+2 is mono
 
 @sample
 // Verarbeitung des Audio-Signals
-in_left = spl0;
-in_right = spl1;
+in_left = spl0 * input_volume;
+in_right = spl1 * input_volume;
 
 // Berechnung des Delay-Indexes
 read_index = buffer_index - delay_samples;
 read_index < 0 ? read_index += buffer_size;
+read_index = min(max(0, read_index), buffer_size - 1); // Bounds checking
 
 // Tape Delay Simulation
 delay_sample_left = delay_buffer[read_index * 2];
@@ -48,8 +103,8 @@ feedback_left = delay_sample_left * feedback_intensity;
 feedback_right = delay_sample_right * feedback_intensity;
 
 // Ausgabe mit Echo
-spl0 += delay_sample_left * echo_volume;
-spl1 += delay_sample_right * echo_volume;
+spl0 = in_left + delay_sample_left * echo_volume;
+spl1 = in_right + delay_sample_right * echo_volume;
 
 // Reverb Simulation (nur für RE-201 und RE-301)
 mode_selector == 2 || mode_selector == 3 ? (
@@ -61,12 +116,97 @@ mode_selector == 2 || mode_selector == 3 ? (
 
 // Chorus Effekt (nur für RE-301 und RE-501)
 mode_selector == 3 || mode_selector == 4 ? (
-    time += 1/srate;
-    chorus_effect_left = sin(chorus_intensity * time * 2) * delay_sample_left * chorus_intensity * 0.3;
-    chorus_effect_right = cos(chorus_intensity * time * 2) * delay_sample_right * chorus_intensity * 0.3;
-    spl0 += chorus_effect_left;
-    spl1 += chorus_effect_right;
+    // Store current samples in chorus buffer
+    chorus_buffer[chorus_pos * 2] = delay_sample_left;
+    chorus_buffer[chorus_pos * 2 + 1] = delay_sample_right;
+    
+    // Update chorus phases at different rates for more complex modulation
+    chorus_phase1 += 2 * $pi * chorus_rate / srate;
+    chorus_phase1 >= 2 * $pi ? chorus_phase1 -= 2 * $pi;
+    
+    // Second phase for richer chorus (especially for type 2)
+    chorus_phase2 += 2 * $pi * (chorus_rate * 1.37) / srate; // Slightly detuned rate
+    chorus_phase2 >= 2 * $pi ? chorus_phase2 -= 2 * $pi;
+    
+    // Calculate chorus effect
+    chorus_left = 0;
+    chorus_right = 0;
+    
+    // Different modulation shapes for different chorus types
+    chorus_type == 0 ? (
+        // Chorus 1 (Mild) - Gentle sine modulation
+        mod_delay_l = chorus_min_delay + (chorus_max_delay - chorus_min_delay) * chorus_depth * 0.5 * (1 + sin(chorus_phase1));
+        mod_delay_r = chorus_min_delay + (chorus_max_delay - chorus_min_delay) * chorus_depth * 0.5 * (1 + sin(chorus_phase1 + 0.2));
+    ) : chorus_type == 1 ? (
+        // Chorus 2 (Rich) - More complex modulation with two phases
+        mod_delay_l = chorus_min_delay + (chorus_max_delay - chorus_min_delay) * chorus_depth * 0.5 * (1 + sin(chorus_phase1) * 0.7 + sin(chorus_phase2) * 0.3);
+        mod_delay_r = chorus_min_delay + (chorus_max_delay - chorus_min_delay) * chorus_depth * 0.5 * (1 + sin(chorus_phase1 + 0.5) * 0.7 + sin(chorus_phase2 + 0.7) * 0.3);
+    ) : (
+        // Chorus 1+2 (Leslie) - Faster, more pronounced modulation
+        mod_delay = chorus_min_delay + (chorus_max_delay - chorus_min_delay) * chorus_depth * 0.5 * (1 + sin(chorus_phase1) * 0.6 + sin(chorus_phase2 * 2) * 0.4);
+        mod_delay_l = mod_delay_r = mod_delay;
+    );
+    
+    mod_delay_l = min(max(1, mod_delay_l), chorus_buffer_size - 1);
+    mod_delay_r = min(max(1, mod_delay_r), chorus_buffer_size - 1);
+    
+    // Get chorus sample positions with different delays for L and R
+    chorus_read_pos_l = chorus_pos - mod_delay_l;
+    chorus_read_pos_l < 0 ? chorus_read_pos_l += chorus_buffer_size;
+    chorus_read_pos_l = min(max(0, chorus_read_pos_l), chorus_buffer_size - 1);
+    
+    chorus_read_pos_r = chorus_pos - mod_delay_r;
+    chorus_read_pos_r < 0 ? chorus_read_pos_r += chorus_buffer_size;
+    chorus_read_pos_r = min(max(0, chorus_read_pos_r), chorus_buffer_size - 1);
+    
+    // Get interpolated samples for left channel
+    chorus_idx_l = floor(chorus_read_pos_l);
+    chorus_frac_l = chorus_read_pos_l - chorus_idx_l;
+    chorus_idx_next_l = (chorus_idx_l + 1) % chorus_buffer_size;
+    
+    // Linear interpolation for left
+    chorus_left = chorus_buffer[chorus_idx_l * 2] * (1 - chorus_frac_l) + 
+                  chorus_buffer[chorus_idx_next_l * 2] * chorus_frac_l;
+    
+    // Get interpolated samples for right channel
+    chorus_idx_r = floor(chorus_read_pos_r);
+    chorus_frac_r = chorus_read_pos_r - chorus_idx_r;
+    chorus_idx_next_r = (chorus_idx_r + 1) % chorus_buffer_size;
+    
+    // Linear interpolation for right
+    chorus_right = chorus_buffer[chorus_idx_r * 2 + 1] * (1 - chorus_frac_r) + 
+                   chorus_buffer[chorus_idx_next_r * 2 + 1] * chorus_frac_r;
+    
+    // Apply chorus based on type (mono or stereo)
+    chorus_is_mono ? (
+        // Mono chorus (Chorus 1+2) - Leslie effect
+        chorus_mono = (chorus_left + chorus_right) * 0.5;
+        // Add tremolo effect for Leslie simulation
+        tremolo_l = 0.5 + 0.5 * sin(chorus_phase1 * 0.5);
+        tremolo_r = 0.5 + 0.5 * sin(chorus_phase1 * 0.5 + $pi);
+        spl0 += chorus_mono * chorus_intensity * tremolo_l;
+        spl1 += chorus_mono * chorus_intensity * tremolo_r;
+    ) : (
+        // Stereo chorus (Chorus 1 or 2)
+        // Apply different character for each chorus type
+        chorus_type == 0 ? (
+            // Chorus 1 - Mild, subtle
+            spl0 += chorus_left * chorus_intensity * 0.8;
+            spl1 += chorus_right * chorus_intensity * 0.8;
+        ) : (
+            // Chorus 2 - Rich, deeper
+            spl0 += chorus_left * chorus_intensity * 1.2;
+            spl1 += chorus_right * chorus_intensity * 1.2;
+        );
+    );
+    
+    // Update chorus position
+    chorus_pos = (chorus_pos + 1) % chorus_buffer_size;
 );
+
+// Apply output volume
+spl0 *= output_volume;
+spl1 *= output_volume;
 
 // Aktualisierung der Delay-Puffer
 delay_buffer[buffer_index * 2] = in_left + feedback_left;

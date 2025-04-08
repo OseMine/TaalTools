@@ -1,0 +1,87 @@
+desc:TaalTools Classic Roland Vintage Tape Echo
+author: Taal
+version: 1.0
+changelog: Initial Release
+
+slider1:50<0,100,1>Echo Volume (%)
+slider2:50<0,100,1>Reverb Volume (%)
+slider3:50<0,100,1>Chorus Intensity (%)
+slider4:3<1,6,1{RE-101,RE-201,RE-301,RE-501}>Mode Selector
+slider5:250<50,1000,1>Delay Time (ms)
+slider6:0.5<0.1,2.0,0.01>Feedback Intensity
+slider7:0<0,1,1{Off,On}>Sync to Tempo
+
+@init
+// Initialisierung der Parameter
+mode = 3; // Standardmodus RE-201
+buffer_size = srate * 2; // 2 Sekunden Buffer
+delay_buffer = memalloc(buffer_size);
+buffer_index = 0;
+feedback_buffer = 0;
+
+@slider
+// Aktualisierung der Parameter basierend auf Slider-Werten
+echo_volume = slider1 / 100;
+reverb_volume = slider2 / 100;
+chorus_intensity = slider3 / 100;
+mode_selector = slider4;
+delay_time_ms = slider5;
+delay_samples = (delay_time_ms / 1000) * srate;
+feedback_intensity = slider6;
+sync_to_tempo = slider7;
+
+@sample
+// Verarbeitung des Audio-Signals
+in_left = spl0;
+in_right = spl1;
+
+// Berechnung des Delay-Indexes
+read_index = buffer_index - delay_samples;
+read_index < 0 ? read_index += buffer_size;
+
+// Tape Delay Simulation
+delay_sample_left = delay_buffer[read_index * 2];
+delay_sample_right = delay_buffer[read_index * 2 + 1];
+
+// Feedback hinzufügen
+feedback_left = delay_sample_left * feedback_intensity;
+feedback_right = delay_sample_right * feedback_intensity;
+
+// Ausgabe mit Echo
+spl0 += delay_sample_left * echo_volume;
+spl1 += delay_sample_right * echo_volume;
+
+// Reverb Simulation (nur für RE-201 und RE-301)
+mode_selector == 2 || mode_selector == 3 ? (
+    reverb_left = delay_sample_left * reverb_volume * 0.8; // Simulierte Federhall-Effekte
+    reverb_right = delay_sample_right * reverb_volume * 0.8;
+    spl0 += reverb_left;
+    spl1 += reverb_right;
+);
+
+// Chorus Effekt (nur für RE-301 und RE-501)
+mode_selector == 3 || mode_selector == 4 ? (
+    time += 1/srate;
+    chorus_effect_left = sin(chorus_intensity * time * 2) * delay_sample_left * chorus_intensity * 0.3;
+    chorus_effect_right = cos(chorus_intensity * time * 2) * delay_sample_right * chorus_intensity * 0.3;
+    spl0 += chorus_effect_left;
+    spl1 += chorus_effect_right;
+);
+
+// Aktualisierung der Delay-Puffer
+delay_buffer[buffer_index * 2] = in_left + feedback_left;
+delay_buffer[buffer_index * 2 + 1] = in_right + feedback_right;
+
+// Inkrementieren und Wrappen des Buffer-Index
+buffer_index += 1;
+buffer_index >= buffer_size ? buffer_index = 0;
+
+@block
+// Tempo-Synchronisation für Delay-Zeit (optional)
+sync_to_tempo == 1 ? (
+    tempo > 0 ? (
+        bpm = tempo;
+        delay_time_ms = (60000 / bpm); // Synchronisierte Delay-Zeit (eine Viertelnote)
+        delay_samples = (delay_time_ms / 1000) * srate;
+    );
+);

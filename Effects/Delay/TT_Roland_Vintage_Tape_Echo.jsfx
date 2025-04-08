@@ -52,13 +52,12 @@ output_off_channel = (output_variation - 1)/sqrt(2);
 // Spring Reverb parameters
 reverb_size = 0.7; // Size of the reverb (0.0 to 1.0)
 num_springs = 3; // Number of spring delay lines
-spring_buffers = MAX_DELAY_SAMPLES * 3; // Start after delay buffers
 spring_buffer_size = srate * 1.5; // 1.5 seconds spring buffer for each spring
 
-// Allocate and initialize spring buffers
-spring_buffer1 = spring_buffers;
-spring_buffer2 = spring_buffers + spring_buffer_size;
-spring_buffer3 = spring_buffers + spring_buffer_size * 2;
+// Allocate and initialize spring buffers - use simple array indexing
+spring_buffer1 = MAX_DELAY_SAMPLES * 3; // Start after delay buffers
+spring_buffer2 = spring_buffer1 + spring_buffer_size;
+spring_buffer3 = spring_buffer2 + spring_buffer_size;
 memset(spring_buffer1, 0, spring_buffer_size);
 memset(spring_buffer2, 0, spring_buffer_size);
 memset(spring_buffer3, 0, spring_buffer_size);
@@ -75,6 +74,122 @@ spring_decay2 = 0.75;
 spring_decay3 = 0.7;
 spring_diffusion = 0.5; // Diffusion amount
 spring_damping = 0.25; // Reduced damping for longer high-frequency content
+spring_left = 0;
+spring_right = 0;
+reverb_left = 0;
+reverb_right = 0;
+
+// Allpass and delay buffer allocation
+reverb_buffer_start = MAX_DELAY_SAMPLES * 3; // Start after delay buffers
+reverb_buffer_size = srate * 4; // 4 seconds total reverb buffer
+memset(reverb_buffer_start, 0, reverb_buffer_size);
+
+// Reverb helper functions
+function allpass_delay_set(buffer, ms) 
+ instance(buf, size, pos) 
+(
+  buf = buffer;
+  size = srate * ms * 0.001;
+  size = floor(size);
+);
+
+function allpass(in, co) 
+ instance(pos, buf, out, size, in, co) 
+(
+  out = buf[pos];
+  in = (in - out*co);
+  buf[pos] = in;
+  pos += 1;
+  pos >= size ? pos -= size;
+  out + in*co
+);
+
+function max_delay_set(buffer, ms) 
+ instance(buf, size, pos) 
+(
+  buf = buffer;
+  size = srate * ms * 0.001;
+  size = floor(size);
+);
+
+function write_delay(in) 
+ instance(pos, buf, out, size) 
+(
+  out = buf[pos];
+  buf[pos] = in;
+  pos += 1;
+  pos >= size ? pos -= size;
+  out
+);
+
+function read_delay_buffer(length_samples) 
+ instance(pos, buf, out, size, length_samples) 
+(
+  i = pos - length_samples;
+  i < 0 ? i = i+size;
+  buf[i]
+);
+
+// Filtering functions
+Fc = 280/srate;
+filt = exp(-2*$pi*Fc);
+
+function highpass(x) 
+ instance(y) 
+(
+  y = x + (y-x)*filt;
+  x - y
+);
+
+Fc2 = 1500/srate;
+filt2 = exp(-2*$pi*Fc2);
+
+function lowpass(x) 
+ instance(y) 
+(
+  y = x + (y-x)*filt2;
+  y
+);
+
+Fc3 = 1200/srate;
+tone_co = exp(-2*$pi*Fc3);
+
+function tone_control(x) 
+ instance(x, x1, x2, y) 
+(
+  x2 = 0.5*(x+x1);
+  y = x2 + (y-x2)*tone_co;
+  out = low_damp*(y - high_damp*(x-y));
+  x1 = x;
+  out
+);
+
+// Saturation function
+spe = exp(-1/(1.25 * 0.001 * srate));
+
+function compsaturate(x) 
+ instance(x, x1, xx, y, z, f) 
+(
+  f = x*x;
+  xx = (f) + (xx-f)*spe;
+  f = log(1+xx);
+  y = f + (y-f)*spe;
+  f = 1/(1+(0.8*y+0.2*f));
+  z = f + (z-f)*spe;
+  
+  x*(0.75+(0.2*z+0.05*f))
+);
+
+// Initialize reverb variables
+ER0 = 0; ER1 = 0;
+FDN_FB_A = 0; FDN_FB_B = 0; FDN_FB_C = 0; FDN_FB_D = 0;
+FDN_FB_E = 0; FDN_FB_F = 0; FDN_FB_G = 0; FDN_FB_H = 0;
+
+// Initialize highpass filter instances for reverb
+// ERL.y = 0;
+// ERR.y = 0;
+// out0.y = 0;
+// out1.y = 0;
 
 // Chorus parameters
 chorus_buffer_size = srate * 0.1; // 100ms chorus buffer
@@ -193,7 +308,7 @@ right += feedback_sin * delayed_left + feedback_cos * delayed_right;
 
 // Write to delay buffers
 buffer_write_index = buffer_read_index + delay_samples;
-while (buffer_write_index >= MAX_DELAY_SAMPLES) (
+buffer_write_index >= MAX_DELAY_SAMPLES ? (
   buffer_write_index -= MAX_DELAY_SAMPLES;
 );
 delay_buffer_mono[buffer_write_index] = mono;
@@ -214,27 +329,38 @@ mode_selector >= 2 ? (
   spring_diffused_left = spring_input_left * (1 - spring_diffusion) + spring_input_right * spring_diffusion;
   spring_diffused_right = spring_input_right * (1 - spring_diffusion) + spring_input_left * spring_diffusion;
   
-  // Process through the three springs (each with different characteristics)
-  // Spring 1 (left dominant)
+  // Process spring 1 (left dominant)
   spring_read_pos1 = spring_pos1 - spring_delay1;
   spring_read_pos1 < 0 ? spring_read_pos1 += spring_buffer_size;
-  spring_out1 = spring_buffer1[spring_read_pos1];
-  spring_buffer1[spring_pos1] = spring_diffused_left + spring_out1 * spring_decay1;
-  spring_pos1 = (spring_pos1 + 1) % spring_buffer_size;
+  spring_out1 = 0;
+  spring_buffer_size > 0 && spring_read_pos1 < spring_buffer_size ? (
+    spring_out1 = spring_buffer1[spring_read_pos1];
+  );
+  spring_buffer1[spring_pos1] = spring_diffused_left * 0.7 + spring_out1 * spring_decay1;
+  spring_pos1 += 1;
+  spring_pos1 >= spring_buffer_size ? spring_pos1 = 0;
   
-  // Spring 2 (right dominant)
+  // Process spring 2 (right dominant)
   spring_read_pos2 = spring_pos2 - spring_delay2;
   spring_read_pos2 < 0 ? spring_read_pos2 += spring_buffer_size;
-  spring_out2 = spring_buffer2[spring_read_pos2];
-  spring_buffer2[spring_pos2] = spring_diffused_right + spring_out2 * spring_decay2;
-  spring_pos2 = (spring_pos2 + 1) % spring_buffer_size;
+  spring_out2 = 0;
+  spring_buffer_size > 0 && spring_read_pos2 < spring_buffer_size ? (
+    spring_out2 = spring_buffer2[spring_read_pos2];
+  );
+  spring_buffer2[spring_pos2] = spring_diffused_right * 0.7 + spring_out2 * spring_decay2;
+  spring_pos2 += 1;
+  spring_pos2 >= spring_buffer_size ? spring_pos2 = 0;
   
-  // Spring 3 (mixed)
+  // Process spring 3 (mixed)
   spring_read_pos3 = spring_pos3 - spring_delay3;
   spring_read_pos3 < 0 ? spring_read_pos3 += spring_buffer_size;
-  spring_out3 = spring_buffer3[spring_read_pos3];
-  spring_buffer3[spring_pos3] = (spring_diffused_left + spring_diffused_right) * 0.5 + spring_out3 * spring_decay3;
-  spring_pos3 = (spring_pos3 + 1) % spring_buffer_size;
+  spring_out3 = 0;
+  spring_buffer_size > 0 && spring_read_pos3 < spring_buffer_size ? (
+    spring_out3 = spring_buffer3[spring_read_pos3];
+  );
+  spring_buffer3[spring_pos3] = (spring_diffused_left + spring_diffused_right) * 0.35 + spring_out3 * spring_decay3;
+  spring_pos3 += 1;
+  spring_pos3 >= spring_buffer_size ? spring_pos3 = 0;
   
   // Mix the spring outputs with different weights for left and right
   spring_left = spring_out1 * 0.5 + spring_out2 * 0.2 + spring_out3 * 0.3;
@@ -348,6 +474,23 @@ spl0 = in_left + delay_sample_left + reverb_left +
        output_off_channel * delay_sample_right;
 spl1 = in_right + delay_sample_right + reverb_right + 
        output_off_channel * delay_sample_left;
+
+// Add chorus to the final mix (if it was processed)
+mode_selector == 3 || mode_selector == 4 ? (
+  chorus_type == 0 ? (
+    // Chorus 1 - Mild, subtle
+    spl0 += chorus_left * chorus_intensity * 0.8;
+    spl1 += chorus_right * chorus_intensity * 0.8;
+  ) : chorus_type == 1 ? (
+    // Chorus 2 - Rich, deeper
+    spl0 += chorus_left * chorus_intensity * 1.2;
+    spl1 += chorus_right * chorus_intensity * 1.2;
+  ) : (
+    // Chorus 1+2 (Leslie) - Mono with tremolo
+    spl0 += chorus_mono * chorus_intensity * tremolo_l;
+    spl1 += chorus_mono * chorus_intensity * tremolo_r;
+  );
+);
 
 // Apply output volume
 spl0 *= output_volume;

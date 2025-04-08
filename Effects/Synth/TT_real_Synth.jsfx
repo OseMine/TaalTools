@@ -1,0 +1,253 @@
+desc: TaalTools Real Synthesizer
+author: Taal
+version: 1.0
+changelog: Initial release
+
+import ../Add/fft_real_synth.jsfx-inc
+
+slider1:0<0,127,1>MIDI Note Display
+slider2:0.5<0,1,0.01>Oscillator Level
+slider3:0<0,4,1{Sine,Square,Sawtooth,Triangle,Additive}>Waveform Type
+slider4:0<-24,24,1>Tune (st)
+slider5:0<-100,100,1>Fine Tune (cents)
+slider6:0<-2,2,0.01>Octave Shift
+slider7:0<0,1,0.01>Harmonic Shift
+slider8:0<0,1,0.01>Harmonic Spread
+slider9:0<0,1,0.01>Harmonic Decay
+
+@init
+// Initialize FFT synthesizer
+fft_size = 4096; // Higher resolution for better quality
+osc.four_init(0, fft_size);
+
+// Initialize variables
+note_on = 0;
+vel = 1.0;
+current_freq = 440;
+prev_sample = 0;
+
+// Function to generate sine wave coefficients
+function generate_sine(coef) (
+  // Simple sine wave has only the fundamental frequency
+  memset(coef, 0, fft_size);
+  coef[0] = 0; // DC offset
+  coef[1] = 0; // Phase
+  coef[2] = 1.0; // Cosine component of fundamental
+  coef[3] = 0; // Sine component of fundamental
+);
+
+// Function to generate square wave coefficients
+function generate_square(coef) local(i, amp) (
+  memset(coef, 0, fft_size);
+  coef[0] = 0; // DC offset
+  coef[1] = 0; // Phase
+  
+  // Square wave has only odd harmonics with 1/n amplitude
+  i = 1;
+  while (i < fft_size/4) (
+    // Only odd harmonics
+    i % 2 == 1 ? (
+      amp = 1.0 / i;
+      coef[i*2] = amp; // Cosine component
+      coef[i*2+1] = 0; // Sine component
+    );
+    i += 1;
+  );
+);
+
+// Function to generate sawtooth wave coefficients
+function generate_sawtooth(coef) local(i, amp) (
+  memset(coef, 0, fft_size);
+  coef[0] = 0; // DC offset
+  coef[1] = 0; // Phase
+  
+  // Sawtooth has all harmonics with 1/n amplitude and alternating signs
+  i = 1;
+  while (i < fft_size/4) (
+    amp = 1.0 / i;
+    coef[i*2] = amp; // Cosine component
+    coef[i*2+1] = 0; // Sine component
+    i += 1;
+  );
+);
+
+// Function to generate triangle wave coefficients
+function generate_triangle(coef) local(i, amp) (
+  memset(coef, 0, fft_size);
+  coef[0] = 0; // DC offset
+  coef[1] = 0; // Phase
+  
+  // Triangle wave has only odd harmonics with 1/n^2 amplitude and alternating signs
+  i = 1;
+  while (i < fft_size/4) (
+    // Only odd harmonics
+    i % 2 == 1 ? (
+      amp = 1.0 / (i*i) * (i % 4 == 1 ? 1 : -1);
+      coef[i*2] = amp; // Cosine component
+      coef[i*2+1] = 0; // Sine component
+    );
+    i += 1;
+  );
+);
+
+// Function to generate additive synthesis coefficients
+function generate_additive(coef, spread, decay, shift) local(i, amp, harmonic) (
+  memset(coef, 0, fft_size);
+  coef[0] = 0; // DC offset
+  coef[1] = 0; // Phase
+  
+  // Create custom harmonic structure
+  i = 1;
+  while (i < fft_size/4) (
+    // Calculate harmonic number with shift
+    harmonic = i + shift * i * 0.5;
+    
+    // Calculate amplitude with decay
+    amp = pow(1.0 - decay, harmonic) / (1 + harmonic * spread);
+    
+    // Apply amplitude to harmonic
+    coef[i*2] = amp; // Cosine component
+    coef[i*2+1] = 0; // Sine component
+    i += 1;
+  );
+);
+
+// Initialize with sine wave
+generate_sine(osc.coef);
+osc.four_update();
+osc.four_ifft(1); // Apply sigma window
+
+@slider
+// Update waveform based on slider
+slider3 == 0 ? generate_sine(osc.coef) :
+slider3 == 1 ? generate_square(osc.coef) :
+slider3 == 2 ? generate_sawtooth(osc.coef) :
+slider3 == 3 ? generate_triangle(osc.coef) :
+slider3 == 4 ? generate_additive(osc.coef, slider8, slider9, slider7);
+
+// Update FFT
+osc.four_update();
+osc.four_ifft(1); // Apply sigma window
+
+@block
+// Handle MIDI input
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  
+  status == $x90 && msg3 > 0 ? (
+    note_on = 1;
+    vel = msg3/127;
+    slider1 = msg2;
+    
+    // Calculate frequency with tuning
+    freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
+    
+    // Set oscillator frequency
+    osc.four_setf(freq);
+    osc.four_update();
+  );
+  
+  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
+    note_on = 0;
+  );
+  
+  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+);
+
+// If additive synthesis is selected, update parameters when they change
+slider3 == 4 && (slider7_last != slider7 || slider8_last != slider8 || slider9_last != slider9) ? (
+  generate_additive(osc.coef, slider8, slider9, slider7);
+  osc.four_update();
+  osc.four_ifft(1);
+  
+  slider7_last = slider7;
+  slider8_last = slider8;
+  slider9_last = slider9;
+);
+
+@sample
+// Get sample from FFT synthesizer
+sample = osc.four_sum(0);
+
+// Apply some analog-style smoothing
+sample = sample * 0.9 + prev_sample * 0.1;
+prev_sample = sample;
+
+// Output
+spl0 = spl1 = sample * slider2 * vel * note_on * 0.5;
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_spectrum(x, y, w, h) local(i, px, py, amp, max_amp) (
+  gfx_set(0.2, 0.7, 0.9, 1);
+  
+  // Find maximum amplitude for normalization
+  max_amp = 0;
+  i = 1;
+  while (i < 64) (
+    amp = sqrt(sqr(osc.coef[i*2]) + sqr(osc.coef[i*2+1]));
+    max_amp = max(max_amp, amp);
+    i += 1;
+  );
+  
+  max_amp = max(max_amp, 0.001); // Avoid division by zero
+  
+  // Draw spectrum
+  i = 1;
+  while (i < 64) (
+    amp = sqrt(sqr(osc.coef[i*2]) + sqr(osc.coef[i*2+1])) / max_amp;
+    px = x + i * w / 64;
+    py = y + h - amp * h;
+    gfx_line(px, y + h, px, py);
+    i += 1;
+  );
+);
+
+function draw_waveform(x, y, w, h) local(i, px, py, sample, step) (
+  gfx_set(1, 0.5, 0.2, 1);
+  
+  step = fft_size / w;
+  px = x;
+  
+  loop(w,
+    i = floor(step * (px - x));
+    i >= 0 && i < fft_size ? (
+      sample = osc.buf[i];
+      py = y + h/2 - sample * h/3;
+      gfx_line(px, y + h/2, px, py);
+    );
+    px += 1;
+  );
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools FFT Synthesizer");
+
+// Draw waveform display
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 40, gfx_w-20, 70);
+draw_waveform(10, 40, gfx_w-20, 70);
+
+// Draw spectrum display
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 120, gfx_w-20, 70);
+draw_spectrum(10, 120, gfx_w-20, 70);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 195, "Waveform: " + 
+  (slider3 == 0 ? "Sine" : 
+   slider3 == 1 ? "Square" : 
+   slider3 == 2 ? "Sawtooth" : 
+   slider3 == 3 ? "Triangle" : "Additive"));
+   
+draw_label(200, 195, "Note: " + (note_on ? sprintf(#, "%d", slider1) : "None"));

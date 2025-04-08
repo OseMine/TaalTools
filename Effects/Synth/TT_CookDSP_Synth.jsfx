@@ -1,0 +1,144 @@
+desc: TaalTools CookDSP Synthesizer
+author: Taal
+version: 1.0
+changelog: Initial release
+
+import ../Add/cookdsp.jsfx-inc
+
+slider1:0<0,127,1>MIDI Note Display
+slider2:0.5<0,1,0.01>Oscillator Level
+slider3:0<0,4,1{Saw,Square,Sine,Triangle,FM}>Waveform
+slider4:0<-24,24,1>Tune (st)
+slider5:0<-100,100,1>Fine Tune (cents)
+slider6:0<-2,2,0.01>Octave Shift
+slider7:2<0.5,8,0.01>FM Ratio
+slider8:0.5<0,1,0.01>FM Amount
+
+@init
+// Initialize variables
+phase = 0;
+phase_mod = 0;
+current_freq = 440;
+note_on = 0;
+vel = 1.0;
+
+// Initialize oscillators
+osc1.new(0);
+osc1.sine(0);
+
+osc2.new(1);
+osc2.sine(0);
+
+@slider
+// Nothing to update from sliders
+
+@block
+// Handle MIDI input
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  
+  status == $x90 && msg3 > 0 ? (
+    note_on = 1;
+    vel = msg3/127;
+    slider1 = msg2;
+    
+    // Calculate frequency with tuning
+    current_freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
+    
+    // Set oscillator frequencies
+    osc1.freq(current_freq, 0);
+    osc2.freq(current_freq * slider7, 1);
+  );
+  
+  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
+    note_on = 0;
+  );
+  
+  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+);
+
+@sample
+// Generate oscillator waveform if note is on
+note_on ? (
+  // Set oscillator types based on selected waveform
+  slider3 == 0 ? ( // Saw
+    osc1.saw(0);
+  ) : slider3 == 1 ? ( // Square
+    osc1.sqr(0);
+  ) : slider3 == 2 ? ( // Sine
+    osc1.sine(0);
+  ) : slider3 == 3 ? ( // Triangle
+    osc1.tri(0);
+  ) : slider3 == 4 ? ( // FM
+    // FM synthesis - keep sine for both oscillators
+    osc1.sine(0);
+    osc2.sine(1);
+    
+    // Get modulator output and apply to carrier frequency
+    mod = osc2.process(1) * slider8 * 1000;
+    osc1.freq(current_freq + mod, 0);
+  );
+  
+  // Generate output
+  sample = osc1.process(0);
+  
+  // Apply velocity and output
+  spl0 = spl1 = sample * slider2 * vel * 0.5;
+) : (
+  spl0 = spl1 = 0;
+);
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_waveform(x, y, w, h) local(i, px, py, sample, p) (
+  gfx_set(0.2, 0.7, 0.9, 1);
+  
+  px = x;
+  loop(w,
+    p = 2 * $pi * (px - x) / w;
+    
+    slider3 == 0 ? ( // Saw
+      sample = 2 * (p / (2*$pi) - floor(0.5 + p / (2*$pi)));
+    ) : slider3 == 1 ? ( // Square
+      sample = p < $pi ? 1 : -1;
+    ) : slider3 == 2 ? ( // Sine
+      sample = sin(p);
+    ) : slider3 == 3 ? ( // Triangle
+      sample = p < $pi ? -1 + 2 * p / $pi : 3 - 2 * p / $pi;
+    ) : slider3 == 4 ? ( // FM
+      mod = slider8 * sin(p * slider7);
+      sample = sin(p + mod * 10);
+    );
+    
+    py = y + h/2 - sample * h/3;
+    gfx_line(px, y + h/2, px, py);
+    px += 1;
+  );
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools CookDSP Synthesizer");
+
+// Draw waveform display
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 40, gfx_w-15, 140);
+draw_waveform(10, 40, gfx_w-15, 140);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 195, "Waveform: " + 
+  (slider3 == 0 ? "Saw" : 
+   slider3 == 1 ? "Square" : 
+   slider3 == 2 ? "Sine" : 
+   slider3 == 3 ? "Triangle" : "FM"));
+   
+draw_label(200, 195, "Note: " + (note_on ? sprintf(#, "%d", slider1) : "None"));

@@ -1,0 +1,165 @@
+desc: TaalTools Framework Envelope
+author: Taal
+version: 1.0
+changelog: Initial release
+
+import ../Add/synth-framework.jsfx-inc
+
+slider1:0.01<0.001,1,0.001:log>Attack
+slider2:0.2<0.001,2,0.001:log>Decay
+slider3:0.5<0,1,0.01>Sustain
+slider4:0.5<0.001,5,0.001:log>Release
+slider5:0<0,1,0.01>Velocity Sensitivity
+slider6:0<0,1,0.01>Output Level
+
+@init
+// Initialize synth framework with 1 custom slot per note
+// [0] = envelope value
+freemem = synth_init(0, 1);
+
+// ADSR envelope function
+function process_envelope(attack, decay, sustain, release, note) 
+  local(env_value, target, samples_from_attack, samples_from_release)
+(
+  samples_from_attack = synth_samples_from_attack(note);
+  samples_from_release = synth_samples_from_release(note);
+  
+  env_value = note[0]; // Get current envelope value
+  
+  samples_from_attack >= 0 && samples_from_release < 0 ? (
+    // Attack or decay phase
+    samples_from_attack < attack * srate ? (
+      // Attack
+      target = 1.0;
+      env_value = env_value + (target - env_value) * (1 - exp(-1 / (attack * srate)));
+    ) : (
+      // Decay to sustain
+      target = sustain;
+      env_value = env_value + (target - env_value) * (1 - exp(-1 / (decay * srate)));
+    );
+  ) : samples_from_release >= 0 ? (
+    // Release phase
+    target = 0;
+    env_value = env_value + (target - env_value) * (1 - exp(-1 / (release * srate)));
+  );
+  
+  note[0] = env_value; // Store envelope value
+  env_value;
+);
+
+@slider
+// Nothing to update from sliders
+
+@block
+// Process MIDI events
+active_voices = synth_block();
+
+@sample
+// Process all active notes
+note = synth_note_first();
+env_value = 0;
+
+while (note) (
+  // Check if note needs initialization
+  synth_needs_init(note) ? (
+    note[0] = 0; // Initialize envelope value
+  );
+  
+  // Get velocity
+  vel = synth_velocity(note) / 127;
+  
+  // Process envelope
+  note_env = process_envelope(slider1, slider2, slider3, slider4, note);
+  
+  // Apply velocity sensitivity
+  note_env = note_env * (1 - slider5 + slider5 * vel);
+  
+  // Take the maximum envelope value from all active notes
+  env_value = max(env_value, note_env);
+  
+  // Advance to next note
+  note = synth_note_next(note);
+);
+
+// Apply envelope to input signal
+spl0 *= env_value * slider6;
+spl1 *= env_value * slider6;
+
+// Update synth framework
+synth_sample();
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_envelope(x, y, w, h) local(px, py, prev_py, t, env_val, attack_w, decay_w, sustain_w, release_w) (
+  gfx_set(0.9, 0.5, 0.2, 1);
+  
+  attack_w = w * slider1 / (slider1 + slider2 + slider4);
+  decay_w = w * slider2 / (slider1 + slider2 + slider4);
+  release_w = w * slider4 / (slider1 + slider2 + slider4);
+  sustain_w = w - attack_w - decay_w - release_w;
+  
+  prev_py = y + h;
+  px = x;
+  
+  // Draw attack
+  loop(attack_w,
+    t = (px - x) / attack_w;
+    env_val = t;
+    py = y + h - env_val * h;
+    gfx_line(px-1, prev_py, px, py);
+    prev_py = py;
+    px += 1;
+  );
+  
+  // Draw decay
+  loop(decay_w,
+    t = (px - (x + attack_w)) / decay_w;
+    env_val = 1 - (1 - slider3) * t;
+    py = y + h - env_val * h;
+    gfx_line(px-1, prev_py, px, py);
+    prev_py = py;
+    px += 1;
+  );
+  
+  // Draw sustain
+  loop(sustain_w,
+    env_val = slider3;
+    py = y + h - env_val * h;
+    gfx_line(px-1, prev_py, px, py);
+    prev_py = py;
+    px += 1;
+  );
+  
+  // Draw release
+  loop(release_w,
+    t = (px - (x + attack_w + decay_w + sustain_w)) / release_w;
+    env_val = slider3 * (1 - t);
+    py = y + h - env_val * h;
+    gfx_line(px-1, prev_py, px, py);
+    prev_py = py;
+    px += 1;
+  );
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools Framework Envelope");
+
+// Draw envelope display
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 40, gfx_w-20, 140);
+draw_envelope(10, 40, gfx_w-20, 140);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 195, "Active Voices: " + sprintf(#, "%d", active_voices));
+draw_label(200, 195, "A: " + sprintf(#, "%.3f", slider1) + "s  D: " + sprintf(#, "%.3f", slider2) + "s");
+draw_label(350, 195, "S: " + sprintf(#, "%.2f", slider3) + "  R: " + sprintf(#, "%.3f", slider4) + "s");

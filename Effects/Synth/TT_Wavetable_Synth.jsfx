@@ -1,0 +1,214 @@
+desc: TaalTools Wavetable Synthesizer
+author: Taal
+version: 1.0
+changelog: Initial release
+
+import ../Add/wavetable.jsfx-inc
+
+slider1:0<0,127,1>MIDI Note Display
+slider2:0.5<0,1,0.01>Oscillator Level
+slider3:0<0,4,1{Sine,Square,Sawtooth,Triangle,Custom}>Waveform
+slider4:0<-24,24,1>Tune (st)
+slider5:0<-100,100,1>Fine Tune (cents)
+slider6:0<-2,2,0.01>Octave Shift
+slider7:1<0,2,1{Truncate,Linear,Spline}>Interpolation Mode
+slider8:0<0,1,0.01>Analog Warmth
+slider9:0<0,1,0.01>Sub Oscillator
+
+@init
+// Initialize wavetable oscillator
+function render_sine(buf, size, gain) local(x, dx) (
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    buf[] = gain * sin(x);
+    buf += 1;
+    x += dx;
+  );
+);
+
+function render_square(buf, size, gain) local(x, dx, val) (
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    val = x < $pi ? 1 : -1;
+    buf[] = gain * val;
+    buf += 1;
+    x += dx;
+  );
+);
+
+function render_saw(buf, size, gain) local(x, dx) (
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    buf[] = gain * (1 - 2 * x/$pi/2);
+    buf += 1;
+    x += dx;
+  );
+);
+
+function render_triangle(buf, size, gain) local(x, dx) (
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    buf[] = gain * (x < $pi ? 2*x/$pi - 1 : 3 - 2*x/$pi);
+    buf += 1;
+    x += dx;
+  );
+);
+
+function render_custom(buf, size, gain) local(x, dx) (
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    // Custom waveform - combination of harmonics
+    buf[] = gain * (sin(x) + 0.5*sin(2*x) + 0.33*sin(3*x) + 0.25*sin(4*x));
+    buf += 1;
+    x += dx;
+  );
+);
+
+// Initialize sub oscillator (sine one octave lower)
+function render_sub(buf, size, gain) local(x, dx) (
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    buf[] = gain * sin(x/2);
+    buf += 1;
+    x += dx;
+  );
+);
+
+// Initialize wavetable size and buffers
+wavetable_size = 2048; // Higher resolution for better quality
+main_osc.wave_init(0, wavetable_size);
+sub_osc.wave_init(wavetable_size, wavetable_size);
+
+// Render initial waveforms
+render_sine(main_osc.buf, main_osc.size, 0.7);
+render_sub(sub_osc.buf, sub_osc.size, 0.5);
+
+// Analog warmth parameters
+prev_sample = 0;
+warmth_amount = 0;
+note_on = 0;
+vel = 1.0;
+current_freq = 440;
+
+// Saturation function for analog warmth
+function saturate(x, amount) local(out) (
+  amount = 0.1 + amount * 0.9; // Scale amount 0.1 to 1.0
+  out = x * (1.5 - amount * 0.5 * abs(x));
+  min(max(out, -1), 1);
+);
+
+@slider
+// Update waveform based on slider
+slider3 == 0 ? render_sine(main_osc.buf, main_osc.size, 0.7) :
+slider3 == 1 ? render_square(main_osc.buf, main_osc.size, 0.5) :
+slider3 == 2 ? render_saw(main_osc.buf, main_osc.size, 0.5) :
+slider3 == 3 ? render_triangle(main_osc.buf, main_osc.size, 0.7) :
+slider3 == 4 ? render_custom(main_osc.buf, main_osc.size, 0.4);
+
+// Update sub oscillator
+render_sub(sub_osc.buf, sub_osc.size, 0.5);
+
+// Update analog warmth
+warmth_amount = slider8;
+
+@block
+// Handle MIDI input
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  
+  status == $x90 && msg3 > 0 ? (
+    note_on = 1;
+    vel = msg3/127;
+    slider1 = msg2;
+    
+    // Calculate frequency with tuning
+    freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
+    
+    // Set oscillator frequencies
+    main_osc.wave_setf(freq);
+    sub_osc.wave_setf(freq/2); // Sub oscillator is one octave lower
+  );
+  
+  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
+    note_on = 0;
+  );
+  
+  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+);
+
+@sample
+// Get sample from wavetable based on interpolation mode
+main_sample = slider7 == 0 ? main_osc.wave_trunc() :
+              slider7 == 1 ? main_osc.wave_lerp() :
+              slider7 == 2 ? main_osc.wave_spline3();
+
+// Get sub oscillator sample
+sub_sample = slider7 == 0 ? sub_osc.wave_trunc() :
+             slider7 == 1 ? sub_osc.wave_lerp() :
+             slider7 == 2 ? sub_osc.wave_spline3();
+
+// Mix main and sub oscillators
+osc = main_sample + sub_sample * slider9;
+
+// Apply analog warmth
+warmth_amount > 0 ? (
+  // Smooth transitions and add warmth
+  osc = osc * (1 - warmth_amount*0.3) + prev_sample * (warmth_amount*0.3);
+  osc = saturate(osc, warmth_amount);
+  prev_sample = osc;
+);
+
+// Output
+spl0 = spl1 = osc * slider2 * vel * note_on * 0.5;
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_waveform(x, y, w, h, buf, size) local(i, px, py, step, val) (
+  gfx_set(0.2, 0.7, 0.9, 1);
+  
+  step = size / w;
+  px = x;
+  
+  loop(w,
+    i = floor(step * (px - x));
+    i >= 0 && i < size ? (
+      val = buf[i];
+      py = y + h/2 - val * h/2;
+      gfx_line(px, y + h/2, px, py);
+    );
+    px += 1;
+  );
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools Wavetable Synthesizer");
+
+// Draw waveform display
+gfx_set(0.8, 0.8, 0.8, 1);
+gfx_rect(10, 40, gfx_w-20, 100);
+draw_waveform(10, 40, gfx_w-20, 100, main_osc.buf, main_osc.size);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 150, "Waveform: " + 
+  (slider3 == 0 ? "Sine" : 
+   slider3 == 1 ? "Square" : 
+   slider3 == 2 ? "Sawtooth" : 
+   slider3 == 3 ? "Triangle" : "Custom"));
+   
+draw_label(10, 170, "Note: " + (note_on ? sprintf(#, "%d", slider1) : "None"));

@@ -1,0 +1,105 @@
+desc: TaalTools SVF Filter
+author: Taal
+version: 1.0
+changelog: Initial release
+
+import ../Add/svf_filter.jsfx-inc
+
+slider1:1000<20,20000,1:log>Filter Cutoff
+slider2:0.7<0.1,5,0.01>Filter Resonance
+slider3:0<0,3,1{Lowpass,Highpass,Bandpass,Notch}>Filter Type
+slider4:12<6,96,6>Filter Slope (dB)
+slider5:0<0,1,0.01>Mix
+
+@init
+// Initialize SVF filter
+filter.svf_init();
+
+@slider
+// Update filter parameters
+filter_freq = slider1;
+filter_q = slider2;
+filter_type = slider3;
+filter_slope = slider4;
+mix = slider5;
+
+// Set filter based on type
+filter_type == 0 ? filter.svf_lp(filter_freq, filter_q, filter_slope) :
+filter_type == 1 ? filter.svf_hp(filter_freq, filter_q, filter_slope) :
+filter_type == 2 ? filter.svf_bp(filter_freq, filter_q, filter_slope) :
+filter_type == 3 ? filter.svf_notch(filter_freq, filter_q, filter_slope);
+
+@sample
+// Store original signal for mix
+orig0 = spl0;
+orig1 = spl1;
+
+// Apply filter
+spl0 = filter.svf_tick(spl0);
+spl1 = filter.svf_tick(spl1);
+
+// Apply mix
+spl0 = orig0 * (1 - mix) + spl0 * mix;
+spl1 = orig1 * (1 - mix) + spl1 * mix;
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_filter_response(x, y, w, h) local(i, px, py, freq, response, phase) (
+  gfx_set(0.2, 0.7, 0.9, 1);
+  
+  // Draw frequency response
+  px = x;
+  loop(w,
+    // Calculate logarithmic frequency from 20Hz to 20kHz
+    freq = 20 * pow(1000, (px - x) / w);
+    
+    // Calculate filter response based on type
+    filter_type == 0 ? ( // Lowpass
+      response = 1 / (1 + pow((freq / filter_freq), filter_slope/6));
+    ) : filter_type == 1 ? ( // Highpass
+      response = 1 / (1 + pow((filter_freq / freq), filter_slope/6));
+    ) : filter_type == 2 ? ( // Bandpass
+      response = 1 / (1 + filter_q * abs(freq / filter_freq - filter_freq / freq));
+    ) : ( // Notch
+      response = abs(1 - 1 / (1 + filter_q * abs(freq / filter_freq - filter_freq / freq)));
+    );
+    
+    // Draw response line
+    py = y + h - response * h;
+    px > x ? gfx_line(px-1, prev_py, px, py);
+    prev_py = py;
+    px += 1;
+  );
+  
+  // Draw cutoff frequency line
+  gfx_set(1, 0.5, 0.2, 0.5);
+  px = x + w * log(filter_freq / 20) / log(1000);
+  gfx_line(px, y, px, y + h);
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools SVF Filter");
+
+// Draw filter response
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 40, gfx_w-20, 140);
+draw_filter_response(10, 40, gfx_w-20, 140);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 195, "Filter Type: " + 
+  (filter_type == 0 ? "Lowpass" : 
+   filter_type == 1 ? "Highpass" : 
+   filter_type == 2 ? "Bandpass" : "Notch"));
+   
+draw_label(200, 195, "Cutoff: " + sprintf(#, "%.0f Hz", filter_freq));
+draw_label(350, 195, "Slope: " + sprintf(#, "%d dB/oct", filter_slope));

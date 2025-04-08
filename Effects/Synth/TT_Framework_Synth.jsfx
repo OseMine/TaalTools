@@ -1,0 +1,129 @@
+desc: TaalTools Framework Synthesizer
+author: Taal
+version: 1.0
+changelog: Initial release
+
+slider1:0<0,127,1>MIDI Note Display
+slider2:0.5<0,1,0.01>Oscillator Level
+slider3:0<0,4,1{Saw,Square,Sine,Triangle,Noise}>Waveform
+slider4:0<-24,24,1>Tune (st)
+slider5:0<-100,100,1>Fine Tune (cents)
+slider6:0<-2,2,0.01>Octave Shift
+
+@init
+// Initialize variables
+phase = 0;
+current_freq = 440;
+note_on = 0;
+vel = 1.0;
+
+// Oscillator functions
+function generate_saw(p) (
+  2 * (p / (2*$pi) - floor(0.5 + p / (2*$pi)));
+);
+
+function generate_square(p) (
+  p < $pi ? 1 : -1;
+);
+
+function generate_sine(p) (
+  sin(p);
+);
+
+function generate_triangle(p) (
+  p < $pi ? -1 + 2 * p / $pi : 3 - 2 * p / $pi;
+);
+
+function generate_noise() (
+  rand(2) - 1;
+);
+
+@slider
+// Nothing to update from sliders
+
+@block
+// Handle MIDI input
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  
+  status == $x90 && msg3 > 0 ? (
+    note_on = 1;
+    vel = msg3/127;
+    slider1 = msg2;
+    
+    // Calculate frequency with tuning
+    current_freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
+  );
+  
+  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
+    note_on = 0;
+  );
+  
+  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+);
+
+@sample
+// Generate oscillator waveform if note is on
+note_on ? (
+  // Update phase
+  phase += current_freq * 2 * $pi / srate;
+  phase >= 2*$pi ? phase -= 2*$pi;
+
+  // Generate oscillator waveform
+  osc = slider3 == 0 ? generate_saw(phase) :
+        slider3 == 1 ? generate_square(phase) :
+        slider3 == 2 ? generate_sine(phase) :
+        slider3 == 3 ? generate_triangle(phase) :
+        generate_noise();
+
+  // Apply velocity and output
+  spl0 = spl1 = osc * slider2 * vel * 0.5;
+) : (
+  spl0 = spl1 = 0;
+);
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_waveform(x, y, w, h) local(i, px, py, sample, p) (
+  gfx_set(0.2, 0.7, 0.9, 1);
+  
+  px = x;
+  loop(w,
+    p = 2 * $pi * (px - x) / w;
+    sample = slider3 == 0 ? generate_saw(p) :
+             slider3 == 1 ? generate_square(p) :
+             slider3 == 2 ? generate_sine(p) :
+             slider3 == 3 ? generate_triangle(p) :
+             0;
+    py = y + h/2 - sample * h/3;
+    gfx_line(px, y + h/2, px, py);
+    px += 1;
+  );
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools Framework Synthesizer");
+
+// Draw waveform display
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 40, gfx_w-15, 140);
+draw_waveform(10, 40, gfx_w-15, 140);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 195, "Waveform: " + 
+  (slider3 == 0 ? "Saw" : 
+   slider3 == 1 ? "Square" : 
+   slider3 == 2 ? "Sine" : 
+   slider3 == 3 ? "Triangle" : "Noise"));
+   
+draw_label(200, 195, "Note: " + (note_on ? sprintf(#, "%d", slider1) : "None"));

@@ -1,8 +1,8 @@
 desc: TaalTools Analog Filters
 author: Taal (with algorithms by Liteon)
-version: 1.4
+version: 1.5
 
-slider1:0<0,4,1{ARP4075,Moog,Roland,Apple 2-Pole,Moog 4-Pole}>Filter Type
+slider1:0<0,9,1{ARP4075,Moog,Roland,Apple 2-Pole,Moog 4-Pole,Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,ARP 4075 (Alt)}>Filter Type
 slider2:0<0,2,1{LP,HP,BP}>Filter Mode
 slider3:1000<20,20000>Frequency (Hz)
 slider4:0.5<0,1>Resonance
@@ -28,6 +28,26 @@ apple.mX1r = apple.mX2r = apple.mY1r = apple.mY2r = 0;
 // Moog 4-pole states
 m4p.y1 = m4p.y2 = m4p.y3 = m4p.y4 = 0;
 m4p.oldx = m4p.oldy1 = m4p.oldy2 = m4p.oldy3 = 0;
+
+// Prophet-5 Rev3 states
+prophet.y1 = prophet.y2 = prophet.y3 = prophet.y4 = 0;
+prophet.oldx = prophet.oldy1 = prophet.oldy2 = prophet.oldy3 = 0;
+
+// Oberheim OB-X states
+obx.x1 = obx.x2 = obx.x3 = obx.x4 = 0;
+obx.y1 = obx.y2 = 0;
+
+// Oberheim SEM states
+sem.lpf = sem.bpf = sem.hpf = 0;
+sem.z1 = sem.z2 = 0;
+
+// Korg MS-20 states
+ms20.hp1 = ms20.hp2 = ms20.hp3 = ms20.hp4 = 0;
+ms20.lp1 = ms20.lp2 = ms20.lp3 = ms20.lp4 = 0;
+
+// ARP 4075 Alternative implementation states
+arp_alt.a = arp_alt.b = arp_alt.c = arp_alt.d = 0;
+arp_alt.e = arp_alt.f = arp_alt.g = arp_alt.h = 0;
 
 // General parameters
 cDenorm = 10^-30;
@@ -88,6 +108,127 @@ function process_arp4075(input) local(fc, out) (
   out = arp.state4;
   
   out;
+);
+
+// ARP 4075 Alternative implementation (24dB/oct LPF)
+// Based on the transfer function:
+// H(s) = 1/((s/ω₀)⁴ + 4(s/ω₀)³ + 6(s/ω₀)² + 4(s/ω₀) + 1 + Q)
+function process_arp4075_alt(input) local(fc, k, out) (
+  fc = 2.0 * $pi * freq / srate;
+  k = 4.0 * res; // Resonance factor
+  
+  // 4-pole cascaded design with transistor ladder structure
+  // Phase compensation in feedback path
+  out = input - k * arp_alt.d * (1 - fc/4);
+  
+  // Four cascaded filter stages
+  arp_alt.a = arp_alt.a + fc * (out - arp_alt.a);
+  arp_alt.b = arp_alt.b + fc * (arp_alt.a - arp_alt.b);
+  arp_alt.c = arp_alt.c + fc * (arp_alt.b - arp_alt.c);
+  arp_alt.d = arp_alt.d + fc * (arp_alt.c - arp_alt.d);
+  
+  arp_alt.d; // Output from the last stage
+);
+
+// Prophet-5 Rev3 (CEM 3320 Filter)
+// 4-pole Low Pass implementation
+function process_prophet5(input) local(fc, k, temp_comp, out) (
+  fc = 2.0 * $pi * freq / srate;
+  k = 4.0 * res; // Resonance factor
+  
+  // Temperature compensation (simulated)
+  temp_comp = 1.0; // Simplified - could be expanded with a temperature parameter
+  fc = fc * temp_comp;
+  
+  // Curtis chip implementation with nonlinearity in resonance path
+  out = input - k * prophet.y3 * (prophet.y3 * prophet.y3) / (freq * freq * freq);
+  
+  // Four cascaded filter stages
+  prophet.y1 = prophet.y1 + fc * (tanh(out) - prophet.y1);
+  prophet.y2 = prophet.y2 + fc * (prophet.y1 - prophet.y2);
+  prophet.y3 = prophet.y3 + fc * (prophet.y2 - prophet.y3);
+  prophet.y4 = prophet.y4 + fc * (prophet.y3 - prophet.y4);
+  
+  prophet.y4; // Output from the last stage
+);
+
+// Oberheim OB-X (State Variable)
+// Based on the Z-domain approximation: H(z) = (z² - 1.2429z + 0.7166)/(z² - 1.6180z + 0.9278)
+function process_obx(input) local(out) (
+  // Implementation of the Z-domain transfer function
+  out = input + 1.6180 * obx.y1 - 0.9278 * obx.y2;
+  out = out - 1.2429 * obx.x1 + 0.7166 * obx.x2;
+  
+  // Update state variables
+  obx.x2 = obx.x1;
+  obx.x1 = input;
+  obx.y2 = obx.y1;
+  obx.y1 = out;
+  
+  // Apply resonance (simplified)
+  slider2 == 0 ? out : // LP
+  slider2 == 1 ? input - out : // HP
+  obx.x1 - obx.x2; // BP
+);
+
+// Oberheim SEM (State Variable)
+// Classic state-variable implementation
+function process_sem(input) local(f, q, fb, lp, bp, hp) (
+  f = 2.0 * sin($pi * freq / srate);
+  q = 1.0 / (res * 4.0 + 0.5); // Q factor
+  
+  // State variable filter core
+  fb = q * (input - sem.z2);
+  hp = input - sem.z2 - fb * sem.z1;
+  bp = hp * f + sem.z1;
+  lp = bp * f + sem.z2;
+  
+  // Update state
+  sem.z1 = bp;
+  sem.z2 = lp;
+  
+  // Output based on filter mode
+  slider2 == 0 ? lp : // LP
+  slider2 == 1 ? hp : // HP
+  bp; // BP
+);
+
+// Korg MS-20 (Cascade Filter)
+// Dual Stage Design with 4-pole HP followed by 4-pole LP
+function process_ms20(input) local(fc_hp, fc_lp, in_hp, out_hp, in_lp, out_lp) (
+  // Set cutoff frequencies
+  fc_hp = freq * 0.25; // HP cutoff typically lower
+  fc_lp = freq;
+  
+  // Normalize to 0-1 range for coefficient calculation
+  fc_hp = 2.0 * $pi * fc_hp / srate;
+  fc_lp = 2.0 * $pi * fc_lp / srate;
+  
+  // 4-pole High Pass
+  in_hp = input;
+  ms20.hp1 = ms20.hp1 + fc_hp * (in_hp - ms20.hp1);
+  in_hp = in_hp - ms20.hp1;
+  ms20.hp2 = ms20.hp2 + fc_hp * (in_hp - ms20.hp2);
+  in_hp = in_hp - ms20.hp2;
+  ms20.hp3 = ms20.hp3 + fc_hp * (in_hp - ms20.hp3);
+  in_hp = in_hp - ms20.hp3;
+  ms20.hp4 = ms20.hp4 + fc_hp * (in_hp - ms20.hp4);
+  out_hp = in_hp - ms20.hp4;
+  
+  // Nonlinear saturation
+  out_hp = out_hp * (1 + 0.2 * out_hp * out_hp);
+  
+  // 4-pole Low Pass with resonance
+  in_lp = out_hp - res * ms20.lp4;
+  ms20.lp1 = ms20.lp1 + fc_lp * (tanh(in_lp / 0.8) - ms20.lp1);
+  ms20.lp2 = ms20.lp2 + fc_lp * (ms20.lp1 - ms20.lp2);
+  ms20.lp3 = ms20.lp3 + fc_lp * (ms20.lp2 - ms20.lp3);
+  ms20.lp4 = ms20.lp4 + fc_lp * (ms20.lp3 - ms20.lp4);
+  
+  // Output based on filter mode
+  slider2 == 0 ? ms20.lp4 : // LP
+  slider2 == 1 ? out_hp : // HP
+  ms20.lp2; // BP (approximated as 2nd stage of LP)
 );
 
 function process_moog(input) local(f,k,p,scale,r,x) (
@@ -176,9 +317,24 @@ oversample ? (
   ) : slider1 == 3 ? (
     lp0 = process_apple(apply_drive(in0));
     lp1 = process_apple(apply_drive(in1));
-  ) : (
+  ) : slider1 == 4 ? (
     lp0 = process_moog4pole(apply_drive(in0));
     lp1 = process_moog4pole(apply_drive(in1));
+  ) : slider1 == 5 ? (
+    lp0 = process_prophet5(apply_drive(in0));
+    lp1 = process_prophet5(apply_drive(in1));
+  ) : slider1 == 6 ? (
+    lp0 = process_obx(apply_drive(in0));
+    lp1 = process_obx(apply_drive(in1));
+  ) : slider1 == 7 ? (
+    lp0 = process_sem(apply_drive(in0));
+    lp1 = process_sem(apply_drive(in1));
+  ) : slider1 == 8 ? (
+    lp0 = process_ms20(apply_drive(in0));
+    lp1 = process_ms20(apply_drive(in1));
+  ) : (
+    lp0 = process_arp4075_alt(apply_drive(in0));
+    lp1 = process_arp4075_alt(apply_drive(in1));
   );
   
   // Second sample
@@ -197,69 +353,178 @@ oversample ? (
   ) : slider1 == 3 ? (
     lp0 += process_apple(apply_drive(in0));
     lp1 += process_apple(apply_drive(in1));
-  ) : (
+  ) : slider1 == 4 ? (
     lp0 += process_moog4pole(apply_drive(in0));
     lp1 += process_moog4pole(apply_drive(in1));
+  ) : slider1 == 5 ? (
+    lp0 += process_prophet5(apply_drive(in0));
+    lp1 += process_prophet5(apply_drive(in1));
+  ) : slider1 == 6 ? (
+    lp0 += process_obx(apply_drive(in0));
+    lp1 += process_obx(apply_drive(in1));
+  ) : slider1 == 7 ? (
+    lp0 += process_sem(apply_drive(in0));
+    lp1 += process_sem(apply_drive(in1));
+  ) : slider1 == 8 ? (
+    lp0 += process_ms20(apply_drive(in0));
+    lp1 += process_ms20(apply_drive(in1));
+  ) : (
+    lp0 += process_arp4075_alt(apply_drive(in0));
+    lp1 += process_arp4075_alt(apply_drive(in1));
   );
   
-  // Average oversampled output
-  lp0 *= 0.5;
-  lp1 *= 0.5;
+  // Apply FIR restoration
+  spl0 = c1 * lp0 + c2 * prev1_0 + c3 * prev2_0;
+  spl1 = c1 * lp1 + c2 * prev1_1 + c3 * prev2_1;
   
+  prev2_0 = prev1_0;
+  prev1_0 = lp0;
+  prev2_1 = prev1_1;
+  prev1_1 = lp1;
 ) : (
-  // Normal processing
-  input0 = spl0;
-  input1 = spl1;
-  
+  // No oversampling - direct processing
   // Process with selected filter
   slider1 == 0 ? (
-    lp0 = process_arp4075(apply_drive(input0));
-    lp1 = process_arp4075(apply_drive(input1));
+    spl0 = process_arp4075(apply_drive(spl0));
+    spl1 = process_arp4075(apply_drive(spl1));
   ) : slider1 == 1 ? (
-    lp0 = process_moog(apply_drive(input0));
-    lp1 = process_moog(apply_drive(input1));
+    spl0 = process_moog(apply_drive(spl0));
+    spl1 = process_moog(apply_drive(spl1));
   ) : slider1 == 2 ? (
-    lp0 = process_moog(apply_drive(input0));
-    lp1 = process_moog(apply_drive(input1));
+    spl0 = process_moog(apply_drive(spl0));
+    spl1 = process_moog(apply_drive(spl1));
   ) : slider1 == 3 ? (
-    lp0 = process_apple(apply_drive(input0));
-    lp1 = process_apple(apply_drive(input1));
+    spl0 = process_apple(apply_drive(spl0));
+    spl1 = process_apple(apply_drive(spl1));
+  ) : slider1 == 4 ? (
+    spl0 = process_moog4pole(apply_drive(spl0));
+    spl1 = process_moog4pole(apply_drive(spl1));
+  ) : slider1 == 5 ? (
+    spl0 = process_prophet5(apply_drive(spl0));
+    spl1 = process_prophet5(apply_drive(spl1));
+  ) : slider1 == 6 ? (
+    spl0 = process_obx(apply_drive(spl0));
+    spl1 = process_obx(apply_drive(spl1));
+  ) : slider1 == 7 ? (
+    spl0 = process_sem(apply_drive(spl0));
+    spl1 = process_sem(apply_drive(spl1));
+  ) : slider1 == 8 ? (
+    spl0 = process_ms20(apply_drive(spl0));
+    spl1 = process_ms20(apply_drive(spl1));
   ) : (
-    lp0 = process_moog4pole(apply_drive(input0));
-    lp1 = process_moog4pole(apply_drive(input1));
+    spl0 = process_arp4075_alt(apply_drive(spl0));
+    spl1 = process_arp4075_alt(apply_drive(spl1));
   );
 );
 
-// Apply filter mode
-slider2 == 0 ? (
-  // LP - use direct lowpass output
-  out0 = lp0;
-  out1 = lp1;
-) : slider2 == 1 ? (
-  // HP - subtract lowpass from input
-  out0 = input0 - lp0;
-  out1 = input1 - lp1;
-) : (
-  // BP - subtract HP from LP
-  out0 = lp0 - (input0 - lp0);
-  out1 = lp1 - (input1 - lp1);
-);
-
-// Apply drive and output gain
-slider5 > 0 ? (
-  drive = 1 + slider5/100;
-  out0 = out0 * drive / (1 + abs(out0 * drive));
-  out1 = out1 * drive / (1 + abs(out1 * drive));
-);
+// Apply output gain
+spl0 *= output;
+spl1 *= output;
 
 // Apply limiter if enabled
 slider7 == 0 ? (
-  spl0 = min(max(out0 * output, -mv), mv);
-  spl1 = min(max(out1 * output, -mv), mv);
-) : (
-  spl0 = out0 * output;
-  spl1 = out1 * output;
+  spl0 = min(max(spl0, -1), 1);
+  spl1 = min(max(spl1, -1), 1);
 );
 
-@gfx 100 16
-// ...existing graphics code...
+@gfx 400 300
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+function draw_filter_response(x, y, w, h) local(i, px, py, freq_log, response, phase) (
+  gfx_set(0.2, 0.7, 0.9, 1);
+  
+  // Draw frequency response
+  px = x;
+  loop(w,
+    // Calculate logarithmic frequency from 20Hz to 20kHz
+    freq_log = 20 * pow(1000, (px - x) / w);
+    
+    // Calculate filter response based on type
+    slider1 == 0 ? ( // ARP4075
+      response = 1 / (1 + pow((freq_log / freq), 4));
+    ) : slider1 == 1 ? ( // Moog
+      response = 1 / (1 + pow((freq_log / freq), 4));
+    ) : slider1 == 2 ? ( // Roland
+      response = 1 / (1 + pow((freq_log / freq), 4));
+    ) : slider1 == 3 ? ( // Apple 2-Pole
+      response = 1 / (1 + pow((freq_log / freq), 2));
+    ) : slider1 == 4 ? ( // Moog 4-Pole
+      response = 1 / (1 + pow((freq_log / freq), 4));
+    ) : slider1 == 5 ? ( // Prophet-5 Rev3
+      response = 1 / (1 + pow((freq_log / freq), 4));
+      // Add resonance peak
+      response = response + (res * 4 * response * (1 - response));
+    ) : slider1 == 6 ? ( // Oberheim OB-X
+      // Approximate OB-X response
+      response = 1 / (1 + pow((freq_log / freq), 2));
+    ) : slider1 == 7 ? ( // Oberheim SEM
+      // State variable filter response
+      slider2 == 0 ? ( // LP
+        response = 1 / (1 + pow((freq_log / freq), 2));
+      ) : slider2 == 1 ? ( // HP
+        response = pow((freq_log / freq), 2) / (1 + pow((freq_log / freq), 2));
+      ) : ( // BP
+        q_factor = 1.0 / (res * 4.0 + 0.5);
+        response = 1 / (1 + q_factor * pow(freq_log / freq - freq / freq_log, 2));
+      );
+    ) : slider1 == 8 ? ( // Korg MS-20
+      // Dual filter response
+      hp_resp = pow((freq_log / (freq * 0.25)), 4) / (1 + pow((freq_log / (freq * 0.25)), 4));
+      lp_resp = 1 / (1 + pow((freq_log / freq), 4));
+      response = hp_resp * lp_resp;
+    ) : ( // ARP 4075 Alt
+      response = 1 / (1 + pow((freq_log / freq), 4));
+      // Add resonance peak
+      response = response + (res * 3 * response * (1 - response));
+    );
+    
+    // Draw response line
+    py = y + h - response * h;
+    px > x ? gfx_line(px-1, prev_py, px, py);
+    prev_py = py;
+    px += 1;
+  );
+  
+  // Draw cutoff frequency line
+  gfx_set(1, 0.5, 0.2, 0.5);
+  px = x + w * log(freq / 20) / log(1000);
+  gfx_line(px, y, px, y + h);
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools Analog Filters");
+
+// Draw filter response
+gfx_set(0.8, 0.8, 0.8, 0.5);
+gfx_rect(10, 40, gfx_w-20, 200);
+draw_filter_response(10, 40, gfx_w-20, 200);
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 255, "Filter Type: " + 
+  (slider1 == 0 ? "ARP4075" : 
+   slider1 == 1 ? "Moog" : 
+   slider1 == 2 ? "Roland" : 
+   slider1 == 3 ? "Apple 2-Pole" : 
+   slider1 == 4 ? "Moog 4-Pole" :
+   slider1 == 5 ? "Prophet-5 Rev3" :
+   slider1 == 6 ? "Oberheim OB-X" :
+   slider1 == 7 ? "Oberheim SEM" :
+   slider1 == 8 ? "Korg MS-20" : "ARP 4075 (Alt)"));
+   
+draw_label(10, 275, "Mode: " + 
+  (slider2 == 0 ? "Lowpass" : 
+   slider2 == 1 ? "Highpass" : "Bandpass"));
+   
+draw_label(200, 255, "Cutoff: " + sprintf(#, "%.0f Hz", freq));
+draw_label(200, 275, "Resonance: " + sprintf(#, "%.2f", res));
+draw_label(320, 255, "Drive: " + sprintf(#, "%.1f%%", (drive-1)*100));
+draw_label(320, 275, "Output: " + sprintf(#, "%.1f dB", slider6));

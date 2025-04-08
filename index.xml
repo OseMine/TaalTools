@@ -139,6 +139,29 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Advanced VCA processors
 ]]></description>
       </metadata>
+      <version name="2.3" author="Taal">
+        <changelog><![CDATA[- Added new Compressor VCA with threshold, ratio, attack, release, and knee controls
+- Added detection mode options (Peak/RMS) to Compressor VCA
+- Added character options (Clean/Analog/Digital) to Compressor VCA]]></changelog>
+        <!-- Synth Collection -->
+        <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_VA_Synth_Extended.jsfx</source>
+
+        <!-- Filter Collection -->
+        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
+        <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
+
+        <!-- VCA Collection -->
+        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
+        <source file="Effects/VCA/TT_Compressor_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Compressor_VCA.jsfx</source>
+      </version>
       <version name="2.2" author="Taal">
         <changelog><![CDATA[- Added analog saturation to Analog VCA with tape and transformer modes
 - Added digital saturation to Digital VCA with multiple modes (Hard Clip, Soft Clip, Fold Back, Waveshaper)

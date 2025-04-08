@@ -1,0 +1,139 @@
+desc: TaalTools Compressor VCA
+author: Taal
+version: 1.0
+
+slider1:0.5<0,1,0.01>Input Gain
+slider2:0.5<0,1,0.01>Threshold
+slider3:4<1,20,0.1>Ratio
+slider4:20<1,100,1>Attack (ms)
+slider5:200<10,1000,10>Release (ms)
+slider6:0<0,1,0.01>Knee
+slider7:0<0,1,1{Peak,RMS}>Detection Mode
+slider8:0<0,1,1{Clean,Analog,Digital}>Character
+slider9:0<-24,24,0.1>Output (dB)
+
+@init
+// Initialize variables
+attack_coef = exp(-1/(slider4 * 0.001 * srate));
+release_coef = exp(-1/(slider5 * 0.001 * srate));
+env_l = env_r = 0;
+gain_reduction_l = gain_reduction_r = 1;
+prev_gain_l = prev_gain_l = 1;
+rms_size = 0.05 * srate; // 50ms RMS window
+rms_buffer_l = 0;
+rms_buffer_r = rms_buffer_l + rms_size;
+rms_pos = 0;
+memset(rms_buffer_l, 0, rms_size);
+memset(rms_buffer_r, 0, rms_size);
+
+// Custom tanh approximation for analog character
+function custom_tanh(x) local(x2) (
+  x2 = x * x;
+  x * (27 + x2) / (27 + 9 * x2);
+);
+
+// Digital character function
+function digital_character(x, amount) local(out) (
+  // Add subtle digital artifacts
+  out = x + amount * 0.01 * sin(x * 100);
+  out;
+);
+
+@slider
+output_vol = 10^(slider9/20);
+attack_coef = exp(-1/(slider4 * 0.001 * srate));
+release_coef = exp(-1/(slider5 * 0.001 * srate));
+threshold = 10^((slider2 * -60)/20); // Convert to linear gain (0 to -60dB)
+ratio = slider3;
+knee_width = slider6 * 0.5; // 0 to 0.5 range for knee width
+
+@sample
+// Input gain
+in_l = spl0 * slider1;
+in_r = spl1 * slider1;
+
+// Detection mode
+slider7 == 0 ? (
+  // Peak detection
+  detect_l = abs(in_l);
+  detect_r = abs(in_r);
+) : (
+  // RMS detection
+  rms_buffer_l[rms_pos] = in_l * in_l;
+  rms_buffer_r[rms_pos] = in_r * in_r;
+  rms_pos = (rms_pos + 1) % rms_size;
+  
+  rms_sum_l = rms_sum_r = 0;
+  i = 0;
+  loop(rms_size,
+    rms_sum_l += rms_buffer_l[i];
+    rms_sum_r += rms_buffer_r[i];
+    i += 1;
+  );
+  
+  detect_l = sqrt(rms_sum_l / rms_size);
+  detect_r = sqrt(rms_sum_r / rms_size);
+);
+
+// Envelope follower
+env_l = detect_l > env_l ? 
+  env_l * attack_coef + detect_l * (1 - attack_coef) : 
+  env_l * release_coef + detect_l * (1 - release_coef);
+
+env_r = detect_r > env_r ? 
+  env_r * attack_coef + detect_r * (1 - attack_coef) : 
+  env_r * release_coef + detect_r * (1 - release_coef);
+
+// Gain reduction calculation with soft knee
+knee_width > 0 ? (
+  // With knee
+  over_l = env_l > (threshold * (1 - knee_width)) ? 
+    (env_l - threshold * (1 - knee_width)) / (threshold * knee_width * 2) : 0;
+  over_l = min(over_l, 1) * (env_l > threshold);
+  
+  over_r = env_r > (threshold * (1 - knee_width)) ? 
+    (env_r - threshold * (1 - knee_width)) / (threshold * knee_width * 2) : 0;
+  over_r = min(over_r, 1) * (env_r > threshold);
+  
+  gain_reduction_l = over_l > 0 ? 
+    pow(env_l / threshold, (1 - 1/ratio) * over_l) : 1;
+  
+  gain_reduction_r = over_r > 0 ? 
+    pow(env_r / threshold, (1 - 1/ratio) * over_r) : 1;
+) : (
+  // Hard knee
+  gain_reduction_l = env_l > threshold ? 
+    pow(env_l / threshold, 1 - 1/ratio) : 1;
+  
+  gain_reduction_r = env_r > threshold ? 
+    pow(env_r / threshold, 1 - 1/ratio) : 1;
+);
+
+// Smooth gain changes to avoid artifacts
+gain_l = 1 / gain_reduction_l;
+gain_r = 1 / gain_reduction_r;
+
+gain_l = prev_gain_l * 0.9 + gain_l * 0.1;
+gain_r = prev_gain_r * 0.9 + gain_r * 0.1;
+
+prev_gain_l = gain_l;
+prev_gain_r = gain_r;
+
+// Apply gain reduction
+out_l = in_l * gain_l;
+out_r = in_r * gain_r;
+
+// Apply character
+slider8 == 1 ? (
+  // Analog character
+  out_l = custom_tanh(out_l);
+  out_r = custom_tanh(out_r);
+) : slider8 == 2 ? (
+  // Digital character
+  out_l = digital_character(out_l, 0.3);
+  out_r = digital_character(out_r, 0.3);
+);
+
+// Output
+spl0 = out_l * output_vol;
+spl1 = out_r * output_vol;

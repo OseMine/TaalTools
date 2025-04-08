@@ -49,6 +49,33 @@ input_sin = sin((input_width + 1)*$pi/4);
 output_on_channel = output_variation + (1 - output_variation)/sqrt(2);
 output_off_channel = (output_variation - 1)/sqrt(2);
 
+// Spring Reverb parameters
+reverb_size = 0.7; // Size of the reverb (0.0 to 1.0)
+num_springs = 3; // Number of spring delay lines
+spring_buffers = MAX_DELAY_SAMPLES * 3; // Start after delay buffers
+spring_buffer_size = srate * 1.5; // 1.5 seconds spring buffer for each spring
+
+// Allocate and initialize spring buffers
+spring_buffer1 = spring_buffers;
+spring_buffer2 = spring_buffers + spring_buffer_size;
+spring_buffer3 = spring_buffers + spring_buffer_size * 2;
+memset(spring_buffer1, 0, spring_buffer_size);
+memset(spring_buffer2, 0, spring_buffer_size);
+memset(spring_buffer3, 0, spring_buffer_size);
+
+// Spring reverb parameters
+spring_pos1 = 0;
+spring_pos2 = 0;
+spring_pos3 = 0;
+spring_delay1 = floor(spring_buffer_size * 0.35); // Different delay times for each spring
+spring_delay2 = floor(spring_buffer_size * 0.47);
+spring_delay3 = floor(spring_buffer_size * 0.73);
+spring_decay1 = 0.8; // Increased decay rates for longer reverb tail
+spring_decay2 = 0.75;
+spring_decay3 = 0.7;
+spring_diffusion = 0.5; // Diffusion amount
+spring_damping = 0.25; // Reduced damping for longer high-frequency content
+
 // Chorus parameters
 chorus_buffer_size = srate * 0.1; // 100ms chorus buffer
 chorus_buffer = buffer_size * 2; // Start after delay buffer
@@ -112,6 +139,30 @@ delay_samples = max(1, floor(delay_seconds * srate + 0.5));
 feedback_cos = feedback_intensity * cos(feedback_rotation);
 feedback_sin = feedback_intensity * sin(feedback_rotation);
 
+// Update spring reverb parameters based on mode
+mode_selector >= 2 ? ( // Only RE-201 and up have spring reverb
+  // Adjust spring characteristics based on selected mode
+  mode_selector == 2 ? ( // RE-201
+    spring_decay1 = 0.75; // Increased from 0.65
+    spring_decay2 = 0.7;  // Increased from 0.6
+    spring_decay3 = 0.65; // Increased from 0.55
+    spring_diffusion = 0.4;
+    spring_damping = 0.2;  // Reduced from 0.25
+  ) : mode_selector == 3 ? ( // RE-301
+    spring_decay1 = 0.8;  // Increased from 0.7
+    spring_decay2 = 0.75; // Increased from 0.65
+    spring_decay3 = 0.7;  // Increased from 0.6
+    spring_diffusion = 0.5;
+    spring_damping = 0.25; // Reduced from 0.3
+  ) : ( // RE-501
+    spring_decay1 = 0.85; // Increased from 0.75
+    spring_decay2 = 0.8;  // Increased from 0.7
+    spring_decay3 = 0.75; // Increased from 0.65
+    spring_diffusion = 0.6;
+    spring_damping = 0.3;  // Reduced from 0.35
+  );
+);
+
 // Update chorus parameters based on selected type
 chorus_rate = chorus_rates[chorus_type];
 chorus_min_delay = chorus_min_delays[chorus_type];
@@ -152,6 +203,55 @@ delay_buffer_right[buffer_write_index] = right;
 // Extract delay samples for further processing
 delay_sample_left = delayed_left * echo_volume;
 delay_sample_right = delayed_right * echo_volume;
+
+// Spring Reverb (only for RE-201 and up)
+mode_selector >= 2 ? (
+  // Input to the spring reverb (mix of the delay signal)
+  spring_input_left = delay_sample_left;
+  spring_input_right = delay_sample_right;
+  
+  // Apply diffusion (mix between channels)
+  spring_diffused_left = spring_input_left * (1 - spring_diffusion) + spring_input_right * spring_diffusion;
+  spring_diffused_right = spring_input_right * (1 - spring_diffusion) + spring_input_left * spring_diffusion;
+  
+  // Process through the three springs (each with different characteristics)
+  // Spring 1 (left dominant)
+  spring_read_pos1 = spring_pos1 - spring_delay1;
+  spring_read_pos1 < 0 ? spring_read_pos1 += spring_buffer_size;
+  spring_out1 = spring_buffer1[spring_read_pos1];
+  spring_buffer1[spring_pos1] = spring_diffused_left + spring_out1 * spring_decay1;
+  spring_pos1 = (spring_pos1 + 1) % spring_buffer_size;
+  
+  // Spring 2 (right dominant)
+  spring_read_pos2 = spring_pos2 - spring_delay2;
+  spring_read_pos2 < 0 ? spring_read_pos2 += spring_buffer_size;
+  spring_out2 = spring_buffer2[spring_read_pos2];
+  spring_buffer2[spring_pos2] = spring_diffused_right + spring_out2 * spring_decay2;
+  spring_pos2 = (spring_pos2 + 1) % spring_buffer_size;
+  
+  // Spring 3 (mixed)
+  spring_read_pos3 = spring_pos3 - spring_delay3;
+  spring_read_pos3 < 0 ? spring_read_pos3 += spring_buffer_size;
+  spring_out3 = spring_buffer3[spring_read_pos3];
+  spring_buffer3[spring_pos3] = (spring_diffused_left + spring_diffused_right) * 0.5 + spring_out3 * spring_decay3;
+  spring_pos3 = (spring_pos3 + 1) % spring_buffer_size;
+  
+  // Mix the spring outputs with different weights for left and right
+  spring_left = spring_out1 * 0.5 + spring_out2 * 0.2 + spring_out3 * 0.3;
+  spring_right = spring_out1 * 0.2 + spring_out2 * 0.5 + spring_out3 * 0.3;
+  
+  // Apply damping (simple low-pass filter)
+  reverb_left = reverb_left * (1 - spring_damping) + spring_left * spring_damping;
+  reverb_right = reverb_right * (1 - spring_damping) + spring_right * spring_damping;
+  
+  // Apply reverb volume
+  reverb_left *= reverb_volume;
+  reverb_right *= reverb_volume;
+) : (
+  // No reverb for RE-101
+  reverb_left = 0;
+  reverb_right = 0;
+);
 
 // Chorus Effekt (nur für RE-301 und RE-501)
 mode_selector == 3 || mode_selector == 4 ? (
@@ -242,10 +342,6 @@ mode_selector == 3 || mode_selector == 4 ? (
     // Update chorus position
     chorus_pos = (chorus_pos + 1) % chorus_buffer_size;
 );
-
-// Apply reverb (simplified)
-reverb_left = delay_sample_left * reverb_volume;
-reverb_right = delay_sample_right * reverb_volume;
 
 // Mix wet and dry signals with stereo enhancement
 spl0 = in_left + delay_sample_left + reverb_left + 

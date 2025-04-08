@@ -145,6 +145,8 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Added new filter types to TT_Analog_Filters (Prophet-5 Rev3, Oberheim OB-X, Oberheim SEM, Korg MS-20, ARP 4075 Alt)
 - Added new standalone filter effects (TT_SVF_Filter, TT_CookDSP_Filter)
 - Added new envelope processor (TT_Framework_Envelope)
+- Added wavetable synthesizer with customizable waveforms
+- Added Real Synth with physical modeling capabilities
 - Improved visualization for filter responses]]></changelog>
         <!-- Synth Collection -->
         <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
@@ -153,6 +155,8 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_SVF_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_SVF_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Framework_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Framework_Synth.jsfx</source>
         <source file="Effects/Synth/TT_CookDSP_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_CookDSP_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Real_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
 
         <!-- Filter Collection -->
         <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>

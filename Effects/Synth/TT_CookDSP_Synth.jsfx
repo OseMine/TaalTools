@@ -22,12 +22,55 @@ current_freq = 440;
 note_on = 0;
 vel = 1.0;
 
-// Initialize oscillators
-osc1.new(0);
-osc1.sine(0);
+// Initialize oscillator variables
+osc1_phase = 0;
+osc2_phase = 0;
+osc1_freq = 440;
+osc2_freq = 440 * 2;
 
-osc2.new(1);
-osc2.sine(0);
+// Oscillator processing function
+function osc1_process(phase, freq, wave_type) local(output, phase_inc) (
+  phase_inc = freq / srate;
+  
+  // Generate waveform based on type
+  wave_type == 0 ? ( // Saw
+    output = 2 * (phase - floor(phase + 0.5));
+  ) : wave_type == 1 ? ( // Square
+    output = phase < 0.5 ? 1 : -1;
+  ) : wave_type == 2 ? ( // Sine
+    output = sin(2 * $pi * phase);
+  ) : wave_type == 3 ? ( // Triangle
+    output = 1 - 4 * abs(round(phase) - phase);
+  );
+  
+  // Update phase
+  osc1_phase += phase_inc;
+  osc1_phase >= 1 ? osc1_phase -= 1;
+  
+  output;
+);
+
+// Second oscillator processing function
+function osc2_process(phase, freq, wave_type) local(output, phase_inc) (
+  phase_inc = freq / srate;
+  
+  // Generate waveform based on type
+  wave_type == 0 ? ( // Saw
+    output = 2 * (phase - floor(phase + 0.5));
+  ) : wave_type == 1 ? ( // Square
+    output = phase < 0.5 ? 1 : -1;
+  ) : wave_type == 2 ? ( // Sine
+    output = sin(2 * $pi * phase);
+  ) : wave_type == 3 ? ( // Triangle
+    output = 1 - 4 * abs(round(phase) - phase);
+  );
+  
+  // Update phase
+  osc2_phase += phase_inc;
+  osc2_phase >= 1 ? osc2_phase -= 1;
+  
+  output;
+);
 
 @slider
 // Nothing to update from sliders
@@ -46,8 +89,8 @@ while (midirecv(offset, msg1, msg2, msg3)) (
     current_freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
     
     // Set oscillator frequencies
-    osc1.freq(current_freq, 0);
-    osc2.freq(current_freq * slider7, 1);
+    osc1_freq = current_freq;
+    osc2_freq = current_freq * slider7;
   );
   
   (status == $x80 || (status == $x90 && msg3 == 0)) ? (
@@ -62,25 +105,25 @@ while (midirecv(offset, msg1, msg2, msg3)) (
 note_on ? (
   // Set oscillator types based on selected waveform
   slider3 == 0 ? ( // Saw
-    osc1.saw(0);
+    osc1_wave = 0;
   ) : slider3 == 1 ? ( // Square
-    osc1.sqr(0);
+    osc1_wave = 1;
   ) : slider3 == 2 ? ( // Sine
-    osc1.sine(0);
+    osc1_wave = 2;
   ) : slider3 == 3 ? ( // Triangle
-    osc1.tri(0);
+    osc1_wave = 3;
   ) : slider3 == 4 ? ( // FM
     // FM synthesis - keep sine for both oscillators
-    osc1.sine(0);
-    osc2.sine(1);
+    osc1_wave = 2;
+    osc2_wave = 2;
     
     // Get modulator output and apply to carrier frequency
-    mod = osc2.process(1) * slider8 * 1000;
-    osc1.freq(current_freq + mod, 0);
+    mod = osc2_process(osc2_phase, osc2_freq, osc2_wave) * slider8 * 1000;
+    osc1_freq = current_freq + mod;
   );
   
   // Generate output
-  sample = osc1.process(0);
+  sample = osc1_process(osc1_phase, osc1_freq, osc1_wave);
   
   // Apply velocity and output
   spl0 = spl1 = sample * slider2 * vel * 0.5;

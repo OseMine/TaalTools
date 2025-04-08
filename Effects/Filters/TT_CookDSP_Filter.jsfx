@@ -11,9 +11,17 @@ slider3:0<0,4,1{Lowpass,Highpass,Bandpass,Notch,Peaking}>Filter Type
 slider4:0<0,1,0.01>Mix
 
 @init
-// Initialize CookDSP filter
-filt.new(0);
-filt.moog(1000, 0.7);
+// Initialize filter coefficients
+a0 = a1 = a2 = b0 = b1 = b2 = 0;
+x1l = x2l = y1l = y2l = 0;
+x1r = x2r = y1r = y2r = 0;
+
+// Moog filter variables
+moog_f = 1000;
+moog_p = 0.7;
+moog_r = moog_p * 4;
+moog_y1 = moog_y2 = moog_y3 = moog_y4 = 0;
+moog_oldx = moog_oldy1 = moog_oldy2 = moog_oldy3 = 0;
 
 @slider
 // Update filter parameters
@@ -22,21 +30,130 @@ filter_q = slider2;
 filter_type = slider3;
 mix = slider4;
 
-// Set filter based on type
-filter_type == 0 ? filt.moog(filter_freq, filter_q, 0) :     // Lowpass
-filter_type == 1 ? filt.butbp(filter_freq, filter_q, 0) :    // Highpass (using bandpass with high Q)
-filter_type == 2 ? filt.butbp(filter_freq, filter_q, 0) :    // Bandpass
-filter_type == 3 ? filt.butbr(filter_freq, filter_q, 0) :    // Notch
-filter_type == 4 ? filt.peakeq(filter_freq, filter_q, 6, 0); // Peaking EQ with 6dB gain
+// Calculate filter coefficients based on type
+filter_type == 0 ? ( // Lowpass - Moog style
+  moog_f = filter_freq;
+  moog_p = filter_q;
+  moog_r = moog_p * 4;
+) : (
+  // Biquad filter calculations
+  omega = 2 * $pi * filter_freq / srate;
+  sn = sin(omega);
+  cs = cos(omega);
+  alpha = sn / (2 * filter_q);
+  
+  filter_type == 1 ? ( // Highpass
+    b0 = (1 + cs) / 2;
+    b1 = -(1 + cs);
+    b2 = (1 + cs) / 2;
+    a0 = 1 + alpha;
+    a1 = -2 * cs;
+    a2 = 1 - alpha;
+  ) : filter_type == 2 ? ( // Bandpass
+    b0 = alpha;
+    b1 = 0;
+    b2 = -alpha;
+    a0 = 1 + alpha;
+    a1 = -2 * cs;
+    a2 = 1 - alpha;
+  ) : filter_type == 3 ? ( // Notch
+    b0 = 1;
+    b1 = -2 * cs;
+    b2 = 1;
+    a0 = 1 + alpha;
+    a1 = -2 * cs;
+    a2 = 1 - alpha;
+  ) : filter_type == 4 ? ( // Peaking
+    A = 10^(6/40); // 6dB gain
+    b0 = 1 + alpha * A;
+    b1 = -2 * cs;
+    b2 = 1 - alpha * A;
+    a0 = 1 + alpha / A;
+    a1 = -2 * cs;
+    a2 = 1 - alpha / A;
+  );
+  
+  // Normalize coefficients
+  b0 /= a0;
+  b1 /= a0;
+  b2 /= a0;
+  a1 /= a0;
+  a2 /= a0;
+);
 
 @sample
 // Store original signal for mix
 orig0 = spl0;
 orig1 = spl1;
 
-// Apply filter
-spl0 = filt.process(spl0, 0);
-spl1 = filt.process(spl1, 0);
+// Apply filter based on type
+filter_type == 0 ? (
+  // Moog Lowpass filter
+  // Adapted from CookDSP moog filter algorithm
+  f = moog_f * 1.16 / srate;
+  f = f < 0 ? 0 : f > 0.5 ? 0.5 : f;
+  
+  // Resonance [0 - 1]
+  p = moog_p < 0 ? 0 : moog_p > 0.95 ? 0.95 : moog_p;
+  
+  // Feedback amount
+  k = 4.0 * (p);
+  
+  // Filter stages
+  t1 = spl0 - k * moog_y4;
+  moog_y1 = t1 * f + moog_oldx * (1 - f);
+  moog_oldx = t1;
+  
+  t2 = moog_y1;
+  moog_y2 = t2 * f + moog_oldy1 * (1 - f);
+  moog_oldy1 = t2;
+  
+  t3 = moog_y2;
+  moog_y3 = t3 * f + moog_oldy2 * (1 - f);
+  moog_oldy2 = t3;
+  
+  t4 = moog_y3;
+  moog_y4 = t4 * f + moog_oldy3 * (1 - f);
+  moog_oldy3 = t4;
+  
+  spl0 = moog_y4;
+  
+  // Right channel
+  t1 = spl1 - k * moog_y4;
+  moog_y1 = t1 * f + moog_oldx * (1 - f);
+  moog_oldx = t1;
+  
+  t2 = moog_y1;
+  moog_y2 = t2 * f + moog_oldy1 * (1 - f);
+  moog_oldy1 = t2;
+  
+  t3 = moog_y2;
+  moog_y3 = t3 * f + moog_oldy2 * (1 - f);
+  moog_oldy2 = t3;
+  
+  t4 = moog_y3;
+  moog_y4 = t4 * f + moog_oldy3 * (1 - f);
+  moog_oldy3 = t4;
+  
+  spl1 = moog_y4;
+) : (
+  // Biquad filter implementation
+  // Left channel
+  out0 = b0 * spl0 + b1 * x1l + b2 * x2l - a1 * y1l - a2 * y2l;
+  x2l = x1l;
+  x1l = spl0;
+  y2l = y1l;
+  y1l = out0;
+  spl0 = out0;
+  
+  // Right channel
+  out1 = b0 * spl1 + b1 * x1r + b2 * x2r - a1 * y1r - a2 * y2r;
+  x2r = x1r;
+  x1r = spl1;
+  y2r = y1r;
+  y1r = out1;
+  spl1 = out1;
+);
 
 // Apply mix
 spl0 = orig0 * (1 - mix) + spl0 * mix;

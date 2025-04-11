@@ -1,0 +1,11 @@
+@init
+function svf_init() (
+  this.z1 = this.z2 = 0;
+);
+
+function svf_set(cutoff, resonance) (
+  this.cutoff = min(cutoff, srate*0.49);
+  this.resonance = max(resonance, 0.1);
+  this.f = 2 * sin($pi * this.cutoff / srate);
+  this.q = 1/this.resonance;
+);

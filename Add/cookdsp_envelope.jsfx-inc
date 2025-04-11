@@ -1,0 +1,18 @@
+@init
+function synth_samples_from_attack(note) (
+  // Convert note length to samples
+  srate * note;
+);
+
+function env_init() (
+  this.state = 0;  // 0=off, 1=attack, 2=decay, 3=sustain, 4=release
+  this.value = 0;
+  this.samplecount = 0;
+);
+
+function env_set_adsr(attack, decay, sustain, release) (
+  this.attack_time = synth_samples_from_attack(attack);
+  this.decay_time = synth_samples_from_attack(decay);
+  this.sustain_level = sustain;
+  this.release_time = synth_samples_from_attack(release);
+);

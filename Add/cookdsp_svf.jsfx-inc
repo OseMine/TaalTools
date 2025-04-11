@@ -1,0 +1,20 @@
+@init
+function svf_init() (
+  this.lp = this.hp = this.bp = 0;
+  this.cutoff = 1000;
+  this.q = 0.5;
+  this.fs = srate;
+);
+
+function svf_set(cutoff, q) (
+  this.cutoff = min(max(cutoff, 20), srate/2);
+  this.q = max(q, 0.025);
+  this.g = tan($pi * this.cutoff / this.fs);
+  this.k = 1 / this.q;
+);
+
+function svf_process(input) (
+  this.hp = (input - (2*this.k + this.g)*this.bp - this.lp) / (1 + 2*this.k*this.g + this.g*this.g);
+  this.bp = this.g * this.hp + this.bp;
+  this.lp = this.g * this.bp + this.lp;
+);

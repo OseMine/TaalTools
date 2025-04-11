@@ -4,6 +4,8 @@ version: 1.0
 changelog: Initial release
 
 import ../Add/cookdsp.jsfx-inc
+import ../Add/cookdsp_envelope.jsfx-inc
+import ../Add/svf_filter.jsfx-inc
 
 slider1:0<0,127,1>MIDI Note Display
 slider2:0.5<0,1,0.01>Oscillator Level
@@ -28,6 +30,13 @@ osc2_phase = 0;
 osc1_freq = 440;
 osc2_freq = 440 * 2;
 
+env.env_init();
+env.env_set_adsr(0.01, 0.1, 0.7, 0.1);
+
+// Initialize filter
+svf.svf_init();
+svf.svf_set(1000, 0.5);
+
 // Oscillator processing function
 function osc1_process(phase, freq, wave_type) local(output, phase_inc) (
   phase_inc = freq / srate;
@@ -40,7 +49,7 @@ function osc1_process(phase, freq, wave_type) local(output, phase_inc) (
   ) : wave_type == 2 ? ( // Sine
     output = sin(2 * $pi * phase);
   ) : wave_type == 3 ? ( // Triangle
-    output = 1 - 4 * abs(round(phase) - phase);
+    output = 1 - 4 * abs(floor(phase) - phase);
   );
   
   // Update phase
@@ -62,7 +71,7 @@ function osc2_process(phase, freq, wave_type) local(output, phase_inc) (
   ) : wave_type == 2 ? ( // Sine
     output = sin(2 * $pi * phase);
   ) : wave_type == 3 ? ( // Triangle
-    output = 1 - 4 * abs(round(phase) - phase);
+    output = 1 - 4 * abs(floor(phase) - phase);
   );
   
   // Update phase
@@ -124,6 +133,9 @@ note_on ? (
   
   // Generate output
   sample = osc1_process(osc1_phase, osc1_freq, osc1_wave);
+  
+  // Apply filter
+  sample = svf.svf_process(sample);
   
   // Apply velocity and output
   spl0 = spl1 = sample * slider2 * vel * 0.5;

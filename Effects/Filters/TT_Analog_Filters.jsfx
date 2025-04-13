@@ -8,7 +8,7 @@ changelog: + Fixed issues with filter types not producing output
           + Optimized filter type switching
 
 slider1:0<0,1,1{Stereo,Mono}>Processing
-slider2:0<0,7,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog,Moog 4-Pole,Apple 12-Pole,Apple 2-Pole}>Filter Type
+slider2:0<0,8,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog,Moog 4-Pole,Apple 12-Pole,Apple 2-Pole,CEM3320}>Filter Type
 slider3:0<0,2,1{LP,HP,BP}>Filter Mode
 slider4:1000<20,20000>Frequency (Hz)  
 slider5:0<0,0.85,0.001>Resonance
@@ -62,6 +62,15 @@ apple_mem_r11 = apple_mem_r12 = apple_mem_r13 = apple_mem_r14 = 0;
 // Add Apple 2-Pole states
 apple2p_x1l = apple2p_x2l = apple2p_y1l = apple2p_y2l = 0;
 apple2p_x1r = apple2p_x2r = apple2p_y1r = apple2p_y2r = 0;
+
+// Add Prophet-5 Rev3 Classic states
+prophet_x1l = prophet_x2l = prophet_y1l = prophet_y2l = 0;
+prophet_x1r = prophet_x2r = prophet_y1r = prophet_y2r = 0;
+
+// CEM3320-style 4-pole filter states
+cem3320_y1l = cem3320_y2l = cem3320_y3l = cem3320_y4l = 0;
+cem3320_y1r = cem3320_y2r = cem3320_y3r = cem3320_y4r = 0;
+
 
 @slider
 mono = slider1;
@@ -287,6 +296,34 @@ filtertype == 0 ? ( // Prophet-5
     spl1 = outputr * outgain;
   ) : spl1 = spl0;
 
+) : filtertype == 8 ? ( // CEM3320-style 4-pole filter
+  // Coefficients
+  f = freq / srate;
+  f = min(max(f, 0.0001), 0.45); // keep within stable range
+  a = exp(-2 * $pi * f);
+  b = 1 - a;
+
+  // Resonance scaling - 0 to self-oscillation
+  res_scaled = slider5 * 4.0;
+  
+  // Process left channel
+  cem_inputl = input0 - res_scaled * cem3320_y4l;
+  cem3320_y1l = a * cem3320_y1l + b * cem_inputl;
+  cem3320_y2l = a * cem3320_y2l + b * cem3320_y1l;
+  cem3320_y3l = a * cem3320_y3l + b * cem3320_y2l;
+  cem3320_y4l = a * cem3320_y4l + b * cem3320_y3l;
+  spl0 = cem3320_y4l * outgain;
+
+  // Process right channel 
+  mono == 0 ? (
+    cem_inputr = input1 - res_scaled * cem3320_y4r;
+    cem3320_y1r = a * cem3320_y1r + b * cem_inputr;
+    cem3320_y2r = a * cem3320_y2r + b * cem3320_y1r;
+    cem3320_y3r = a * cem3320_y3r + b * cem3320_y2r;
+    cem3320_y4r = a * cem3320_y4r + b * cem3320_y3r;
+    spl1 = cem3320_y4r * outgain;
+  ) : spl1 = spl0;
+
 ) : (
 // Process left channel
   x = input0 - res * y4l;
@@ -367,7 +404,9 @@ gfx_drawstr(filtertype == 0 ? "Prophet-5 Rev3" :
             filtertype == 3 ? "Korg MS-20" :
             filtertype == 4 ? "Moog" : 
             filtertype == 5 ? "Moog 4-Pole" : 
-            filtertype == 6 ? "Apple 12-Pole" : "Apple 2-Pole");
+            filtertype == 6 ? "Apple 12-Pole" :
+            filtertype == 7 ? "Apple 2-Pole" :
+            filtertype == 8 ? "CEM3320" : "Unknown Filter");
 
 gfx_x = 10; gfx_y = 30;
 gfx_drawstr("Mode: ");

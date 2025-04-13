@@ -1,5 +1,5 @@
 desc: TaalTools Analog Filters
-version: 2.7
+version: 2.8
 author: TaalTools
 changelog: + Fixed issues with filter types not producing output
           + Improved filter coefficient calculations
@@ -8,7 +8,7 @@ changelog: + Fixed issues with filter types not producing output
           + Optimized filter type switching
 
 slider1:0<0,1,1{Stereo,Mono}>Processing
-slider2:0<0,4,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog}>Filter Type
+slider2:0<0,5,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog,Moog 4-Pole}>Filter Type
 slider3:0<0,2,1{LP,HP,BP}>Filter Mode
 slider4:1000<20,20000>Frequency (Hz)  
 slider5:0<0,0.85,0.001>Resonance
@@ -46,6 +46,12 @@ ccIn2msb = -1;
 ccIn1lsb = ccIn1msb+32;
 ccIn2lsb = ccIn2msb+32;
 modlevel = 1;
+
+// Add new Moog 4-Pole states
+moog4p_y1l = moog4p_y2l = moog4p_y3l = moog4p_y4l = 0;
+moog4p_oldxl = moog4p_oldy1l = moog4p_oldy2l = moog4p_oldy3l = 0;
+moog4p_y1r = moog4p_y2r = moog4p_y3r = moog4p_y4r = 0;
+moog4p_oldxr = moog4p_oldy1r = moog4p_oldy2r = moog4p_oldy3r = 0;
 
 @slider
 mono = slider1;
@@ -124,10 +130,53 @@ filtertype == 0 ? ( // Prophet-5
   f = 2.0 * freq / srate;
   k = 3.7 * f - 1.7 * f * f - 1.0;
   p = (k + 1.0) * 0.5;
-) : ( // Moog
+) : filtertype == 4 ? ( // Moog
   f = 2.0 * freq / srate;
   k = 3.6 * f - 1.6 * f * f - 1.0;
   p = (k + 1.0) * 0.5;
+) : ( // Moog 4-Pole
+  f = 2 * freq / srate;
+  k = 3.6 * f - 1.6 * f * f - 1.0;
+  p = (k + 1.0) * 0.5;
+  scale = exp((1-p)*1.386249);
+  r = res * scale;
+  
+  // Process left channel
+  xl = input0 - r * moog4p_y4l;
+  moog4p_y1l = xl*p + moog4p_oldxl*p - k*moog4p_y1l;
+  moog4p_y2l = moog4p_y1l*p + moog4p_oldy1l*p - k*moog4p_y2l;
+  moog4p_y3l = moog4p_y2l*p + moog4p_oldy2l*p - k*moog4p_y3l;
+  moog4p_y4l = moog4p_y3l*p + moog4p_oldy3l*p - k*moog4p_y4l;
+  
+  moog4p_oldxl = xl;
+  moog4p_oldy1l = moog4p_y1l;
+  moog4p_oldy2l = moog4p_y2l;
+  moog4p_oldy3l = moog4p_y3l;
+  
+  mono == 0 ? (
+    xr = input1 - r * moog4p_y4r;
+    moog4p_y1r = xr*p + moog4p_oldxr*p - k*moog4p_y1r;
+    moog4p_y2r = moog4p_y1r*p + moog4p_oldy1r*p - k*moog4p_y2r;
+    moog4p_y3r = moog4p_y2r*p + moog4p_oldy2r*p - k*moog4p_y3r;
+    moog4p_y4r = moog4p_y3r*p + moog4p_oldy3r*p - k*moog4p_y4r;
+    
+    moog4p_oldxr = xr;
+    moog4p_oldy1r = moog4p_y1r;
+    moog4p_oldy2r = moog4p_y2r;
+    moog4p_oldy3r = moog4p_y3r;
+  );
+  
+  // Set output based on filter mode
+  filtermode == 0 ? ( // LP
+    spl0 = moog4p_y4l * outgain;
+    spl1 = mono ? spl0 : moog4p_y4r * outgain;
+  ) : filtermode == 1 ? ( // HP
+    spl0 = (input0 - moog4p_y4l) * outgain;
+    spl1 = mono ? spl0 : (input1 - moog4p_y4r) * outgain;
+  ) : ( // BP
+    spl0 = (moog4p_y3l - moog4p_y4l) * outgain * 6;
+    spl1 = mono ? spl0 : (moog4p_y3r - moog4p_y4r) * outgain * 6;
+  );
 );
 
 // Process left channel
@@ -205,7 +254,8 @@ gfx_drawstr("Filter Type: ");
 gfx_drawstr(filtertype == 0 ? "Prophet-5 Rev3" : 
             filtertype == 1 ? "Oberheim OB-X" :
             filtertype == 2 ? "Oberheim SEM" :
-            filtertype == 3 ? "Korg MS-20" : "Moog");
+            filtertype == 3 ? "Korg MS-20" :
+            filtertype == 4 ? "Moog" : "Moog 4-Pole");
 
 gfx_x = 10; gfx_y = 30;
 gfx_drawstr("Mode: ");

@@ -1,5 +1,5 @@
 desc: TaalTools Analog Filters
-version: 2.8
+version: 2.9
 author: TaalTools
 changelog: + Fixed issues with filter types not producing output
           + Improved filter coefficient calculations
@@ -8,7 +8,7 @@ changelog: + Fixed issues with filter types not producing output
           + Optimized filter type switching
 
 slider1:0<0,1,1{Stereo,Mono}>Processing
-slider2:0<0,5,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog,Moog 4-Pole}>Filter Type
+slider2:0<0,7,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog,Moog 4-Pole,Apple 12-Pole,Apple 2-Pole}>Filter Type
 slider3:0<0,2,1{LP,HP,BP}>Filter Mode
 slider4:1000<20,20000>Frequency (Hz)  
 slider5:0<0,0.85,0.001>Resonance
@@ -52,6 +52,16 @@ moog4p_y1l = moog4p_y2l = moog4p_y3l = moog4p_y4l = 0;
 moog4p_oldxl = moog4p_oldy1l = moog4p_oldy2l = moog4p_oldy3l = 0;
 moog4p_y1r = moog4p_y2r = moog4p_y3r = moog4p_y4r = 0;
 moog4p_oldxr = moog4p_oldy1r = moog4p_oldy2r = moog4p_oldy3r = 0;
+
+// Add Apple filter state variables
+apple_y1l = apple_y2l = apple_y3l = apple_y4l = 0;
+apple_mem_l11 = apple_mem_l12 = apple_mem_l13 = apple_mem_l14 = 0;
+apple_y1r = apple_y2r = apple_y3r = apple_y4r = 0; 
+apple_mem_r11 = apple_mem_r12 = apple_mem_r13 = apple_mem_r14 = 0;
+
+// Add Apple 2-Pole states
+apple2p_x1l = apple2p_x2l = apple2p_y1l = apple2p_y2l = 0;
+apple2p_x1r = apple2p_x2r = apple2p_y1r = apple2p_y2r = 0;
 
 @slider
 mono = slider1;
@@ -134,7 +144,7 @@ filtertype == 0 ? ( // Prophet-5
   f = 2.0 * freq / srate;
   k = 3.6 * f - 1.6 * f * f - 1.0;
   p = (k + 1.0) * 0.5;
-) : ( // Moog 4-Pole
+) : filtertype == 5 ? ( // Moog 4-Pole
   f = 2 * freq / srate;
   k = 3.6 * f - 1.6 * f * f - 1.0;
   p = (k + 1.0) * 0.5;
@@ -177,44 +187,131 @@ filtertype == 0 ? ( // Prophet-5
     spl0 = (moog4p_y3l - moog4p_y4l) * outgain * 6;
     spl1 = mono ? spl0 : (moog4p_y3r - moog4p_y4r) * outgain * 6;
   );
-);
+) : filtertype == 6 ? ( // Apple 12-Pole Butterworth
+  // Calculate frequency and resonance
+  sx = 16 + freq * 1.20103 / 200;  
+  cx = floor(exp(sx*log(1.059))*8.17742);
+  cutoff = 2 * cx / srate;
+  res_scaled = (1 - slider5) * 1.5;  // Invert and scale resonance for proper response
 
+  // Calculate coefficients
+  k = 0.5 * res_scaled * sin($pi * cutoff);
+  c1 = 0.5 * (1 - k)/(1 + k);
+  c2 = (0.5 + c1) * cos($pi * cutoff);
+  c3 = filtermode == 0 ? 
+       (0.5 + c1 - c2) * 0.25 :   // LP
+       (0.5 + c1 + c2) * 0.25;    // HP
+
+  // Set coefficients
+  a0 = 2 * c3;
+  a1 = filtermode == 0 ? 4*c3 : -4*c3;
+  a2 = 2 * c3;
+  b1 = -2 * c2;
+  b2 = 2 * c1;
+
+  // Process left channel with cascaded filter sections
+  x = input0;
+  loop(6,
+    out = a0*x + a1*apple_mem_l11 + a2*apple_mem_l12 
+          - b1*apple_mem_l13 - b2*apple_mem_l14;
+    apple_mem_l12 = apple_mem_l11;
+    apple_mem_l11 = x;
+    apple_mem_l14 = apple_mem_l13;
+    apple_mem_l13 = out;
+    x = out;
+  );
+  spl0 = out * outgain;
+  
+  // Process right channel if stereo
+  mono == 0 ? (
+    x = input1;
+    loop(6,
+      out = a0*x + a1*apple_mem_r11 + a2*apple_mem_r12
+            - b1*apple_mem_r13 - b2*apple_mem_r14;
+      apple_mem_r12 = apple_mem_r11;
+      apple_mem_r11 = x;
+      apple_mem_r14 = apple_mem_r13;
+      apple_mem_r13 = out;
+      x = out;
+    );
+    spl1 = out * outgain;
+  ) : spl1 = spl0;
+
+) : filtertype == 7 ? ( // Apple 2-Pole
+  // Calculate coefficients
+  sx = 16 + freq * 1.20103 / 200;  // Map frequency to exponential scale
+  cx = floor(exp(sx*log(1.059))*8.17742);
+  cutoff = 2 * cx / srate;
+  res_scaled = pow(10, 0.05 * -(slider5 * 50)); // Map resonance 0-0.85 to 0-25dB
+  
+  // Original Apple coefficient calculation
+  k = 0.5 * res_scaled * sin($pi * cutoff);
+  c1 = 0.5 * (1 - k) / (1 + k);
+  c2 = (0.5 + c1) * cos($pi * cutoff);
+  c3 = (0.5 + c1 - c2) * 0.25;
+
+  a0 = 2 * c3;
+  a1 = 2 * 2 * c3; 
+  a2 = 2 * c3;
+  b1 = 2 * -c2;
+  b2 = 2 * c1;
+
+  // Process left channel
+  outputl = a0*input0 + a1*apple2p_x1l + a2*apple2p_x2l - b1*apple2p_y1l - b2*apple2p_y2l;
+  apple2p_x2l = apple2p_x1l;
+  apple2p_x1l = input0;
+  apple2p_y2l = apple2p_y1l;
+  apple2p_y1l = outputl;
+  spl0 = outputl * outgain;
+
+  // Process right channel if stereo
+  mono == 0 ? (
+    outputr = a0*input1 + a1*apple2p_x1r + a2*apple2p_x2r - b1*apple2p_y1r - b2*apple2p_y2r;
+    apple2p_x2r = apple2p_x1r;
+    apple2p_x1r = input1;
+    apple2p_y2r = apple2p_y1r;
+    apple2p_y1r = outputr;
+    spl1 = outputr * outgain;
+  ) : spl1 = spl0;
+
+) : (
 // Process left channel
-x = input0 - res * y4l;
-y1l = x * p + oldxl * p - k * y1l;
-y2l = y1l * p + oldy1l * p - k * y2l;
-y3l = y2l * p + oldy2l * p - k * y3l;
-y4l = y3l * p + oldy3l * p - k * y4l;
+  x = input0 - res * y4l;
+  y1l = x * p + oldxl * p - k * y1l;
+  y2l = y1l * p + oldy1l * p - k * y2l;
+  y3l = y2l * p + oldy2l * p - k * y3l;
+  y4l = y3l * p + oldy3l * p - k * y4l;
 
-oldxl = x;
-oldy1l = y1l;
-oldy2l = y2l;
-oldy3l = y3l;
+  oldxl = x;
+  oldy1l = y1l;
+  oldy2l = y2l;
+  oldy3l = y3l;
 
-// Process right channel if stereo
-mono == 0 ? (
-  x = input1 - res * y4r;
-  y1r = x * p + oldxr * p - k * y1r;
-  y2r = y1r * p + oldy1r * p - k * y2r;
-  y3r = y2r * p + oldy2r * p - k * y3r;
-  y4r = y3r * p + oldy3r * p - k * y4r;
+  // Process right channel if stereo
+  mono == 0 ? (
+    x = input1 - res * y4r;
+    y1r = x * p + oldxr * p - k * y1r;
+    y2r = y1r * p + oldy1r * p - k * y2r;
+    y3r = y2r * p + oldy2r * p - k * y3r;
+    y4r = y3r * p + oldy3r * p - k * y4r;
 
-  oldxr = x;
-  oldy1r = y1r;
-  oldy2r = y2r;
-  oldy3r = y3r;
-);
+    oldxr = x;
+    oldy1r = y1r;
+    oldy2r = y2r;
+    oldy3r = y3r;
+  );
 
-// Set output based on filter mode
-filtermode == 0 ? ( // LP
-  spl0 = y4l * outgain;
-  spl1 = mono ? spl0 : y4r * outgain;
-) : filtermode == 1 ? ( // HP
-  spl0 = (input0 - y4l) * outgain;
-  spl1 = mono ? spl0 : (input1 - y4r) * outgain;
-) : ( // BP
-  spl0 = (y3l - y4l) * outgain;
-  spl1 = mono ? spl0 : (y3r - y4r) * outgain;
+  // Set output based on filter mode
+  filtermode == 0 ? ( // LP
+    spl0 = y4l * outgain;
+    spl1 = mono ? spl0 : y4r * outgain;
+  ) : filtermode == 1 ? ( // HP
+    spl0 = (input0 - y4l) * outgain;
+    spl1 = mono ? spl0 : (input1 - y4r) * outgain;
+  ) : ( // BP
+    spl0 = (y3l - y4l) * outgain;
+    spl1 = mono ? spl0 : (y3r - y4r) * outgain;
+  );
 );
 
 // Apply limiter if enabled
@@ -255,7 +352,9 @@ gfx_drawstr(filtertype == 0 ? "Prophet-5 Rev3" :
             filtertype == 1 ? "Oberheim OB-X" :
             filtertype == 2 ? "Oberheim SEM" :
             filtertype == 3 ? "Korg MS-20" :
-            filtertype == 4 ? "Moog" : "Moog 4-Pole");
+            filtertype == 4 ? "Moog" : 
+            filtertype == 5 ? "Moog 4-Pole" : 
+            filtertype == 6 ? "Apple 12-Pole" : "Apple 2-Pole");
 
 gfx_x = 10; gfx_y = 30;
 gfx_drawstr("Mode: ");

@@ -140,7 +140,42 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Envelope and modulation effects
 ]]></description>
       </metadata>
-        <version name="2.8" author="Taal">
+        <version name="2.9" author="Taal">
+        <changelog><![CDATA[- Added new Apple 12-Pole Filter type with adjustable slopes
+- Added extensive filter mode options (12dB to 72dB/oct) 
+- Improved filter stability at high frequencies
+- Enhanced stereo processing with better channel separation
+- Added independent HP/LP controls for complex filtering
+- Added Apple 2-Pole as new filter type option
+- Added filter state variables
+- Implemented original Apple coefficient calculation
+- Added proper stereo/mono handling
+- Mapped resonance range 0-0.85 to 0-25dB]]></changelog>
+        <!-- Common Include Files -->
+        <source file="Add/cookdsp.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp.jsfx-inc</source>
+        <source file="Add/cookdsp_envelope.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp_envelope.jsfx-inc</source>
+        <source file="Add/svf_filter.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/svf_filter.jsfx-inc</source>
+        
+        <!-- Synth Collection -->
+        <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_VA_Synth_Extended.jsfx</source>
+        <source file="Effects/Synth/TT_SVF_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_SVF_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Framework_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Framework_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_CookDSP_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_CookDSP_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
+
+        <!-- Filter Collection -->
+        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
+        <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
+      </version>
+      <version name="2.8" author="Taal">
         <changelog><![CDATA[- Added new Moog 4-Pole filter type based on CSound source code
 - Enhanced filter stability and resonance behavior
 - Improved stereo processing and oversampling

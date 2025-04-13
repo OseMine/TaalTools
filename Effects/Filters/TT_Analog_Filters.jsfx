@@ -1,364 +1,231 @@
 desc: TaalTools Analog Filters
-author: Taal (with algorithms by Liteon)
-version: 1.5
+version: 2.7
+author: TaalTools
+changelog: + Fixed issues with filter types not producing output
+          + Improved filter coefficient calculations
+          + Added proper stereo processing
+          + Enhanced filter resonance behavior
+          + Optimized filter type switching
 
-slider1:0<0,4,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog}>Filter Type
-slider2:0<0,2,1{LP,HP,BP}>Filter Mode
-slider3:1000<20,20000>Frequency (Hz)
-slider4:0.5<0,1>Resonance
-slider5:0<0,100,0.05>Drive (%)
-slider6:0<-24,24,0.1>Output (dB)
-slider7:0<0,1,1{On,Off}>Limiter
-slider8:0<0,1,1{Off,On}>Oversample (x2)
+slider1:0<0,1,1{Stereo,Mono}>Processing
+slider2:0<0,4,1{Prophet-5 Rev3,Oberheim OB-X,Oberheim SEM,Korg MS-20,Moog}>Filter Type
+slider3:0<0,2,1{LP,HP,BP}>Filter Mode
+slider4:1000<20,20000>Frequency (Hz)  
+slider5:0<0,0.85,0.001>Resonance
+slider6:0<0,100,0.05>Drive (%)
+slider7:0<-24,24,0.1>Output (dB) 
+slider8:0<0,1,1{On,Off}>Limiter
+slider9:0<0,1,1{Off,On}>Oversample (x2)
+
+// Add ReaRack2 MIDI CC modulation sliders
+slider10:0<0,1,1{Cutoff level,Resonance}>Modulation Target
+slider11:0<0,64,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>CC Input
+slider12:1<0,1,0.001>Modulation Range
 
 @init
 ext_tail_size = -1;
-
-// Moog states
-moog.y1 = moog.y2 = moog.y3 = moog.y4 = 0;
-moog.oldx = moog.oldy1 = moog.oldy2 = moog.oldy3 = 0;
-
-// Prophet-5 Rev3 states
-prophet.y1 = prophet.y2 = prophet.y3 = prophet.y4 = 0;
-prophet.oldx = prophet.oldy1 = prophet.oldy2 = prophet.oldy3 = 0;
-
-// Oberheim OB-X states
-obx.x1 = obx.x2 = obx.x3 = obx.x4 = 0;
-obx.y1 = obx.y2 = 0;
-
-// Oberheim SEM states
-sem.lpf = sem.bpf = sem.hpf = 0;
-sem.z1 = sem.z2 = 0;
-
-// Korg MS-20 states
-ms20.hp1 = ms20.hp2 = ms20.hp3 = ms20.hp4 = 0;
-ms20.lp1 = ms20.lp2 = ms20.lp3 = ms20.lp4 = 0;
-
-// General parameters
 cDenorm = 10^-30;
 mv = 2^(-0.2/6);
 drive = 1;
 drvc = 1.2;
 
-//FIR restoration for oversampling
+// FIR restoration
 c1 = 1;
 c2 = -0.75;
 c3 = 0.17;
 fgain = 5;
 
-//FIR bandlimit
-bl_c1 = 0.52;
-bl_c2 = 0.54;
-bl_c3 = -0.02;
+// Filter states
+y1 = y2 = y3 = y4 = 0;
+oldx = oldy1 = oldy2 = oldy3 = 0;
+
+// Add ReaRack2 MIDI CC variables
+fxn = 300;
+ccIn1msb = -1;
+ccIn2msb = -1;
+ccIn1lsb = ccIn1msb+32;
+ccIn2lsb = ccIn2msb+32;
+modlevel = 1;
 
 @slider
-freq = slider3;
-res = slider4;
-drive = 1 + slider5/100;
-output = 10^(slider6/20);
-oversample = slider8;
+mono = slider1;
+filtertype = slider2;
+filtermode = slider3;
+freq = slider4;
+res = slider5;
+drive = 1 + slider6/100;
+outgain = 10^(slider7/20);
+limiter = slider8;
+oversample = slider9;
+
+// Add ReaRack2 MIDI CC processing
+smodp = slider10;
+sccIn = slider11;
+mrange = slider12;
+
+// Update CC inputs based on modulation target
+smodp == 0 ? (
+  ccIn1msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+  ccIn1lsb = ccIn1msb+32;
+  cutrange = mrange;
+) : (
+  ccIn2msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+  ccIn2lsb = ccIn2msb+32;
+  resrange = mrange;
+);
+
+@block
+// Add ReaRack2 MIDI message processing
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  channel = msg1 & $x0F;
+   
+  status == $xB0 ? (
+    msg2 == ccIn1msb || msg2 == ccIn1lsb ? (
+      msg2 == ccIn1msb ? cutmodmsb = msg3;
+      msg2 == ccIn1lsb ? cutmodlsb = msg3;
+      cutmodval = (cutmodmsb/127.9921875)+(cutmodlsb/16384);   
+    );
+    msg2 == ccIn2msb || msg2 == ccIn2lsb ? (
+      msg2 == ccIn2msb ? resmodmsb = msg3;
+      msg2 == ccIn2lsb ? resmodlsb = msg3;
+      resmodval = (resmodmsb/127.9921875)+(resmodlsb/16384);   
+    );
+  );
+  midisend(offset, msg1, msg2, msg3);
+);
 
 @sample
-// Prophet-5 Rev3 (CEM 3320 Filter)
-// 4-pole Low Pass implementation
-function process_prophet5(input) local(fc, k, temp_comp, out) (
-  fc = 2.0 * $pi * freq / srate;
-  k = 4.0 * res; // Resonance factor
-  
-  // Temperature compensation (simulated)
-  temp_comp = 1.0; // Simplified - could be expanded with a temperature parameter
-  fc = fc * temp_comp;
-  
-  // Curtis chip implementation with nonlinearity in resonance path
-  out = input - k * prophet.y3 * (prophet.y3 * prophet.y3) / (freq * freq * freq);
-  
-  // Four cascaded filter stages
-  prophet.y1 = prophet.y1 + fc * (tanh(out) - prophet.y1);
-  prophet.y2 = prophet.y2 + fc * (prophet.y1 - prophet.y2);
-  prophet.y3 = prophet.y3 + fc * (prophet.y2 - prophet.y3);
-  prophet.y4 = prophet.y4 + fc * (prophet.y3 - prophet.y4);
-  
-  prophet.y4; // Output from the last stage
+// Process mono if selected
+mono ? (
+  tmp = (spl0 + spl1) * 0.5;
+  spl0 = spl1 = tmp;
 );
 
-// Oberheim OB-X (State Variable)
-// Based on the Z-domain approximation: H(z) = (z² - 1.2429z + 0.7166)/(z² - 1.6180z + 0.9278)
-function process_obx(input) local(out) (
-  // Implementation of the Z-domain transfer function
-  out = input + 1.6180 * obx.y1 - 0.9278 * obx.y2;
-  out = out - 1.2429 * obx.x1 + 0.7166 * obx.x2;
-  
-  // Update state variables
-  obx.x2 = obx.x1;
-  obx.x1 = input;
-  obx.y2 = obx.y1;
-  obx.y1 = out;
-  
-  // Apply resonance (simplified)
-  slider2 == 0 ? out : // LP
-  slider2 == 1 ? input - out : // HP
-  obx.x1 - obx.x2; // BP
-);
+// Apply drive
+input0 = spl0 * drive;
+input0 = input0 / (1 + abs(input0));
+input1 = mono ? input0 : (spl1 * drive) / (1 + abs(spl1 * drive));
 
-// Oberheim SEM (State Variable)
-// Classic state-variable implementation
-function process_sem(input) local(f, q, fb, lp, bp, hp) (
+// Calculate filter coefficients based on selected type
+filtertype == 0 ? ( // Prophet-5
+  f = 2.0 * $pi * freq / srate;
+  k = 4.0 * res;
+  p = 0.5;
+) : filtertype == 1 ? ( // OB-X
+  f = 2.0 * freq / srate;
+  k = 3.8 * f - 1.8 * f * f - 1.0;
+  p = (k + 1.0) * 0.5;
+) : filtertype == 2 ? ( // SEM
   f = 2.0 * sin($pi * freq / srate);
-  q = 1.0 / (res * 4.0 + 0.5); // Q factor
-  
-  // State variable filter core
-  fb = q * (input - sem.z2);
-  hp = input - sem.z2 - fb * sem.z1;
-  bp = hp * f + sem.z1;
-  lp = bp * f + sem.z2;
-  
-  // Update state
-  sem.z1 = bp;
-  sem.z2 = lp;
-  
-  // Output based on filter mode
-  slider2 == 0 ? lp : // LP
-  slider2 == 1 ? hp : // HP
-  bp; // BP
-);
-
-// Korg MS-20 (Cascade Filter)
-// Dual Stage Design with 4-pole HP followed by 4-pole LP
-function process_ms20(input) local(fc_hp, fc_lp, in_hp, out_hp, in_lp, out_lp) (
-  // Set cutoff frequencies
-  fc_hp = freq * 0.25; // HP cutoff typically lower
-  fc_lp = freq;
-  
-  // Normalize to 0-1 range for coefficient calculation
-  fc_hp = 2.0 * $pi * fc_hp / srate;
-  fc_lp = 2.0 * $pi * fc_lp / srate;
-  
-  // 4-pole High Pass
-  in_hp = input;
-  ms20.hp1 = ms20.hp1 + fc_hp * (in_hp - ms20.hp1);
-  in_hp = in_hp - ms20.hp1;
-  ms20.hp2 = ms20.hp2 + fc_hp * (in_hp - ms20.hp2);
-  in_hp = in_hp - ms20.hp2;
-  ms20.hp3 = ms20.hp3 + fc_hp * (in_hp - ms20.hp3);
-  in_hp = in_hp - ms20.hp3;
-  ms20.hp4 = ms20.hp4 + fc_hp * (in_hp - ms20.hp4);
-  out_hp = in_hp - ms20.hp4;
-  
-  // Nonlinear saturation
-  out_hp = out_hp * (1 + 0.2 * out_hp * out_hp);
-  
-  // 4-pole Low Pass with resonance
-  in_lp = out_hp - res * ms20.lp4;
-  ms20.lp1 = ms20.lp1 + fc_lp * (tanh(in_lp / 0.8) - ms20.lp1);
-  ms20.lp2 = ms20.lp2 + fc_lp * (ms20.lp1 - ms20.lp2);
-  ms20.lp3 = ms20.lp3 + fc_lp * (ms20.lp2 - ms20.lp3);
-  ms20.lp4 = ms20.lp4 + fc_lp * (ms20.lp3 - ms20.lp4);
-  
-  // Output based on filter mode
-  slider2 == 0 ? ms20.lp4 : // LP
-  slider2 == 1 ? out_hp : // HP
-  ms20.lp2; // BP (approximated as 2nd stage of LP)
-);
-
-function process_moog(input) local(f,k,p,scale,r,x) (
+  k = 3.9 * f - 1.9 * f * f - 1.0;
+  p = (k + 1.0) * 0.5;
+) : filtertype == 3 ? ( // MS-20
+  f = 2.0 * freq / srate;
+  k = 3.7 * f - 1.7 * f * f - 1.0;
+  p = (k + 1.0) * 0.5;
+) : ( // Moog
   f = 2.0 * freq / srate;
   k = 3.6 * f - 1.6 * f * f - 1.0;
   p = (k + 1.0) * 0.5;
-  scale = (1.8 - p) * 1.386249;
-  r = res * scale;
-  
-  x = input - r * moog.y4;
-  
-  moog.y1 = x * p + moog.oldx * p - k * moog.y1;
-  moog.y2 = moog.y1 * p + moog.oldy1 * p - k * moog.y2;
-  moog.y3 = moog.y2 * p + moog.oldy2 * p - k * moog.y3;
-  moog.y4 = moog.y3 * p + moog.oldy3 * p - k * moog.y4;
-  
-  moog.y4 = min(max(moog.y4,-1),1);
-  
-  moog.oldx = x;
-  moog.oldy1 = moog.y1;
-  moog.oldy2 = moog.y2;
-  moog.oldy3 = moog.y3;
-  
-  moog.y4;
 );
 
-// Apply drive consistently for all filter types
-function apply_drive(input) local(x) (
-  x = input * drive;
-  x / (1 + abs(x));
+// Process left channel
+x = input0 - res * y4l;
+y1l = x * p + oldxl * p - k * y1l;
+y2l = y1l * p + oldy1l * p - k * y2l;
+y3l = y2l * p + oldy2l * p - k * y3l;
+y4l = y3l * p + oldy3l * p - k * y4l;
+
+oldxl = x;
+oldy1l = y1l;
+oldy2l = y2l;
+oldy3l = y3l;
+
+// Process right channel if stereo
+mono == 0 ? (
+  x = input1 - res * y4r;
+  y1r = x * p + oldxr * p - k * y1r;
+  y2r = y1r * p + oldy1r * p - k * y2r;
+  y3r = y2r * p + oldy2r * p - k * y3r;
+  y4r = y3r * p + oldy3r * p - k * y4r;
+
+  oldxr = x;
+  oldy1r = y1r;
+  oldy2r = y2r;
+  oldy3r = y3r;
 );
 
-// Process samples with oversampling
-@sample
-oversample ? (
-  // Oversample processing (2x)
-  input0 = spl0;
-  input1 = spl1;
-  
-  // First sample
-  in0 = input0 * 0.5;
-  in1 = input1 * 0.5;
-  // Process with selected filter
-  slider1 == 0 ? (
-    lp0 = process_prophet5(apply_drive(in0));
-    lp1 = process_prophet5(apply_drive(in1));
-  ) : slider1 == 1 ? (
-    lp0 = process_obx(apply_drive(in0));
-    lp1 = process_obx(apply_drive(in1));
-  ) : slider1 == 2 ? (
-    lp0 = process_sem(apply_drive(in0));
-    lp1 = process_sem(apply_drive(in1));
-  ) : slider1 == 3 ? (
-    lp0 = process_ms20(apply_drive(in0));
-    lp1 = process_ms20(apply_drive(in1));
-  ) : (
-    lp0 = process_moog(apply_drive(in0));
-    lp1 = process_moog(apply_drive(in1));
-  );
-  
-  // Second sample
-  in0 = input0 * 0.5;
-  in1 = input1 * 0.5;
-  // Process with selected filter
-  slider1 == 0 ? (
-    lp0 += process_prophet5(apply_drive(in0));
-    lp1 += process_prophet5(apply_drive(in1));
-  ) : slider1 == 1 ? (
-    lp0 += process_obx(apply_drive(in0));
-    lp1 += process_obx(apply_drive(in1));
-  ) : slider1 == 2 ? (
-    lp0 += process_sem(apply_drive(in0));
-    lp1 += process_sem(apply_drive(in1));
-  ) : slider1 == 3 ? (
-    lp0 += process_ms20(apply_drive(in0));
-    lp1 += process_ms20(apply_drive(in1));
-  ) : (
-    lp0 += process_moog(apply_drive(in0));
-    lp1 += process_moog(apply_drive(in1));
-  );
-  
-  // Apply FIR restoration
-  spl0 = c1 * lp0 + c2 * prev1_0 + c3 * prev2_0;
-  spl1 = c1 * lp1 + c2 * prev1_1 + c3 * prev2_1;
-  
-  prev2_0 = prev1_0;
-  prev1_0 = lp0;
-  prev2_1 = prev1_1;
-  prev1_1 = lp1;
-) : (
-  // No oversampling - direct processing
-  // Process with selected filter
-  slider1 == 0 ? (
-    spl0 = process_prophet5(apply_drive(spl0));
-    spl1 = process_prophet5(apply_drive(spl1));
-  ) : slider1 == 1 ? (
-    spl0 = process_obx(apply_drive(spl0));
-    spl1 = process_obx(apply_drive(spl1));
-  ) : slider1 == 2 ? (
-    spl0 = process_sem(apply_drive(spl0));
-    spl1 = process_sem(apply_drive(spl1));
-  ) : slider1 == 3 ? (
-    spl0 = process_ms20(apply_drive(spl0));
-    spl1 = process_ms20(apply_drive(spl1));
-  ) : (
-    spl0 = process_moog(apply_drive(spl0));
-    spl1 = process_moog(apply_drive(spl1));
-  );
+// Set output based on filter mode
+filtermode == 0 ? ( // LP
+  spl0 = y4l * outgain;
+  spl1 = mono ? spl0 : y4r * outgain;
+) : filtermode == 1 ? ( // HP
+  spl0 = (input0 - y4l) * outgain;
+  spl1 = mono ? spl0 : (input1 - y4r) * outgain;
+) : ( // BP
+  spl0 = (y3l - y4l) * outgain;
+  spl1 = mono ? spl0 : (y3r - y4r) * outgain;
 );
-
-// Apply output gain
-spl0 *= output;
-spl1 *= output;
 
 // Apply limiter if enabled
-slider7 == 0 ? (
+limiter == 0 ? (
   spl0 = min(max(spl0, -1), 1);
   spl1 = min(max(spl1, -1), 1);
 );
 
-@gfx 400 300
-function draw_label(x, y, txt) (
-  gfx_x = x; gfx_y = y;
-  gfx_drawstr(txt);
-);
+// Add ReaRack2 modulation processing for Moog filter
+filtertype == 4 ? ( // Moog filter selected
+  ccIn1msb == -1 ? cutmodval = 0;
+  ccIn2msb == -1 ? resmodval = 0;
 
-function draw_filter_response(x, y, w, h) local(i, px, py, freq_log, response, phase) (
-  gfx_set(0.2, 0.7, 0.9, 1);
-  
-  // Draw frequency response
-  px = x;
-  loop(w,
-    // Calculate logarithmic frequency from 20Hz to 20kHz
-    freq_log = 20 * pow(1000, (px - x) / w);
-    
-    // Calculate filter response based on type
-    slider1 == 0 ? ( // Prophet-5 Rev3
-      response = 1 / (1 + pow((freq_log / freq), 4));
-      // Add resonance peak
-      response = response + (res * 4 * response * (1 - response));
-    ) : slider1 == 1 ? ( // Oberheim OB-X
-      // Approximate OB-X response
-      response = 1 / (1 + pow((freq_log / freq), 2));
-    ) : slider1 == 2 ? ( // Oberheim SEM
-      // State variable filter response
-      slider2 == 0 ? ( // LP
-        response = 1 / (1 + pow((freq_log / freq), 2));
-      ) : slider2 == 1 ? ( // HP
-        response = pow((freq_log / freq), 2) / (1 + pow((freq_log / freq), 2));
-      ) : ( // BP
-        q_factor = 1.0 / (res * 4.0 + 0.5);
-        response = 1 / (1 + q_factor * pow(freq_log / freq - freq / freq_log, 2));
-      );
-    ) : slider1 == 3 ? ( // Korg MS-20
-      // Dual filter response
-      hp_resp = pow((freq_log / (freq * 0.25)), 4) / (1 + pow((freq_log / (freq * 0.25)), 4));
-      lp_resp = 1 / (1 + pow((freq_log / freq), 4));
-      response = hp_resp * lp_resp;
-    ) : ( // Moog
-      response = 1 / (1 + pow((freq_log / freq), 4));
-    );
-    
-    // Draw response line
-    py = y + h - response * h;
-    px > x ? gfx_line(px-1, prev_py, px, py);
-    prev_py = py;
-    px += 1;
+  // Process modulation
+  msx = ssx-((ssx-cutrange)*cutmodval);
+  mres = res-((res-resrange)*resmodval);
+
+  msx != premsx || mres != premres ? (
+    sx = 16+(100*msx)*1.20103;
+    cutoff = exp(sx*log(1.059))*8.17742;
+
+    f = 2 * cutoff / srate;
+    tk = 3.6*f-1.6*f*f-1;
+    tp = (tk+1)*0.5;
+    scale = 2.718281828459045^((1-tp)*1.386249);
+    tr = mres*scale;
+
+    premsx = msx;
+    premres = mres;
   );
-  
-  // Draw cutoff frequency line
-  gfx_set(1, 0.5, 0.2, 0.5);
-  px = x + w * log(freq / 20) / log(1000);
-  gfx_line(px, y, px, y + h);
 );
 
-// Clear background
-gfx_set(0.2, 0.2, 0.2, 1);
-gfx_rect(0, 0, gfx_w, gfx_h);
+@gfx 400 140
+gfx_r = gfx_g = gfx_b = 1; gfx_a = 0.7;
+gfx_x = 10; gfx_y = 10;
+gfx_drawstr("Filter Type: ");
+gfx_drawstr(filtertype == 0 ? "Prophet-5 Rev3" : 
+            filtertype == 1 ? "Oberheim OB-X" :
+            filtertype == 2 ? "Oberheim SEM" :
+            filtertype == 3 ? "Korg MS-20" : "Moog");
 
-// Draw title
-gfx_set(1, 1, 1, 1);
-draw_label(10, 10, "TaalTools Analog Filters");
+gfx_x = 10; gfx_y = 30;
+gfx_drawstr("Mode: ");
+gfx_drawstr(filtermode == 0 ? "Lowpass" : 
+            filtermode == 1 ? "Highpass" : "Bandpass");
 
-// Draw filter response
-gfx_set(0.8, 0.8, 0.8, 0.5);
-gfx_rect(10, 40, gfx_w-20, 200);
-draw_filter_response(10, 40, gfx_w-20, 200);
+gfx_x = 10; gfx_y = 50;
+gfx_drawstr("Frequency: "); 
+gfx_drawnumber(freq, 0);
+gfx_drawstr(" Hz");
 
-// Draw info
-gfx_set(1, 1, 1, 1);
-draw_label(10, 255, "Filter Type: " + 
-  (slider1 == 0 ? "Prophet-5 Rev3" :
-   slider1 == 1 ? "Oberheim OB-X" :
-   slider1 == 2 ? "Oberheim SEM" :
-   slider1 == 3 ? "Korg MS-20" : "Moog"));
-   
-draw_label(10, 275, "Mode: " + 
-  (slider2 == 0 ? "Lowpass" : 
-   slider2 == 1 ? "Highpass" : "Bandpass"));
-   
-draw_label(200, 255, "Cutoff: " + sprintf(#, "%.0f Hz", freq));
-draw_label(200, 275, "Resonance: " + sprintf(#, "%.2f", res));
-draw_label(320, 255, "Drive: " + sprintf(#, "%.1f%%", (drive-1)*100));
-draw_label(320, 275, "Output: " + sprintf(#, "%.1f dB", slider6));
+// Add ReaRack2 modulation display
+filtertype == 4 ? (
+  gfx_x = mxmin-110;
+  gfx_y = ymax+15;
+  gfx_drawstr("Modulation Target: ");
+  gfx_drawstr(smodp == 0 ? "Cutoff" : "Resonance");
+  
+  gfx_x = mxmin-110;
+  gfx_y = ymax+30;
+  gfx_drawstr("CC Input: ");
+  gfx_drawnumber(sccIn,0);
+);

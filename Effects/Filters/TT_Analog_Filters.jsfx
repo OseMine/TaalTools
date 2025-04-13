@@ -239,20 +239,33 @@ filtertype == 0 ? ( // Prophet-5
 
 ) : filtertype == 7 ? ( // Apple 2-Pole
   // Calculate coefficients
-  sx = 16 + freq * 1.20103 / 200;  // Map frequency to exponential scale
+  sx = 16 + freq * 1.20103 / 200;
   cx = floor(exp(sx*log(1.059))*8.17742);
   cutoff = 2 * cx / srate;
-  res_scaled = pow(10, 0.05 * -(slider5 * 50)); // Map resonance 0-0.85 to 0-25dB
+  res_scaled = pow(10, 0.05 * -(slider5 * 50));
   
-  // Original Apple coefficient calculation
   k = 0.5 * res_scaled * sin($pi * cutoff);
   c1 = 0.5 * (1 - k) / (1 + k);
   c2 = (0.5 + c1) * cos($pi * cutoff);
-  c3 = (0.5 + c1 - c2) * 0.25;
 
-  a0 = 2 * c3;
-  a1 = 2 * 2 * c3; 
-  a2 = 2 * c3;
+  // Different coefficient calculations based on filter mode
+  filtermode == 0 ? ( // LP
+    c3 = (0.5 + c1 - c2) * 0.25;
+    a0 = 2 * c3;
+    a1 = 4 * c3;
+    a2 = 2 * c3;
+  ) : filtermode == 1 ? ( // HP
+    c3 = (0.5 + c1 + c2) * 0.25;
+    a0 = 2 * c3;
+    a1 = -4 * c3;
+    a2 = 2 * c3;
+  ) : ( // BP
+    c3 = (0.5 + c1) * 0.25;
+    a0 = 2 * c3 * cutoff;
+    a1 = 0;
+    a2 = -a0;
+  );
+  
   b1 = 2 * -c2;
   b2 = 2 * c1;
 

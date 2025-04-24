@@ -1,69 +1,181 @@
-desc:TaalTools Additive Osc
+desc: TaalTools Additive Oscillator
+tags: synthesizer oscillator
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+provides: TaalTools_AdditiveOsc/TaalTools_AdditiveOsc.jsfx
+
+slider1:master_volume=0.5<0,1,0.01>Master Volume
+slider2:note_mode=0<0,1,1{Direct MIDI,Fixed Note}>Note Mode
+slider3:fixed_note=60<0,127,1>Fixed Note (when Note Mode = Fixed)
+
+slider10:osc1_gain=1<0,1,0.01>Osc 1 Gain
+slider11:osc1_tune=0<-24,24,0.01>Osc 1 Tune (semitones)
+
+slider13:osc2_gain=0.8<0,1,0.01>Osc 2 Gain
+slider14:osc2_tune=0<-24,24,0.01>Osc 2 Tune (semitones)
+
+slider16:osc3_gain=0.7<0,1,0.01>Osc 3 Gain
+slider17:osc3_tune=0<-24,24,0.01>Osc 3 Tune (semitones)
+
+slider19:osc4_gain=0.6<0,1,0.01>Osc 4 Gain
+slider20:osc4_tune=0<-24,24,0.01>Osc 4 Tune (semitones)
+
+slider22:osc5_gain=0.5<0,1,0.01>Osc 5 Gain
+slider23:osc5_tune=0<-24,24,0.01>Osc 5 Tune (semitones)
+
+slider25:osc6_gain=0.4<0,1,0.01>Osc 6 Gain
+slider26:osc6_tune=0<-24,24,0.01>Osc 6 Tune (semitones)
+
+slider28:osc7_gain=0.3<0,1,0.01>Osc 7 Gain
+slider29:osc7_tune=0<-24,24,0.01>Osc 7 Tune (semitones)
+
+slider31:osc8_gain=0.2<0,1,0.01>Osc 8 Gain
+slider32:osc8_tune=0<-24,24,0.01>Osc 8 Tune (semitones)
+
+slider34:osc9_gain=0.1<0,1,0.01>Osc 9 Gain
+slider35:osc9_tune=0<-24,24,0.01>Osc 9 Tune (semitones)
+
+slider37:osc10_gain=0.05<0,1,0.01>Osc 10 Gain
+slider38:osc10_tune=0<-24,24,0.01>Osc 10 Tune (semitones)
 
 in_pin:none
-out_pin:Stereo
-
-slider1:attack=0.01<0,1,0.001>Attack (s)
-slider2:release=0.5<0.01,5,0.01>Release (s)
-slider3:gain=0.8<0,1,0.01>Gain
-
-// Tuning Sliders
-slider:Base frequency
-slider10:tune1=0<-24,24,1>Partial 1 Tune
-slider11:tune2=0<-24,24,1>Partial 2 Tune
-slider12:tune3=0<-24,24,1>Partial 3 Tune
-slider13:tune4=0<-24,24,1>Partial 4 Tune
-slider14:tune5=0<-24,24,1>Partial 5 Tune
-slider15:tune6=0<-24,24,1>Partial 6 Tune
-slider16:tune7=0<-24,24,1>Partial 7 Tune
-slider17:tune8=0<-24,24,1>Partial 8 Tune
-slider18:tune9=0<-24,24,1>Partial 9 Tune
-slider19:tune10=0<-24,24,1>Partial 10 Tune
+out_pin:left output
+out_pin:right output
 
 @init
-notes = 128;
-note_states = 0;
-frequencies = 0;
-srate_inv = 1 / srate;
+// Constants
+TWO_PI = 2.0 * $pi;
+MIDI_NOTES = 128;
+MAX_POLYPHONY = 16;
+
+// MIDI note tracking
+note_on = 0;
+active_note = -1;
+velocity = 0;
+
+// Initialize oscillator phases
+osc1_phase = osc2_phase = osc3_phase = osc4_phase = osc5_phase = 0;
+osc6_phase = osc7_phase = osc8_phase = osc9_phase = osc10_phase = 0;
+freqs = 0;
 
 @slider
-attack_samples = attack * srate;
-release_samples = release * srate;
+// Update parameters when sliders change
 
 @block
-while (
-    midirecv(offset, msg1, msg2, msg3) ? (
-        status = msg1 & 0xF0;
-        note = msg2;
-        vel = msg3;
-
-        status == 0x90 && vel > 0 ? (
-            frequencies[note] = 440 * 2^((note - 69)/12);
-            note_states[note] = 1;
-        )
-        : status == 0x80 || (status == 0x90 && vel == 0) ? (
-            note_states[note] = 0;
-        );
+// Process MIDI
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+  
+  // Note On
+  status == 0x90 && (msg23 & 0xFF00) ? (
+    note = msg23 & 0x7F;
+    vel = (msg23 & 0xFF00) >> 8;
+    
+    vel > 0 ? (
+      active_note = note;
+      note_on = 1;
+      velocity = vel / 127;
+    ) : (
+      // Note Off (note on with velocity 0)
+      note == active_note ? (
+        note_on = 0;
+      );
     );
+  ) : 
+  
+  // Note Off
+  status == 0x80 ? (
+    note = msg23 & 0x7F;
+    note == active_note ? (
+      note_on = 0;
+    );
+  );
+  
+  midisend(offset, msg1, msg23); // Pass through MIDI
 );
 
 @sample
-spl0 = spl1 = 0;
+// Determine current frequency based on note mode and active note
+note_mode == 0 ? (
+  // Direct MIDI mode
+  current_note = note_on ? active_note : -1;
+) : (
+  // Fixed note mode
+  current_note = fixed_note;
+);
 
-i = 0;
-loop(128,
-    note_states[i] == 1 ? (
-        freq = frequencies[i];
-
-        sum = 0;
-        loop(10,
-            f = freq * 2^(this["tune"+(j+1)]/12);
-            sum += sin(2*$pi * f * srate_inv * samplesblock);
-        );
-
-        amp = gain / 10;
-        spl0 += amp * sum;
-        spl1 += amp * sum;
-    );
-    i += 1;
+current_note >= 0 ? (
+  // Convert MIDI note to frequency: 440 * 2^((note-69)/12)
+  base_freq = 440 * pow(2, (current_note - 69) / 12);
+  
+  // Calculate frequencies for all oscillators with their tuning offsets
+  freq1 = base_freq * pow(2, osc1_tune / 12);
+  freq2 = base_freq * pow(2, osc2_tune / 12);
+  freq3 = base_freq * pow(2, osc3_tune / 12);
+  freq4 = base_freq * pow(2, osc4_tune / 12);
+  freq5 = base_freq * pow(2, osc5_tune / 12);
+  freq6 = base_freq * pow(2, osc6_tune / 12);
+  freq7 = base_freq * pow(2, osc7_tune / 12);
+  freq8 = base_freq * pow(2, osc8_tune / 12);
+  freq9 = base_freq * pow(2, osc9_tune / 12);
+  freq10 = base_freq * pow(2, osc10_tune / 12);
+  
+  // Update oscillator phases
+  osc1_phase += freq1 * TWO_PI / srate;
+  osc1_phase >= TWO_PI ? osc1_phase -= TWO_PI;
+  
+  osc2_phase += freq2 * TWO_PI / srate;
+  osc2_phase >= TWO_PI ? osc2_phase -= TWO_PI;
+  
+  osc3_phase += freq3 * TWO_PI / srate;
+  osc3_phase >= TWO_PI ? osc3_phase -= TWO_PI;
+  
+  osc4_phase += freq4 * TWO_PI / srate;
+  osc4_phase >= TWO_PI ? osc4_phase -= TWO_PI;
+  
+  osc5_phase += freq5 * TWO_PI / srate;
+  osc5_phase >= TWO_PI ? osc5_phase -= TWO_PI;
+  
+  osc6_phase += freq6 * TWO_PI / srate;
+  osc6_phase >= TWO_PI ? osc6_phase -= TWO_PI;
+  
+  osc7_phase += freq7 * TWO_PI / srate;
+  osc7_phase >= TWO_PI ? osc7_phase -= TWO_PI;
+  
+  osc8_phase += freq8 * TWO_PI / srate;
+  osc8_phase >= TWO_PI ? osc8_phase -= TWO_PI;
+  
+  osc9_phase += freq9 * TWO_PI / srate;
+  osc9_phase >= TWO_PI ? osc9_phase -= TWO_PI;
+  
+  osc10_phase += freq10 * TWO_PI / srate;
+  osc10_phase >= TWO_PI ? osc10_phase -= TWO_PI;
+  
+  // Calculate the output of each oscillator
+  output = 0;
+  output += sin(osc1_phase) * osc1_gain;
+  output += sin(osc2_phase) * osc2_gain;
+  output += sin(osc3_phase) * osc3_gain;
+  output += sin(osc4_phase) * osc4_gain;
+  output += sin(osc5_phase) * osc5_gain;
+  output += sin(osc6_phase) * osc6_gain;
+  output += sin(osc7_phase) * osc7_gain;
+  output += sin(osc8_phase) * osc8_gain;
+  output += sin(osc9_phase) * osc9_gain;
+  output += sin(osc10_phase) * osc10_gain;
+  
+  // Apply master volume and velocity (if in MIDI mode)
+  amplitude = master_volume * (note_mode == 0 ? (note_on ? velocity : 0) : 1);
+  output *= amplitude;
+  
+  // Normalize the output a bit to avoid clipping
+  output *= 0.3;
+  
+  // Output to both channels
+  spl0 = spl1 = output;
+) : (
+  // No note playing
+  spl0 = spl1 = 0;
 );

@@ -1,0 +1,179 @@
+desc: TaalTools Hammond Organ
+tags: synthesizer oscillator organ
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+provides: TaalTools_HammondOrgan/TaalTools_HammondOrgan.jsfx
+
+slider1:master_volume=0.5<0,1,0.01>Master Volume
+slider2:note_mode=0<0,1,1{Direct MIDI,Fixed Note}>Note Mode
+slider3:fixed_note=60<0,127,1>Fixed Note (when Note Mode = Fixed)
+
+// Hammond drawbars (16', 5 1/3', 8', 4', 2 2/3', 2', 1 3/5', 1 1/3', 1')
+slider10:drawbar_16=0.7<0,1,0.01>16' Drawbar
+slider11:drawbar_5_1_3=0.0<0,1,0.01>5 1/3' Drawbar
+slider12:drawbar_8=0.8<0,1,0.01>8' Drawbar
+slider13:drawbar_4=0.6<0,1,0.01>4' Drawbar
+slider14:drawbar_2_2_3=0.2<0,1,0.01>2 2/3' Drawbar
+slider15:drawbar_2=0.5<0,1,0.01>2' Drawbar
+slider16:drawbar_1_3_5=0.1<0,1,0.01>1 3/5' Drawbar
+slider17:drawbar_1_1_3=0.2<0,1,0.01>1 1/3' Drawbar
+slider18:drawbar_1=0.3<0,1,0.01>1' Drawbar
+
+// Chorus/vibrato effect
+slider20:chorus_amount=0.3<0,1,0.01>Chorus Amount
+slider21:chorus_speed=3<0.1,10,0.1>Chorus Speed (Hz)
+
+in_pin:none
+out_pin:left output
+out_pin:right output
+
+@init
+// Constants
+TWO_PI = 2.0 * $pi;
+MIDI_NOTES = 128;
+MAX_POLYPHONY = 16;
+
+// MIDI note tracking
+note_on = 0;
+active_note = -1;
+velocity = 0;
+
+// Initialize oscillator phases
+phase_16 = phase_5_1_3 = phase_8 = phase_4 = phase_2_2_3 = 0;
+phase_2 = phase_1_3_5 = phase_1_1_3 = phase_1 = 0;
+
+// Chorus/vibrato LFO
+chorus_phase = 0;
+
+@slider
+// Update parameters when sliders change
+
+@block
+// Process MIDI
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+  
+  // Note On
+  status == 0x90 && (msg23 & 0xFF00) ? (
+    note = msg23 & 0x7F;
+    vel = (msg23 & 0xFF00) >> 8;
+    
+    vel > 0 ? (
+      active_note = note;
+      note_on = 1;
+      velocity = vel / 127;
+    ) : (
+      // Note Off (note on with velocity 0)
+      note == active_note ? (
+        note_on = 0;
+      );
+    );
+  ) : 
+  
+  // Note Off
+  status == 0x80 ? (
+    note = msg23 & 0x7F;
+    note == active_note ? (
+      note_on = 0;
+    );
+  );
+  
+  midisend(offset, msg1, msg23); // Pass through MIDI
+);
+
+@sample
+// Update chorus LFO
+chorus_phase += chorus_speed * TWO_PI / srate;
+chorus_phase >= TWO_PI ? chorus_phase -= TWO_PI;
+chorus_mod = chorus_amount * sin(chorus_phase) * 0.01; // Small frequency modulation
+
+// Determine current frequency based on note mode and active note
+note_mode == 0 ? (
+  // Direct MIDI mode
+  current_note = note_on ? active_note : -1;
+) : (
+  // Fixed note mode
+  current_note = fixed_note;
+);
+
+current_note >= 0 ? (
+  // Convert MIDI note to frequency: 440 * 2^((note-69)/12)
+  base_freq = 440 * pow(2, (current_note - 69) / 12);
+  
+  // Calculate frequencies for all drawbars
+  // Hammond intervals (relative to base pitch):
+  // 16' = sub-octave (1/2)
+  // 5 1/3' = fifth below 8' (3/2 * 1/2)
+  // 8' = unison (1)
+  // 4' = octave (2)
+  // 2 2/3' = fifth above 8' (3/2)
+  // 2' = two octaves (4) 
+  // 1 3/5' = major third above 2' (5)
+  // 1 1/3' = fifth above 2' (6)
+  // 1' = three octaves (8)
+  
+  freq_16 = base_freq * 0.5 * (1 + chorus_mod);
+  freq_5_1_3 = base_freq * 0.75 * (1 + chorus_mod);
+  freq_8 = base_freq * (1 + chorus_mod);
+  freq_4 = base_freq * 2 * (1 + chorus_mod);
+  freq_2_2_3 = base_freq * 3 * (1 + chorus_mod);
+  freq_2 = base_freq * 4 * (1 + chorus_mod);
+  freq_1_3_5 = base_freq * 5 * (1 + chorus_mod);
+  freq_1_1_3 = base_freq * 6 * (1 + chorus_mod);
+  freq_1 = base_freq * 8 * (1 + chorus_mod);
+  
+  // Update oscillator phases
+  phase_16 += freq_16 * TWO_PI / srate;
+  phase_16 >= TWO_PI ? phase_16 -= TWO_PI;
+  
+  phase_5_1_3 += freq_5_1_3 * TWO_PI / srate;
+  phase_5_1_3 >= TWO_PI ? phase_5_1_3 -= TWO_PI;
+  
+  phase_8 += freq_8 * TWO_PI / srate;
+  phase_8 >= TWO_PI ? phase_8 -= TWO_PI;
+  
+  phase_4 += freq_4 * TWO_PI / srate;
+  phase_4 >= TWO_PI ? phase_4 -= TWO_PI;
+  
+  phase_2_2_3 += freq_2_2_3 * TWO_PI / srate;
+  phase_2_2_3 >= TWO_PI ? phase_2_2_3 -= TWO_PI;
+  
+  phase_2 += freq_2 * TWO_PI / srate;
+  phase_2 >= TWO_PI ? phase_2 -= TWO_PI;
+  
+  phase_1_3_5 += freq_1_3_5 * TWO_PI / srate;
+  phase_1_3_5 >= TWO_PI ? phase_1_3_5 -= TWO_PI;
+  
+  phase_1_1_3 += freq_1_1_3 * TWO_PI / srate;
+  phase_1_1_3 >= TWO_PI ? phase_1_1_3 -= TWO_PI;
+  
+  phase_1 += freq_1 * TWO_PI / srate;
+  phase_1 >= TWO_PI ? phase_1 -= TWO_PI;
+  
+  // Use sine waves for a cleaner tone
+  output = 0;
+  output += sin(phase_16) * drawbar_16;
+  output += sin(phase_5_1_3) * drawbar_5_1_3;
+  output += sin(phase_8) * drawbar_8;
+  output += sin(phase_4) * drawbar_4;
+  output += sin(phase_2_2_3) * drawbar_2_2_3;
+  output += sin(phase_2) * drawbar_2;
+  output += sin(phase_1_3_5) * drawbar_1_3_5;
+  output += sin(phase_1_1_3) * drawbar_1_1_3;
+  output += sin(phase_1) * drawbar_1;
+  
+  // Apply master volume and velocity (if in MIDI mode)
+  amplitude = master_volume * (note_mode == 0 ? (note_on ? velocity : 0) : 1);
+  output *= amplitude;
+  
+  // Normalize the output to avoid clipping
+  output *= 0.3;
+  
+  // Output to both channels
+  spl0 = spl1 = output;
+) : (
+  // No note playing
+  spl0 = spl1 = 0;
+);

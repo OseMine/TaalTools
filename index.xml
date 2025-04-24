@@ -167,6 +167,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Additive_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Additive_Osc.jsfx</source>
+        <source file="Effects/Synth/TT_Organ_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Organ_Osc.jsfx</source>
         <!-- Filter Collection -->
         <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
         <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>

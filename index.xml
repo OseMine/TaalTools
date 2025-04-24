@@ -140,7 +140,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Envelope and modulation effects
 ]]></description>
       </metadata>
-        <version name="2.9" author="Taal">
+        <version name="3.0" author="Taal">
         <changelog><![CDATA[- Added new Apple 12-Pole Filter type with adjustable slopes
 - Added extensive filter mode options (12dB to 72dB/oct) 
 - Improved filter stability at high frequencies

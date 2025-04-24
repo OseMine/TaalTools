@@ -158,7 +158,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Add/svf_filter.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/svf_filter.jsfx-inc</source>
         
         <!-- Envelope Collection -->
-        <source file="Effects/Envelope/TT_Gate_Envelope2.jsfx.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope2.jsfx.jsfx</source>
+        <source file="Effects/Envelope/TT_Gate_Envelope2.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope2.jsfx</source>
 
         <!-- Synth Collection -->
         <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>

@@ -1,0 +1,144 @@
+desc: TaalTools Gate Envelope
+tags: dynamics gate midi
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+provides: TaalTools_GateEnvelope/TaalTools_GateEnvelope.jsfx
+
+slider1:attack_ms=10<0,1000,1>Attack (ms)
+slider2:release_ms=100<0,5000,1>Release (ms)
+slider3:threshold_db=-60<-90,0,1>Threshold (dB)
+slider4:gate_depth=60<0,120,1>Gate Depth (dB)
+slider5:midi_channel=0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel
+slider6:lookahead_ms=0<0,50,1>Lookahead (ms)
+slider7:hold_ms=50<0,1000,1>Hold Time (ms)
+slider8:midi_controlled=1<0,1,1{No,Yes}>MIDI Gate Control
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+// Constants
+MIDI_NOTES = 128;
+active_midi_notes = 0;
+note_count = 0;
+notes_on = 0;
+env_level = 0;
+hold_samples = 0;
+hold_counter = 0;
+
+// Initialize note tracking array
+i = 0;
+while (i < MIDI_NOTES) (
+  note_active[i] = 0;
+  i += 1;
+);
+
+@slider
+// Convert ms to samples
+attack_samples = attack_ms * srate / 1000;
+release_samples = release_ms * srate / 1000;
+lookahead_samples = lookahead_ms * srate / 1000;
+hold_samples = hold_ms * srate / 1000;
+
+// Convert dB values to linear
+threshold = 10^(threshold_db/20);
+depth_mult = 10^(-gate_depth/20);
+
+@block
+// Process MIDI
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+  
+  // Check if we should process this MIDI channel
+  process_midi = midi_channel == 0 || midi_channel == channel + 1;
+  
+  process_midi ? (
+    // Note on
+    status == 0x90 && (msg23 & 0xFF00) ? (
+      note = msg23 & 0x7F;
+      vel = (msg23 & 0xFF00) >> 8;
+      
+      vel > 0 ? (
+        // Note on with velocity > 0
+        note_active[note] = 1;
+        note_count += 1;
+      ) : (
+        // Note off via note on with velocity 0
+        note_active[note] == 1 ? (
+          note_active[note] = 0;
+          note_count -= 1;
+        );
+      );
+    ) : 
+    // Note off
+    status == 0x80 ? (
+      note = msg23 & 0x7F;
+      note_active[note] == 1 ? (
+        note_active[note] = 0;
+        note_count -= 1;
+      );
+    );
+  );
+  
+  // Pass through all MIDI messages
+  midisend(offset, msg1, msg23);
+);
+
+// Make sure note_count doesn't go negative due to any logic errors
+note_count < 0 ? note_count = 0;
+
+// Store if any notes are active
+notes_on = note_count > 0;
+
+// Hold counter handling
+notes_on ? (
+  // Reset hold counter when notes are active
+  hold_counter = 0;
+) : (
+  // Increment hold counter when no notes are active
+  hold_counter < hold_samples ? hold_counter += 1;
+);
+
+// Determine if gate should be open based on MIDI and hold
+gate_open = notes_on || hold_counter < hold_samples;
+
+@sample
+// Get input sample level (max of left and right channels)
+in_level = max(abs(spl0), abs(spl1));
+
+// Determine if gate should open based on audio threshold or MIDI control
+open_gate = midi_controlled ? gate_open : in_level > threshold;
+
+// Update envelope level with attack/release
+open_gate ? (
+  // Attack
+  env_level < 1 ? (
+    attack_samples > 0 ? (
+      env_level += 1 / attack_samples;
+      env_level > 1 ? env_level = 1;
+    ) : (
+      env_level = 1;
+    );
+  );
+) : (
+  // Release
+  env_level > 0 ? (
+    release_samples > 0 ? (
+      env_level -= 1 / release_samples;
+      env_level < 0 ? env_level = 0;
+    ) : (
+      env_level = 0;
+    );
+  );
+);
+
+// Compute gate multiplier (linear interpolation between full depth and 1.0)
+gate_mult = env_level + (1 - env_level) * depth_mult;
+
+// Apply to output
+spl0 *= gate_mult;
+spl1 *= gate_mult;

@@ -157,6 +157,9 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Add/cookdsp_envelope.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp_envelope.jsfx-inc</source>
         <source file="Add/svf_filter.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/svf_filter.jsfx-inc</source>
         
+        <!-- Envelope Collection -->
+        <source file="Effects/Envelope/TT_Gate_Envelope2.jsfx.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope2.jsfx.jsfx</source>
+
         <!-- Synth Collection -->
         <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>

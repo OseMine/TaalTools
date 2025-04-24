@@ -1,0 +1,258 @@
+desc: TaalTools FM Oscillator
+tags: synthesizer oscillator fm
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+provides: TaalTools_FMOsc/TaalTools_FMOsc.jsfx
+
+// Global controls
+slider1:master_volume=0.5<0,1,0.01>Master Volume
+slider2:note_mode=0<0,1,1{Direct MIDI,Fixed Note}>Note Mode
+slider3:fixed_note=60<0,127,1>Fixed Note (when Note Mode = Fixed)
+
+// Algorithm selection
+slider4:algorithm=0<0,3,1{1>2>3>4,1+2>3>4,1>2+3>4,1+2+3>4}>Algorithm
+
+// Operator 1 (Modulator or Carrier depending on algorithm)
+slider10:op1_level=1.0<0,1,0.01>Op 1 Level
+slider11:op1_ratio=1.0<0.1,12,0.01>Op 1 Frequency Ratio
+slider12:op1_feedback=0<0,1,0.01>Op 1 Feedback
+
+// Operator 2
+slider15:op2_level=0.6<0,1,0.01>Op 2 Level
+slider16:op2_ratio=2.0<0.1,12,0.01>Op 2 Frequency Ratio
+slider17:op2_feedback=0<0,1,0.01>Op 2 Feedback
+
+// Operator 3
+slider20:op3_level=0.3<0,1,0.01>Op 3 Level
+slider21:op3_ratio=3.0<0.1,12,0.01>Op 3 Frequency Ratio
+slider22:op3_feedback=0<0,1,0.01>Op 3 Feedback
+
+// Operator 4 (Always a carrier)
+slider25:op4_level=0.8<0,1,0.01>Op 4 Level
+slider26:op4_ratio=1.0<0.1,12,0.01>Op 4 Frequency Ratio
+
+// Simple ADSR envelope settings
+slider30:attack_ms=10<1,2000,1>Attack (ms)
+slider31:decay_ms=200<1,2000,1>Decay (ms)
+slider32:sustain=0.7<0,1,0.01>Sustain Level
+slider33:release_ms=300<1,5000,1>Release (ms)
+
+in_pin:none
+out_pin:left output
+out_pin:right output
+
+@init
+// Constants
+TWO_PI = 2.0 * $pi;
+
+// MIDI note tracking
+note_on = 0;
+active_note = -1;
+velocity = 0;
+
+// Initialize oscillator phases
+op1_phase = op2_phase = op3_phase = op4_phase = 0;
+
+// Envelope state
+env_stage = 0; // 0=off, 1=attack, 2=decay, 3=sustain, 4=release
+env_level = 0;
+env_time = 0;
+
+@slider
+// Convert envelope times from ms to samples
+attack_samples = max(1, attack_ms * srate / 1000); 
+decay_samples = max(1, decay_ms * srate / 1000);
+release_samples = max(1, release_ms * srate / 1000);
+
+@block
+// Process MIDI
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+  
+  // Note On
+  status == 0x90 && (msg23 & 0xFF00) ? (
+    note = msg23 & 0x7F;
+    vel = (msg23 & 0xFF00) >> 8;
+    
+    vel > 0 ? (
+      active_note = note;
+      note_on = 1;
+      velocity = vel / 127;
+      
+      // Start envelope
+      env_stage = 1; // attack
+      env_time = 0;
+    ) : (
+      // Note Off (note on with velocity 0)
+      note == active_note ? (
+        note_on = 0;
+        // Start release phase if this is our active note
+        env_stage = 4; // release
+        env_time = 0;
+      );
+    );
+  ) : 
+  
+  // Note Off
+  status == 0x80 ? (
+    note = msg23 & 0x7F;
+    note == active_note ? (
+      note_on = 0;
+      // Start release phase
+      env_stage = 4; // release
+      env_time = 0;
+    );
+  );
+  
+  midisend(offset, msg1, msg23); // Pass through MIDI
+);
+
+@sample
+// Envelope processing
+env_stage == 1 ? ( // Attack
+  env_level = env_time / attack_samples;
+  env_time += 1;
+  env_time >= attack_samples ? (
+    env_stage = 2; // Move to decay
+    env_time = 0;
+  );
+) : env_stage == 2 ? ( // Decay
+  env_level = 1.0 - (1.0 - sustain) * (env_time / decay_samples);
+  env_time += 1;
+  env_time >= decay_samples ? (
+    env_stage = 3; // Move to sustain
+    env_level = sustain;
+  );
+) : env_stage == 3 ? ( // Sustain
+  env_level = sustain;
+  !note_on ? (
+    env_stage = 4; // Move to release if note is off
+    env_time = 0;
+  );
+) : env_stage == 4 ? ( // Release
+  env_level = sustain * (1.0 - env_time / release_samples);
+  env_time += 1;
+  env_time >= release_samples ? (
+    env_stage = 0; // End envelope
+    env_level = 0;
+  );
+) : ( // Off
+  env_level = 0;
+);
+
+// Determine current frequency based on note mode and active note
+note_mode == 0 ? (
+  // Direct MIDI mode
+  current_note = (env_stage > 0) ? active_note : -1;
+) : (
+  // Fixed note mode
+  current_note = fixed_note;
+);
+
+current_note >= 0 ? (
+  // Convert MIDI note to frequency: 440 * 2^((note-69)/12)
+  base_freq = 440 * pow(2, (current_note - 69) / 12);
+  
+  // Calculate operator frequencies based on ratios
+  op1_freq = base_freq * op1_ratio;
+  op2_freq = base_freq * op2_ratio;
+  op3_freq = base_freq * op3_ratio;
+  op4_freq = base_freq * op4_ratio;
+  
+  // Store previous sample for feedback
+  op1_prev = sin(op1_phase);
+  op2_prev = sin(op2_phase);
+  op3_prev = sin(op3_phase);
+  
+  // FM synthesis based on selected algorithm
+  algorithm == 0 ? ( // 1>2>3>4 (series)
+    // Update phases with modulation
+    mod1 = op1_prev * op1_level + op1_feedback * op1_prev;
+    op1_phase += op1_freq * TWO_PI / srate;
+    op1_phase >= TWO_PI ? op1_phase -= TWO_PI;
+    
+    mod2 = sin(op1_phase + mod1) * op2_level + op2_feedback * op2_prev;
+    op2_phase += op2_freq * TWO_PI / srate;
+    op2_phase >= TWO_PI ? op2_phase -= TWO_PI;
+    
+    mod3 = sin(op2_phase + mod2) * op3_level + op3_feedback * op3_prev;
+    op3_phase += op3_freq * TWO_PI / srate;
+    op3_phase >= TWO_PI ? op3_phase -= TWO_PI;
+    
+    // Final carrier with modulation
+    output = sin(op3_phase + mod3 * op3_level) * op4_level;
+    op4_phase += op4_freq * TWO_PI / srate;
+    op4_phase >= TWO_PI ? op4_phase -= TWO_PI;
+    
+  ) : algorithm == 1 ? ( // 1+2>3>4 (parallel into series)
+    // Update phases with modulation
+    mod1 = op1_prev * op1_level + op1_feedback * op1_prev;
+    op1_phase += op1_freq * TWO_PI / srate;
+    op1_phase >= TWO_PI ? op1_phase -= TWO_PI;
+    
+    mod2 = op2_prev * op2_level + op2_feedback * op2_prev;
+    op2_phase += op2_freq * TWO_PI / srate;
+    op2_phase >= TWO_PI ? op2_phase -= TWO_PI;
+    
+    mod3 = sin(op3_phase + mod1 + mod2) * op3_level + op3_feedback * op3_prev;
+    op3_phase += op3_freq * TWO_PI / srate;
+    op3_phase >= TWO_PI ? op3_phase -= TWO_PI;
+    
+    // Final carrier with modulation
+    output = sin(op4_phase + mod3) * op4_level;
+    op4_phase += op4_freq * TWO_PI / srate;
+    op4_phase >= TWO_PI ? op4_phase -= TWO_PI;
+    
+  ) : algorithm == 2 ? ( // 1>2+3>4 (series into parallel)
+    // Update phases with modulation
+    mod1 = op1_prev * op1_level + op1_feedback * op1_prev;
+    op1_phase += op1_freq * TWO_PI / srate;
+    op1_phase >= TWO_PI ? op1_phase -= TWO_PI;
+    
+    mod2 = sin(op2_phase + mod1) * op2_level + op2_feedback * op2_prev;
+    op2_phase += op2_freq * TWO_PI / srate;
+    op2_phase >= TWO_PI ? op2_phase -= TWO_PI;
+    
+    mod3 = sin(op3_phase + mod1) * op3_level + op3_feedback * op3_prev;
+    op3_phase += op3_freq * TWO_PI / srate;
+    op3_phase >= TWO_PI ? op3_phase -= TWO_PI;
+    
+    // Final carrier with modulation from both paths
+    output = sin(op4_phase + mod2 + mod3) * op4_level;
+    op4_phase += op4_freq * TWO_PI / srate;
+    op4_phase >= TWO_PI ? op4_phase -= TWO_PI;
+    
+  ) : ( // algorithm == 3, 1+2+3>4 (all parallel)
+    // Update phases with modulation
+    mod1 = op1_prev * op1_level + op1_feedback * op1_prev;
+    op1_phase += op1_freq * TWO_PI / srate;
+    op1_phase >= TWO_PI ? op1_phase -= TWO_PI;
+    
+    mod2 = op2_prev * op2_level + op2_feedback * op2_prev;
+    op2_phase += op2_freq * TWO_PI / srate;
+    op2_phase >= TWO_PI ? op2_phase -= TWO_PI;
+    
+    mod3 = op3_prev * op3_level + op3_feedback * op3_prev;
+    op3_phase += op3_freq * TWO_PI / srate;
+    op3_phase >= TWO_PI ? op3_phase -= TWO_PI;
+    
+    // Final carrier with modulation from all modulators
+    output = sin(op4_phase + mod1 + mod2 + mod3) * op4_level;
+    op4_phase += op4_freq * TWO_PI / srate;
+    op4_phase >= TWO_PI ? op4_phase -= TWO_PI;
+  );
+  
+  // Apply envelope and master volume
+  output *= env_level * master_volume * velocity;
+  
+  // Normalize the output a bit to avoid clipping
+  output *= 0.3;
+  
+  // Output to both channels
+  spl0 = spl1 = output;
+) : (
+  // No note playing
+  spl0 = spl1 = 0;
+);

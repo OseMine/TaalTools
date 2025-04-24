@@ -1,0 +1,69 @@
+desc:TaalTools Additive Osc
+
+in_pin:none
+out_pin:Stereo
+
+slider1:attack=0.01<0,1,0.001>Attack (s)
+slider2:release=0.5<0.01,5,0.01>Release (s)
+slider3:gain=0.8<0,1,0.01>Gain
+
+// Tuning Sliders
+slider:Base frequency
+slider10:tune1=0<-24,24,1>Partial 1 Tune
+slider11:tune2=0<-24,24,1>Partial 2 Tune
+slider12:tune3=0<-24,24,1>Partial 3 Tune
+slider13:tune4=0<-24,24,1>Partial 4 Tune
+slider14:tune5=0<-24,24,1>Partial 5 Tune
+slider15:tune6=0<-24,24,1>Partial 6 Tune
+slider16:tune7=0<-24,24,1>Partial 7 Tune
+slider17:tune8=0<-24,24,1>Partial 8 Tune
+slider18:tune9=0<-24,24,1>Partial 9 Tune
+slider19:tune10=0<-24,24,1>Partial 10 Tune
+
+@init
+notes = 128;
+note_states = 0;
+frequencies = 0;
+srate_inv = 1 / srate;
+
+@slider
+attack_samples = attack * srate;
+release_samples = release * srate;
+
+@block
+while (
+    midirecv(offset, msg1, msg2, msg3) ? (
+        status = msg1 & 0xF0;
+        note = msg2;
+        vel = msg3;
+
+        status == 0x90 && vel > 0 ? (
+            frequencies[note] = 440 * 2^((note - 69)/12);
+            note_states[note] = 1;
+        )
+        : status == 0x80 || (status == 0x90 && vel == 0) ? (
+            note_states[note] = 0;
+        );
+    );
+);
+
+@sample
+spl0 = spl1 = 0;
+
+i = 0;
+loop(128,
+    note_states[i] == 1 ? (
+        freq = frequencies[i];
+
+        sum = 0;
+        loop(10,
+            f = freq * 2^(this["tune"+(j+1)]/12);
+            sum += sin(2*$pi * f * srate_inv * samplesblock);
+        );
+
+        amp = gain / 10;
+        spl0 += amp * sum;
+        spl1 += amp * sum;
+    );
+    i += 1;
+);

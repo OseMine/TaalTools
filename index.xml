@@ -151,6 +151,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Implemented original Apple coefficient calculation
 - Added proper stereo/mono handling
 - Mapped resonance range 0-0.85 to 0-25dB]]></changelog>
+
         <!-- Common Include Files -->
         <source file="Add/cookdsp.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp.jsfx-inc</source>
         <source file="Add/cookdsp_envelope.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp_envelope.jsfx-inc</source>
@@ -165,7 +166,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_CookDSP_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_CookDSP_Synth.jsfx</source>
         <source file="Effects/Synth/TT_real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
-
+        <source file="Effects/Synth/TT_Additive_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Additive_Osc.jsfx</source>
         <!-- Filter Collection -->
         <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
         <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>

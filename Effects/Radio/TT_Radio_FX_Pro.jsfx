@@ -1,8 +1,8 @@
 desc:TaalTools Radio FX Pro
 tags: radio vintage broadcast am fm bandwidth character analog
 author: TaalTools
-version: 1.1
-changelog: Enhanced character and modulation features
+version: 1.2
+changelog: Fixed effect amount and character processing
 provides: TaalTools_RadioFX/TT_Radio_FX_Pro.jsfx
 
 // === SLIDERS ===
@@ -16,7 +16,7 @@ slider7:0<0,5,1>Character/Style (0=Clean,1=Warm,2=Dark,3=Harsh,4=Lofi,5=Broken)
 slider8:0<0,1,1>Analog Mode (0=Digital,1=Analog)
 
 @init
-// Base variables from Radio FX
+// Base variables
 seed = 12345678;
 lp0 = lp1 = 0;
 hp0 = hp1 = 0;
@@ -25,7 +25,7 @@ noise_level = crackle_level = saturation_amount = 0;
 bandwidth = 1.0;
 effect_amount = 0.5;
 
-// Pro specific variables
+// Effect variables
 phase = 0.0;
 wobble_rate = 0.5;
 wobble_amount = 0.003;
@@ -143,8 +143,13 @@ hp_factor = 0.01 * bandwidth;
 bp_factor = 0.5;
 
 @sample
+// Store dry signal for final mix
 spl0_orig = spl0;
 spl1_orig = spl1;
+
+// Apply effect amount at input stage
+spl0 *= effect_amount;
+spl1 *= effect_amount;
 
 // Random dropouts simulation
 (dropout_active || rand() < dropout_chance) ? (
@@ -167,10 +172,10 @@ spl1 += noise + crackle;
 hp0 += (spl0 - hp0) * hp_factor;
 hp1 += (spl1 - hp1) * hp_factor;
 
-// Mid
+// Mid with extra saturation
 bp0 += (spl0 - bp0) * bp_factor;
 bp1 += (spl1 - bp1) * bp_factor;
-bp0 = saturate(bp0, saturation_amount * 1.5); // Extra mid saturation
+bp0 = saturate(bp0, saturation_amount * 1.5);
 bp1 = saturate(bp1, saturation_amount * 1.5);
 
 // Low
@@ -181,13 +186,13 @@ lp1 += (spl1 - lp1) * lp_factor;
 spl0 = hp0 * 0.2 + bp0 * 0.5 + lp0 * 0.3;
 spl1 = hp1 * 0.2 + bp1 * 0.5 + lp1 * 0.3;
 
-// Wobble (frequency modulation)
+// Wobble and stereo drift
 phase += wobble_rate/srate;
 phase >= 1 ? phase -= 1;
 wobble = sin(phase*2*$pi) * wobble_amount;
 
 spl0 *= 1 + wobble;
-spl1 *= 1 - wobble; // Stereo drift
+spl1 *= 1 - wobble;
 
 // Character/Style processing
 character == 1 ? ( // Warm
@@ -211,16 +216,14 @@ character == 1 ? ( // Warm
     spl1 *= rand() * 0.8 + 0.2;
 );
 
-// Analog mode adds subtle noise and irregularities
+// Analog mode
 analog_mode ? (
     spl0 += (rand() * 2 - 1) * 0.002;
     spl1 += (rand() * 2 - 1) * 0.002;
-    
-    // Subtle frequency variations
     spl0 *= 1 + (rand() - 0.5) * 0.001;
     spl1 *= 1 + (rand() - 0.5) * 0.001;
 );
 
-// Final mix
-spl0 = spl0_orig*(1-effect_amount) + spl0*effect_amount;
-spl1 = spl1_orig*(1-effect_amount) + spl1*effect_amount;
+// Mix with dry signal
+spl0 = spl0_orig*(1-effect_amount) + spl0;
+spl1 = spl1_orig*(1-effect_amount) + spl1;

@@ -1,8 +1,8 @@
 desc:TaalTools Radio FX Pro (with Modulation)
 tags: radio vintage broadcast am fm modulation transmission
 author: TaalTools
-version: 1.1
-changelog: Enhanced modulation and transmission features
+version: 1.2
+changelog: Fixed modulation and effect amount processing
 provides: TaalTools_RadioFX/TT_Radio_FX_Pro_Modulation.jsfx
 
 // === SLIDERS ===
@@ -15,8 +15,8 @@ slider6:1<0.1,2,0.01>Bandwidth Factor
 slider7:0<0,5,1>Character/Style (0=Clean,1=Warm,2=Dark,3=Harsh,4=Lofi,5=Broken)
 slider8:0<0,1,1>Analog Mode (0=Digital,1=Analog)
 slider9:1<0,2,1>Transmission Mode (0=AM,1=FM,2=Digital)
-slider10:100000<1000,200000,100>Carrier Frequency (Hz)
-slider11:100000<1000,200000,100>Receiver Frequency (Hz)
+slider10:1000<100,10000,1>Carrier Frequency (Hz)
+slider11:1000<100,10000,1>Receiver Frequency (Hz)
 slider12:1<0,1,1>Lock Carrier/Receiver Frequencies
 
 @init
@@ -29,18 +29,19 @@ noise_level = crackle_level = saturation_amount = 0;
 bandwidth = 1.0;
 effect_amount = 0.5;
 
-// Pro specific variables
+// Modulation variables
+phase_mod = phase_rec = 0.0;
+prev_fm_sample = 0;
+demod_dc = 0;
+fm_delay = 0;
+
+// Effect variables
 phase = 0.0;
 wobble_rate = 0.5;
 wobble_amount = 0.003;
 dropout_chance = 0.001;
 dropout_active = 0;
 dropout_timer = 0;
-
-// Modulation variables
-phase_mod = phase_rec = 0.0;
-prev_phase = 0;
-fm_delay0 = fm_delay1 = 0;
 
 // === Helper Functions ===
 function rand() local(temp) (
@@ -59,26 +60,29 @@ function tanh(x) local(x2) (
     x * (27 + x2) / (27 + 9 * x2);
 );
 
-// AM modulation/demodulation
+// AM modulation/demodulation with better envelope detection
 function am_modulate(input, carrier) (
-    (1 + input * 0.5) * carrier;
+    input = max(min(input, 1), -1); // Clip input
+    (1 + input) * carrier * 0.5; // Normalized AM
 );
 
-function am_demodulate(input, carrier) (
-    abs(input * carrier);
+function am_demodulate(input, carrier) local(detected) (
+    detected = abs(input * carrier * 2);
+    demod_dc += (detected - demod_dc) * 0.001; // DC removal
+    detected - demod_dc;
 );
 
-// FM modulation/demodulation
+// FM modulation/demodulation with improved frequency deviation
 function fm_modulate(input, phase) local(mod_phase) (
-    mod_phase = phase + input * 0.1; // Modulation index
+    mod_phase = phase + input * 0.5; // Increased modulation index
     sin(mod_phase * 2 * $pi);
 );
 
-function fm_demodulate(input, prev) local(diff) (
-    diff = input - prev;
-    diff > $pi ? diff -= 2*$pi;
-    diff < -$pi ? diff += 2*$pi;
-    diff / (2 * $pi);
+function fm_demodulate(curr_sample, prev_sample) local(phase_diff) (
+    phase_diff = atan2(curr_sample * prev_fm_sample - prev_sample * curr_sample,
+                      curr_sample * curr_sample + prev_sample * prev_sample);
+    prev_fm_sample = curr_sample;
+    phase_diff * 2; // Increased demodulation gain
 );
 
 function update_decade_settings() (
@@ -179,49 +183,43 @@ hp_factor = 0.01 * bandwidth;
 bp_factor = 0.5;
 
 @sample
+// Store dry signal for final mix
 spl0_orig = spl0;
 spl1_orig = spl1;
+
+// Apply effect amount at input stage
+spl0 *= effect_amount;
+spl1 *= effect_amount;
 
 // Mix to mono for transmission
 signal = (spl0 + spl1) * 0.5;
 
-// Carrier generation
-phase_mod += carrier_freq/srate;
+// Carrier/Receiver phase calculation with better frequency scaling
+phase_mod += (carrier_freq/srate) * 0.1; // Reduced carrier frequency impact
 phase_mod >= 1 ? phase_mod -= 1;
 carrier = sin(phase_mod * 2 * $pi);
 
-// Apply modulation based on selected mode
-transmission_mode == 0 ? (
-    // AM
-    modulated = am_modulate(signal, carrier);
-) : transmission_mode == 1 ? (
-    // FM
-    modulated = fm_modulate(signal, phase_mod);
-) : (
-    // Digital (pass-through with slight artifacts)
-    modulated = signal;
-    modulated += (rand()*2-1)*0.001; // Digital noise
-);
-
-// Receiver
-phase_rec += receiver_freq/srate;
+phase_rec += (receiver_freq/srate) * 0.1;
 phase_rec >= 1 ? phase_rec -= 1;
 receive_carrier = sin(phase_rec * 2 * $pi);
 
-// Demodulation
+// Apply modulation based on mode
 transmission_mode == 0 ? (
-    // AM
+    // AM with improved modulation depth
+    modulated = am_modulate(signal, carrier);
     demodulated = am_demodulate(modulated, receive_carrier);
 ) : transmission_mode == 1 ? (
-    // FM
-    demodulated = fm_demodulate(modulated, prev_phase);
-    prev_phase = modulated;
+    // FM with better frequency deviation
+    modulated = fm_modulate(signal, phase_mod);
+    demodulated = fm_demodulate(modulated, fm_delay);
+    fm_delay = modulated;
 ) : (
-    // Digital
-    demodulated = modulated;
+    // Digital with subtle artifacts
+    modulated = signal;
+    demodulated = modulated + (rand()*2-1)*0.001;
 );
 
-// Apply demodulated signal to both channels
+// Apply demodulated signal
 spl0 = demodulated;
 spl1 = demodulated;
 
@@ -246,10 +244,10 @@ spl1 += noise + crackle;
 hp0 += (spl0 - hp0) * hp_factor;
 hp1 += (spl1 - hp1) * hp_factor;
 
-// Mid
+// Mid with extra saturation
 bp0 += (spl0 - bp0) * bp_factor;
 bp1 += (spl1 - bp1) * bp_factor;
-bp0 = saturate(bp0, saturation_amount * 1.5); // Extra mid saturation
+bp0 = saturate(bp0, saturation_amount * 1.5);
 bp1 = saturate(bp1, saturation_amount * 1.5);
 
 // Low
@@ -260,15 +258,15 @@ lp1 += (spl1 - lp1) * lp_factor;
 spl0 = hp0 * 0.2 + bp0 * 0.5 + lp0 * 0.3;
 spl1 = hp1 * 0.2 + bp1 * 0.5 + lp1 * 0.3;
 
-// Wobble (frequency modulation)
+// Wobble and stereo drift
 phase += wobble_rate/srate;
 phase >= 1 ? phase -= 1;
 wobble = sin(phase*2*$pi) * wobble_amount;
 
 spl0 *= 1 + wobble;
-spl1 *= 1 - wobble; // Stereo drift
+spl1 *= 1 - wobble;
 
-// Character/Style processing
+// Apply character/style
 character == 1 ? ( // Warm
     spl0 = saturate(spl0 * 1.2, 0.3);
     spl1 = saturate(spl1 * 1.2, 0.3);
@@ -290,16 +288,14 @@ character == 1 ? ( // Warm
     spl1 *= rand() * 0.8 + 0.2;
 );
 
-// Analog mode adds subtle noise and irregularities
+// Analog mode
 analog_mode ? (
     spl0 += (rand() * 2 - 1) * 0.002;
     spl1 += (rand() * 2 - 1) * 0.002;
-    
-    // Subtle frequency variations
     spl0 *= 1 + (rand() - 0.5) * 0.001;
     spl1 *= 1 + (rand() - 0.5) * 0.001;
 );
 
-// Final mix
-spl0 = spl0_orig*(1-effect_amount) + spl0*effect_amount;
-spl1 = spl1_orig*(1-effect_amount) + spl1*effect_amount;
+// Mix with dry signal
+spl0 = spl0_orig*(1-effect_amount) + spl0;
+spl1 = spl1_orig*(1-effect_amount) + spl1;

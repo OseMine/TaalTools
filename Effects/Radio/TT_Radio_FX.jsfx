@@ -1,11 +1,11 @@
 desc:TaalTools Radio FX
 tags: radio vintage broadcast am fm bandwidth
 author: TaalTools
-version: 1.1
-changelog: Improved efficiency and extensibility
+version: 1.2
+changelog: Fixed effect amount and improved processing
 provides: TaalTools_RadioFX/TT_Radio_FX.jsfx
 
-// slider definitions
+// === SLIDERS ===
 slider1:0<0,7,1>Decade Mode (0=50s,1=60s,2=70s,3=80s,4=90s,5=00s,6=10s,7=20s)
 slider2:50<0,100,1>Effect Amount (%)
 slider3:0<0,1,0.01>Noise Level
@@ -14,28 +14,32 @@ slider5:0<0,1,0.01>Saturation Amount
 slider6:1<0.1,2,0.01>Bandwidth Factor (1=default)
 
 @init
-// Fast PRNG state
+// Base variables
 seed = 12345678;
 lp0 = lp1 = 0;
 noise_level = crackle_level = saturation_amount = 0;
 bandwidth = 1.0;
 effect_amount = 0.5;
 
-// Base radio effect functions
+// === Helper Functions ===
 function rand() local(temp) (
     seed = (seed * 1664525 + 1013904223) | 0;
-    temp = seed/2147483648; // Normalize to -1 to 1
+    temp = seed/2147483648;
     temp;
 );
 
 function saturate(sample, amount) local(out) (
-    // Improved saturator with variable slope
     out = sample * (1 + abs(sample) * amount);
-    min(max(out, -1), 1); // Safe clipping
+    min(max(out, -1), 1);
 );
 
 function update_decade_settings() (
-    // Set decade-based characteristics
+    // defaults
+    noise_level = 0.0;
+    crackle_level = 0.0;
+    saturation_amount = 0.0;
+    bandwidth = 1.0;
+
     decade == 0 ? ( // 1950s
         noise_level = 0.3;
         crackle_level = 0.2;
@@ -84,8 +88,8 @@ function update_decade_settings() (
         saturation_amount = 0.05;
         bandwidth = 1.2;
     );
-    
-    // User overrides
+
+    // Manual override if user moves sliders
     noise_level = max(noise_level, slider3);
     crackle_level = max(crackle_level, slider4);
     saturation_amount = max(saturation_amount, slider5);
@@ -95,16 +99,25 @@ function update_decade_settings() (
 @slider
 decade = slider1;
 effect_amount = slider2/100;
+noise_level = slider3;
+crackle_level = slider4;
+saturation_amount = slider5;
+bandwidth = slider6;
+
 update_decade_settings();
 
 @block
-// Update core effect parameters
+// Update filter coefficients
 lp_factor = 0.99 * (1/bandwidth);
 
 @sample
-// Store dry signal
+// Store dry signal for final mix
 spl0_orig = spl0;
 spl1_orig = spl1;
+
+// Apply effect amount at input stage
+spl0 *= effect_amount;
+spl1 *= effect_amount;
 
 // Generate noise and crackle
 noise = rand() * noise_level;
@@ -124,6 +137,6 @@ lp1 += (spl1 - lp1) * lp_factor;
 spl0 = lp0;
 spl1 = lp1;
 
-// Final mix
-spl0 = spl0_orig*(1-effect_amount) + spl0*effect_amount;
-spl1 = spl1_orig*(1-effect_amount) + spl1*effect_amount;
+// Mix with dry signal
+spl0 = spl0_orig*(1-effect_amount) + spl0;
+spl1 = spl1_orig*(1-effect_amount) + spl1;

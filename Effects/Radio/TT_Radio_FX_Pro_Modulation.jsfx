@@ -1,8 +1,8 @@
 desc:TaalTools Radio FX Pro (with Modulation)
 tags: radio vintage broadcast am fm modulation transmission
 author: TaalTools
-version: 1.0
-changelog: Initial Release
+version: 1.1
+changelog: Enhanced modulation and transmission features
 provides: TaalTools_RadioFX/TT_Radio_FX_Pro_Modulation.jsfx
 
 // === SLIDERS ===
@@ -19,44 +19,67 @@ slider10:100000<1000,200000,100>Carrier Frequency (Hz)
 slider11:100000<1000,200000,100>Receiver Frequency (Hz)
 slider12:1<0,1,1>Lock Carrier/Receiver Frequencies
 
-// === INTERNALS ===
 @init
-seed = 0.1234567;
+// Base variables
+seed = 12345678;
+lp0 = lp1 = 0;
+hp0 = hp1 = 0;
+bp0 = bp1 = 0;
+noise_level = crackle_level = saturation_amount = 0;
+bandwidth = 1.0;
+effect_amount = 0.5;
+
+// Pro specific variables
 phase = 0.0;
-phase_mod = 0.0;
-phase_rec = 0.0;
-wobble_rate = 0.5; // Hz
+wobble_rate = 0.5;
 wobble_amount = 0.003;
 dropout_chance = 0.001;
 dropout_active = 0;
 dropout_timer = 0;
 
-// === HELPER FUNCTIONS ===
-function saturate(sample, amount) (
-    sample - (sample^3)*amount;
+// Modulation variables
+phase_mod = phase_rec = 0.0;
+prev_phase = 0;
+fm_delay0 = fm_delay1 = 0;
+
+// === Helper Functions ===
+function rand() local(temp) (
+    seed = (seed * 1664525 + 1013904223) | 0;
+    temp = seed/2147483648;
+    temp;
 );
 
-function rand() (
-    seed = (seed * 196314165) + 907633515;
-    (seed & 0x7FFFFFFF) / 2147483647;
+function saturate(sample, amount) local(out) (
+    out = sample * (1 + abs(sample) * amount);
+    min(max(out, -1), 1);
 );
 
-// === UPDATE SETTINGS ===
-@slider
-decade = slider1;
-effect_amount = slider2/100;
-manual_noise_level = slider3;
-manual_crackle_level = slider4;
-manual_saturation_amount = slider5;
-bandwidth = slider6;
-character = slider7;
-analog_mode = slider8;
-transmission_mode = slider9;
-carrier_freq = slider10;
-receiver_freq = slider11;
-lock_freqs = slider12;
+function tanh(x) local(x2) (
+    x2 = x * x;
+    x * (27 + x2) / (27 + 9 * x2);
+);
 
-lock_freqs == 1 ? receiver_freq = carrier_freq;
+// AM modulation/demodulation
+function am_modulate(input, carrier) (
+    (1 + input * 0.5) * carrier;
+);
+
+function am_demodulate(input, carrier) (
+    abs(input * carrier);
+);
+
+// FM modulation/demodulation
+function fm_modulate(input, phase) local(mod_phase) (
+    mod_phase = phase + input * 0.1; // Modulation index
+    sin(mod_phase * 2 * $pi);
+);
+
+function fm_demodulate(input, prev) local(diff) (
+    diff = input - prev;
+    diff > $pi ? diff -= 2*$pi;
+    diff < -$pi ? diff += 2*$pi;
+    diff / (2 * $pi);
+);
 
 function update_decade_settings() (
     // defaults
@@ -80,152 +103,203 @@ function update_decade_settings() (
         crackle_level = 0.15;
         saturation_amount = 0.4;
         bandwidth = 0.6;
+        wobble_amount = 0.004;
     );
     decade == 2 ? ( // 70s
         noise_level = 0.2;
         crackle_level = 0.1;
         saturation_amount = 0.35;
         bandwidth = 0.7;
+        wobble_amount = 0.003;
     );
     decade == 3 ? ( // 80s
         noise_level = 0.15;
         crackle_level = 0.08;
         saturation_amount = 0.3;
         bandwidth = 0.8;
+        wobble_amount = 0.002;
     );
     decade == 4 ? ( // 90s
         noise_level = 0.1;
         crackle_level = 0.05;
         saturation_amount = 0.25;
         bandwidth = 0.9;
+        wobble_amount = 0.001;
     );
     decade == 5 ? ( // 00s
         noise_level = 0.05;
         crackle_level = 0.02;
         saturation_amount = 0.15;
         bandwidth = 1.0;
+        wobble_amount = 0.0005;
     );
     decade == 6 ? ( // 10s
         noise_level = 0.03;
         crackle_level = 0.01;
         saturation_amount = 0.1;
         bandwidth = 1.1;
+        wobble_amount = 0.0002;
     );
     decade == 7 ? ( // 20s
         noise_level = 0.02;
         crackle_level = 0.005;
         saturation_amount = 0.05;
         bandwidth = 1.2;
+        wobble_amount = 0.0001;
     );
 
     // Manual override if user moves sliders
-    noise_level = max(noise_level, manual_noise_level);
-    crackle_level = max(crackle_level, manual_crackle_level);
-    saturation_amount = max(saturation_amount, manual_saturation_amount);
+    noise_level = max(noise_level, slider3);
+    crackle_level = max(crackle_level, slider4);
+    saturation_amount = max(saturation_amount, slider5);
+    bandwidth = slider6 * bandwidth;
 );
 
-// === PROCESS AUDIO ===
-@block
+@slider
+decade = slider1;
+effect_amount = slider2/100;
+noise_level = slider3;
+crackle_level = slider4;
+saturation_amount = slider5;
+bandwidth = slider6;
+character = slider7;
+analog_mode = slider8;
+transmission_mode = slider9;
+carrier_freq = slider10;
+receiver_freq = slider11;
+lock_freqs = slider12;
+
+lock_freqs ? receiver_freq = carrier_freq;
 update_decade_settings();
+
+@block
+// Update filter coefficients
+lp_factor = 0.99 * (1/bandwidth);
+hp_factor = 0.01 * bandwidth;
+bp_factor = 0.5;
 
 @sample
 spl0_orig = spl0;
 spl1_orig = spl1;
 
-// Transmission Simulation
-signal = (spl0 + spl1)*0.5; // Mono Basis
+// Mix to mono for transmission
+signal = (spl0 + spl1) * 0.5;
 
+// Carrier generation
 phase_mod += carrier_freq/srate;
-phase_mod > 1 ? phase_mod -= 1;
+phase_mod >= 1 ? phase_mod -= 1;
 carrier = sin(phase_mod * 2 * $pi);
 
-// Amplitude Modulation
+// Apply modulation based on selected mode
 transmission_mode == 0 ? (
-    modulated = (1 + 0.5*signal) * carrier;
-);
-
-// Frequency Modulation
-transmission_mode == 1 ? (
-    phase_fm = phase_mod + signal*0.01; // 0.01 = FM depth
-    modulated = sin(phase_fm * 2 * $pi);
-);
-
-// Digital Transmission
-transmission_mode == 2 ? (
+    // AM
+    modulated = am_modulate(signal, carrier);
+) : transmission_mode == 1 ? (
+    // FM
+    modulated = fm_modulate(signal, phase_mod);
+) : (
+    // Digital (pass-through with slight artifacts)
     modulated = signal;
-    // Add slight digital artifacts
-    modulated += (rand()*2-1)*0.001;
+    modulated += (rand()*2-1)*0.001; // Digital noise
 );
 
 // Receiver
 phase_rec += receiver_freq/srate;
-phase_rec > 1 ? phase_rec -= 1;
+phase_rec >= 1 ? phase_rec -= 1;
 receive_carrier = sin(phase_rec * 2 * $pi);
 
-// AM Demodulation
+// Demodulation
 transmission_mode == 0 ? (
-    demodulated = modulated * receive_carrier;
-);
-
-// FM Demodulation
-transmission_mode == 1 ? (
-    demodulated = atan2(sin(modulated*2*$pi), cos(modulated*2*$pi));
-);
-
-// Digital just passes through
-transmission_mode == 2 ? (
+    // AM
+    demodulated = am_demodulate(modulated, receive_carrier);
+) : transmission_mode == 1 ? (
+    // FM
+    demodulated = fm_demodulate(modulated, prev_phase);
+    prev_phase = modulated;
+) : (
+    // Digital
     demodulated = modulated;
 );
 
-// Post Demodulation Filter
-lp_factor = 0.99 * (1/bandwidth);
+// Apply demodulated signal to both channels
+spl0 = demodulated;
+spl1 = demodulated;
 
-lp0 += (demodulated - lp0) * lp_factor;
-lp1 += (demodulated - lp1) * lp_factor;
-
-spl0 = lp0;
-spl1 = lp1;
-
-// Random dropouts
+// Random dropouts simulation
 (dropout_active || rand() < dropout_chance) ? (
     dropout_timer += 1;
     dropout_active = 1;
-    (dropout_timer > srate*0.05) ? (dropout_active=0;dropout_timer=0;);
+    (dropout_timer > srate*0.05) ? (dropout_active=0; dropout_timer=0;);
     spl0 *= 0.2;
     spl1 *= 0.2;
 );
 
-// Noise and crackle
-noise = (rand()*2-1) * noise_level;
-crackle = (rand() < crackle_level) ? (rand()*2-1)*0.5 : 0;
+// Generate and apply noise components
+noise = rand() * noise_level;
+crackle = (rand() > 0.99) ? rand() * crackle_level : 0;
 
 spl0 += noise + crackle;
 spl1 += noise + crackle;
 
-// Saturation and wobble
-spl0 = saturate(spl0, saturation_amount);
-spl1 = saturate(spl1, saturation_amount);
+// Multiband processing
+// High
+hp0 += (spl0 - hp0) * hp_factor;
+hp1 += (spl1 - hp1) * hp_factor;
 
+// Mid
+bp0 += (spl0 - bp0) * bp_factor;
+bp1 += (spl1 - bp1) * bp_factor;
+bp0 = saturate(bp0, saturation_amount * 1.5); // Extra mid saturation
+bp1 = saturate(bp1, saturation_amount * 1.5);
+
+// Low
+lp0 += (spl0 - lp0) * lp_factor;
+lp1 += (spl1 - lp1) * lp_factor;
+
+// Recombine bands
+spl0 = hp0 * 0.2 + bp0 * 0.5 + lp0 * 0.3;
+spl1 = hp1 * 0.2 + bp1 * 0.5 + lp1 * 0.3;
+
+// Wobble (frequency modulation)
 phase += wobble_rate/srate;
 phase >= 1 ? phase -= 1;
 wobble = sin(phase*2*$pi) * wobble_amount;
 
 spl0 *= 1 + wobble;
-spl1 *= 1 - wobble;
+spl1 *= 1 - wobble; // Stereo drift
 
-// Style / Character adjustments
-character == 1 ? (spl0 *= 1.05; spl1 *= 1.05); // Warm
-character == 2 ? (spl0 *= 0.85; spl1 *= 0.85); // Dark
-character == 3 ? (spl0 = tanh(spl0*2); spl1 = tanh(spl1*2)); // Harsh
-character == 4 ? (spl0 = saturate(spl0,0.7); spl1 = saturate(spl1,0.7)); // Lofi
-character == 5 ? (spl0 *= rand()*0.8+0.2; spl1 *= rand()*0.8+0.2); // Broken
-
-// Analog mode adds slight noise and drift
-analog_mode ? (
-    spl0 += (rand()*2-1)*0.002;
-    spl1 += (rand()*2-1)*0.002;
+// Character/Style processing
+character == 1 ? ( // Warm
+    spl0 = saturate(spl0 * 1.2, 0.3);
+    spl1 = saturate(spl1 * 1.2, 0.3);
+) : character == 2 ? ( // Dark
+    spl0 *= 0.85;
+    spl1 *= 0.85;
+    lp0 += (spl0 - lp0) * 0.6;
+    lp1 += (spl1 - lp1) * 0.6;
+    spl0 = lp0;
+    spl1 = lp1;
+) : character == 3 ? ( // Harsh
+    spl0 = tanh(spl0 * 2);
+    spl1 = tanh(spl1 * 2);
+) : character == 4 ? ( // Lofi
+    spl0 = floor(spl0 * 8) / 8;
+    spl1 = floor(spl1 * 8) / 8;
+) : character == 5 ? ( // Broken
+    spl0 *= rand() * 0.8 + 0.2;
+    spl1 *= rand() * 0.8 + 0.2;
 );
 
-// Final dry/wet mix
+// Analog mode adds subtle noise and irregularities
+analog_mode ? (
+    spl0 += (rand() * 2 - 1) * 0.002;
+    spl1 += (rand() * 2 - 1) * 0.002;
+    
+    // Subtle frequency variations
+    spl0 *= 1 + (rand() - 0.5) * 0.001;
+    spl1 *= 1 + (rand() - 0.5) * 0.001;
+);
+
+// Final mix
 spl0 = spl0_orig*(1-effect_amount) + spl0*effect_amount;
 spl1 = spl1_orig*(1-effect_amount) + spl1*effect_amount;

@@ -140,7 +140,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
 - Envelope and modulation effects
 ]]></description>
       </metadata>
-      <version name="3.1" author="Taal">
+      <version name="3.2" author="Taal">
         <changelog><![CDATA[- Added new Radio Effects Suite with three variations
 - Added vintage radio simulation with decade-based presets
 - Added advanced modulation and transmission simulation

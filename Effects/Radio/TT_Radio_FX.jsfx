@@ -1,0 +1,138 @@
+desc:TaalTools Radio FX
+tags: radio vintage broadcast am fm bandwidth
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+provides: TaalTools_RadioFX/TT_Radio_FX.jsfx
+
+// slider definitions
+slider1:0<0,7,1>Decade Mode (0=50s,1=60s,2=70s,3=80s,4=90s,5=00s,6=10s,7=20s)
+slider2:50<0,100,1>Effect Amount (%)
+slider3:0<0,1,0.01>Noise Level
+slider4:0<0,1,0.01>Crackle Level
+slider5:0<0,1,0.01>Saturation Amount
+slider6:1<0.1,2,0.01>Bandwidth Factor (1=default)
+
+// internal variables
+@init
+decade = 0;
+effect_amount = 0.5;
+noise_level = 0.0;
+crackle_level = 0.0;
+saturation_amount = 0.0;
+bandwidth = 1.0;
+
+// noise generator
+seed = 0.1234;
+
+// helper functions
+function saturate(sample, amount) (
+    sample - (sample^3)*amount;
+);
+
+function rand() (
+    seed = (seed * 196314165) + 907633515;
+    (seed & 0x7FFFFFFF) / 2147483647;
+);
+
+@slider
+decade = slider1;
+effect_amount = slider2/100;
+noise_level = slider3;
+crackle_level = slider4;
+saturation_amount = slider5;
+bandwidth = slider6;
+
+// Decade settings
+function update_decade_settings() (
+    // defaults
+    noise_level = 0.0;
+    crackle_level = 0.0;
+    saturation_amount = 0.0;
+    bandwidth = 1.0;
+
+    decade == 0 ? ( // 1950s
+        noise_level = 0.3;
+        crackle_level = 0.2;
+        saturation_amount = 0.5;
+        bandwidth = 0.5;
+    );
+    decade == 1 ? ( // 1960s
+        noise_level = 0.25;
+        crackle_level = 0.15;
+        saturation_amount = 0.4;
+        bandwidth = 0.6;
+    );
+    decade == 2 ? ( // 1970s
+        noise_level = 0.2;
+        crackle_level = 0.1;
+        saturation_amount = 0.35;
+        bandwidth = 0.7;
+    );
+    decade == 3 ? ( // 1980s
+        noise_level = 0.15;
+        crackle_level = 0.08;
+        saturation_amount = 0.3;
+        bandwidth = 0.8;
+    );
+    decade == 4 ? ( // 1990s
+        noise_level = 0.1;
+        crackle_level = 0.05;
+        saturation_amount = 0.25;
+        bandwidth = 0.9;
+    );
+    decade == 5 ? ( // 2000s
+        noise_level = 0.05;
+        crackle_level = 0.02;
+        saturation_amount = 0.15;
+        bandwidth = 1.0;
+    );
+    decade == 6 ? ( // 2010s
+        noise_level = 0.03;
+        crackle_level = 0.01;
+        saturation_amount = 0.1;
+        bandwidth = 1.1;
+    );
+    decade == 7 ? ( // 2020s
+        noise_level = 0.02;
+        crackle_level = 0.005;
+        saturation_amount = 0.05;
+        bandwidth = 1.2;
+    );
+);
+
+@block
+update_decade_settings();
+
+@sample
+// original sample
+spl0_orig = spl0;
+spl1_orig = spl1;
+
+// add noise
+noise = (rand()*2-1) * noise_level;
+
+// add crackle
+crackle = (rand() < crackle_level) ? (rand()*2-1)*0.5 : 0;
+
+// combine
+spl0 += noise + crackle;
+spl1 += noise + crackle;
+
+// simple saturation
+spl0 = saturate(spl0, saturation_amount);
+spl1 = saturate(spl1, saturation_amount);
+
+// simple lowpass / bandwidth limiter
+// (primitive but effective for character)
+lp_factor = 0.99 * (1/bandwidth);
+
+lp0 += (spl0 - lp0) * lp_factor;
+lp1 += (spl1 - lp1) * lp_factor;
+
+spl0 = lp0;
+spl1 = lp1;
+
+// mix dry/wet
+spl0 = spl0_orig*(1-effect_amount) + spl0*effect_amount;
+spl1 = spl1_orig*(1-effect_amount) + spl1*effect_amount;

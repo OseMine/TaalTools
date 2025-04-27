@@ -1,0 +1,231 @@
+desc:TaalTools Radio FX Pro (with Modulation)
+tags: radio vintage broadcast am fm modulation transmission
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+provides: TaalTools_RadioFX/TT_Radio_FX_Pro_Modulation.jsfx
+
+// === SLIDERS ===
+slider1:0<0,7,1>Decade Mode (0=50s,1=60s,2=70s,3=80s,4=90s,5=00s,6=10s,7=20s)
+slider2:50<0,100,1>Effect Amount (%)
+slider3:0<0,1,0.01>Noise Level
+slider4:0<0,1,0.01>Crackle Level
+slider5:0<0,1,0.01>Saturation Amount
+slider6:1<0.1,2,0.01>Bandwidth Factor
+slider7:0<0,5,1>Character/Style (0=Clean,1=Warm,2=Dark,3=Harsh,4=Lofi,5=Broken)
+slider8:0<0,1,1>Analog Mode (0=Digital,1=Analog)
+slider9:1<0,2,1>Transmission Mode (0=AM,1=FM,2=Digital)
+slider10:100000<1000,200000,100>Carrier Frequency (Hz)
+slider11:100000<1000,200000,100>Receiver Frequency (Hz)
+slider12:1<0,1,1>Lock Carrier/Receiver Frequencies
+
+// === INTERNALS ===
+@init
+seed = 0.1234567;
+phase = 0.0;
+phase_mod = 0.0;
+phase_rec = 0.0;
+wobble_rate = 0.5; // Hz
+wobble_amount = 0.003;
+dropout_chance = 0.001;
+dropout_active = 0;
+dropout_timer = 0;
+
+// === HELPER FUNCTIONS ===
+function saturate(sample, amount) (
+    sample - (sample^3)*amount;
+);
+
+function rand() (
+    seed = (seed * 196314165) + 907633515;
+    (seed & 0x7FFFFFFF) / 2147483647;
+);
+
+// === UPDATE SETTINGS ===
+@slider
+decade = slider1;
+effect_amount = slider2/100;
+manual_noise_level = slider3;
+manual_crackle_level = slider4;
+manual_saturation_amount = slider5;
+bandwidth = slider6;
+character = slider7;
+analog_mode = slider8;
+transmission_mode = slider9;
+carrier_freq = slider10;
+receiver_freq = slider11;
+lock_freqs = slider12;
+
+lock_freqs == 1 ? receiver_freq = carrier_freq;
+
+function update_decade_settings() (
+    // defaults
+    noise_level = 0.0;
+    crackle_level = 0.0;
+    saturation_amount = 0.0;
+    bandwidth = 1.0;
+    wobble_rate = 0.5;
+    wobble_amount = 0.003;
+
+    decade == 0 ? ( // 50s
+        noise_level = 0.3;
+        crackle_level = 0.2;
+        saturation_amount = 0.5;
+        bandwidth = 0.5;
+        wobble_rate = 0.3;
+        wobble_amount = 0.005;
+    );
+    decade == 1 ? ( // 60s
+        noise_level = 0.25;
+        crackle_level = 0.15;
+        saturation_amount = 0.4;
+        bandwidth = 0.6;
+    );
+    decade == 2 ? ( // 70s
+        noise_level = 0.2;
+        crackle_level = 0.1;
+        saturation_amount = 0.35;
+        bandwidth = 0.7;
+    );
+    decade == 3 ? ( // 80s
+        noise_level = 0.15;
+        crackle_level = 0.08;
+        saturation_amount = 0.3;
+        bandwidth = 0.8;
+    );
+    decade == 4 ? ( // 90s
+        noise_level = 0.1;
+        crackle_level = 0.05;
+        saturation_amount = 0.25;
+        bandwidth = 0.9;
+    );
+    decade == 5 ? ( // 00s
+        noise_level = 0.05;
+        crackle_level = 0.02;
+        saturation_amount = 0.15;
+        bandwidth = 1.0;
+    );
+    decade == 6 ? ( // 10s
+        noise_level = 0.03;
+        crackle_level = 0.01;
+        saturation_amount = 0.1;
+        bandwidth = 1.1;
+    );
+    decade == 7 ? ( // 20s
+        noise_level = 0.02;
+        crackle_level = 0.005;
+        saturation_amount = 0.05;
+        bandwidth = 1.2;
+    );
+
+    // Manual override if user moves sliders
+    noise_level = max(noise_level, manual_noise_level);
+    crackle_level = max(crackle_level, manual_crackle_level);
+    saturation_amount = max(saturation_amount, manual_saturation_amount);
+);
+
+// === PROCESS AUDIO ===
+@block
+update_decade_settings();
+
+@sample
+spl0_orig = spl0;
+spl1_orig = spl1;
+
+// Transmission Simulation
+signal = (spl0 + spl1)*0.5; // Mono Basis
+
+phase_mod += carrier_freq/srate;
+phase_mod > 1 ? phase_mod -= 1;
+carrier = sin(phase_mod * 2 * $pi);
+
+// Amplitude Modulation
+transmission_mode == 0 ? (
+    modulated = (1 + 0.5*signal) * carrier;
+);
+
+// Frequency Modulation
+transmission_mode == 1 ? (
+    phase_fm = phase_mod + signal*0.01; // 0.01 = FM depth
+    modulated = sin(phase_fm * 2 * $pi);
+);
+
+// Digital Transmission
+transmission_mode == 2 ? (
+    modulated = signal;
+    // Add slight digital artifacts
+    modulated += (rand()*2-1)*0.001;
+);
+
+// Receiver
+phase_rec += receiver_freq/srate;
+phase_rec > 1 ? phase_rec -= 1;
+receive_carrier = sin(phase_rec * 2 * $pi);
+
+// AM Demodulation
+transmission_mode == 0 ? (
+    demodulated = modulated * receive_carrier;
+);
+
+// FM Demodulation
+transmission_mode == 1 ? (
+    demodulated = atan2(sin(modulated*2*$pi), cos(modulated*2*$pi));
+);
+
+// Digital just passes through
+transmission_mode == 2 ? (
+    demodulated = modulated;
+);
+
+// Post Demodulation Filter
+lp_factor = 0.99 * (1/bandwidth);
+
+lp0 += (demodulated - lp0) * lp_factor;
+lp1 += (demodulated - lp1) * lp_factor;
+
+spl0 = lp0;
+spl1 = lp1;
+
+// Random dropouts
+(dropout_active || rand() < dropout_chance) ? (
+    dropout_timer += 1;
+    dropout_active = 1;
+    (dropout_timer > srate*0.05) ? (dropout_active=0;dropout_timer=0;);
+    spl0 *= 0.2;
+    spl1 *= 0.2;
+);
+
+// Noise and crackle
+noise = (rand()*2-1) * noise_level;
+crackle = (rand() < crackle_level) ? (rand()*2-1)*0.5 : 0;
+
+spl0 += noise + crackle;
+spl1 += noise + crackle;
+
+// Saturation and wobble
+spl0 = saturate(spl0, saturation_amount);
+spl1 = saturate(spl1, saturation_amount);
+
+phase += wobble_rate/srate;
+phase >= 1 ? phase -= 1;
+wobble = sin(phase*2*$pi) * wobble_amount;
+
+spl0 *= 1 + wobble;
+spl1 *= 1 - wobble;
+
+// Style / Character adjustments
+character == 1 ? (spl0 *= 1.05; spl1 *= 1.05); // Warm
+character == 2 ? (spl0 *= 0.85; spl1 *= 0.85); // Dark
+character == 3 ? (spl0 = tanh(spl0*2); spl1 = tanh(spl1*2)); // Harsh
+character == 4 ? (spl0 = saturate(spl0,0.7); spl1 = saturate(spl1,0.7)); // Lofi
+character == 5 ? (spl0 *= rand()*0.8+0.2; spl1 *= rand()*0.8+0.2); // Broken
+
+// Analog mode adds slight noise and drift
+analog_mode ? (
+    spl0 += (rand()*2-1)*0.002;
+    spl1 += (rand()*2-1)*0.002;
+);
+
+// Final dry/wet mix
+spl0 = spl0_orig*(1-effect_amount) + spl0*effect_amount;
+spl1 = spl1_orig*(1-effect_amount) + spl1*effect_amount;

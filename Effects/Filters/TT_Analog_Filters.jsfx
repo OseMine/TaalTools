@@ -486,7 +486,9 @@ filtertype == 4 ? ( // Moog filter selected
   );
 );
 
-@gfx 400 140
+@gfx 400 240  // Increased height for visualization
+
+// Basic UI elements
 gfx_r = gfx_g = gfx_b = 1; gfx_a = 0.7;
 gfx_x = 10; gfx_y = 10;
 gfx_drawstr("Filter Type: ");
@@ -500,25 +502,65 @@ gfx_drawstr(filtertype == 0 ? "Prophet-5 Rev3" :
             filtertype == 7 ? "Apple 2-Pole" :
             filtertype == 8 ? "CEM3320" : "Unknown Filter");
 
-gfx_x = 10; gfx_y = 30;
-gfx_drawstr("Mode: ");
-gfx_drawstr(filtermode == 0 ? "Lowpass" : 
-            filtermode == 1 ? "Highpass" : "Bandpass");
+// Draw frequency response visualization
+gfx_x = 10; gfx_y = 80;
+gfx_r = 0.2; gfx_g = 0.6; gfx_b = 1.0;
+width = 380;
+height = 100;
+gfx_rect(gfx_x, gfx_y, width, height, 0);
 
-gfx_x = 10; gfx_y = 50;
-gfx_drawstr("Frequency: "); 
-gfx_drawnumber(freq, 0);
-gfx_drawstr(" Hz");
+// Draw frequency curve
+gfx_r = 1; gfx_g = 1; gfx_b = 1;
+lastx = lasty = 0;
+i = 0;
+while(i < width) (
+  f = pow(2, (i/width * 10 - 2)) * 20; // 20Hz to 20kHz log scale
+  response = 0;
+  
+  // Calculate frequency response based on filter type
+  filtertype == 2 ? ( // SEM
+    f_norm = f/srate;
+    response = 20*log10(abs(1/(1 + pow(f_norm/freq, 2))));
+    // Add resonance peak
+    peak = res_aggressive * 20 * (1 - abs(f_norm/freq - 1));
+    response += max(0, peak);
+  ) : (
+    // Default response curve for other filters
+    f_norm = f/freq;
+    response = 20*log10(1/sqrt(1 + pow(f_norm, 4)));
+  );
+  
+  x = gfx_x + i;
+  y = gfx_y + height * (1 - (response + 60)/60);
+  i ? (
+    gfx_line(lastx, lasty, x, y, 1);
+  );
+  lastx = x;
+  lasty = y;
+  i += 1;
+);
+
+// Draw frequency markers
+gfx_r = gfx_g = gfx_b = 0.5;
+freqs = "100Hz 1kHz 10kHz";
+i = 0;
+loop(3,
+  gfx_x = gfx_x + width * (i+1)/4;
+  gfx_y = gfx_y + height + 5;
+  gfx_drawstr(sprintf(#, "%s", strsub(freqs, i*5, 5)));
+  i += 1;
+);
 
 // Add ReaRack2 modulation display
 filtertype == 4 ? (
-  gfx_x = mxmin-110;
-  gfx_y = ymax+15;
+  gfx_x = 10;
+  gfx_y = gfx_y + 20;
+  gfx_r = gfx_g = gfx_b = 1;
   gfx_drawstr("Modulation Target: ");
   gfx_drawstr(smodp == 0 ? "Cutoff" : "Resonance");
   
-  gfx_x = mxmin-110;
-  gfx_y = ymax+30;
+  gfx_x = 10;
+  gfx_y = gfx_y + 15;
   gfx_drawstr("CC Input: ");
   gfx_drawnumber(sccIn,0);
 );

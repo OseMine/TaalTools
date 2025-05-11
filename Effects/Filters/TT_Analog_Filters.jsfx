@@ -71,6 +71,26 @@ prophet_x1r = prophet_x2r = prophet_y1r = prophet_y2r = 0;
 cem3320_y1l = cem3320_y2l = cem3320_y3l = cem3320_y4l = 0;
 cem3320_y1r = cem3320_y2r = cem3320_y3r = cem3320_y4r = 0;
 
+// Add OB-Xd filter state variables
+obxd_s1l = obxd_s2l = obxd_s3l = obxd_s4l = 0;
+obxd_s1r = obxd_s2r = obxd_s3r = obxd_s4r = 0;
+obxd_rcor = 500.0;
+obxd_rcor24 = 970.0;
+obxd_rcorInv = 1/obxd_rcor;
+obxd_rcor24Inv = 1/obxd_rcor24;
+
+// Add SEM filter state variables after other filter states
+sem_s1l = sem_s2l = 0;
+sem_s1r = sem_s2r = 0;
+sem_lastOutL = sem_lastOutR = 0;
+
+// Function to approximate diode pair resistance (OB-Xd style)
+function obxd_diodePairResistance(x) (
+  x2 = x * x;
+  x3 = x2 * x;
+  x4 = x3 * x;
+  (0.0103592*x4 + 0.00920833*x3 + 0.185*x2 + 0.05*x + 1.0);
+);
 
 @slider
 mono = slider1;
@@ -141,10 +161,82 @@ filtertype == 0 ? ( // Prophet-5
   f = 2.0 * freq / srate;
   k = 3.8 * f - 1.8 * f * f - 1.0;
   p = (k + 1.0) * 0.5;
+
+  // Calculate main filter parameters
+  g = 2.0 * $pi * freq / srate;
+  g1 = tan(g);
+  g2 = g1 * g1;
+  
+  // Apply OB-Xd style processing for left channel
+  tCfbl = obxd_diodePairResistance(obxd_s1l * 0.0876) - 1.0;
+  v = ((input0 - 2*(obxd_s1l*(res+tCfbl)) - g2*obxd_s1l - obxd_s2l)/(1 + g1*(2*(res+tCfbl) + g2)));
+  y1 = v*g1 + obxd_s1l;
+  obxd_s1l = v*g1 + y1;
+  y2 = y1*g1 + obxd_s2l;
+  obxd_s2l = y1*g1 + y2;
+  
+  // Process right channel if stereo
+  mono == 0 ? (
+    tCfbr = obxd_diodePairResistance(obxd_s1r * 0.0876) - 1.0;
+    v = ((input1 - 2*(obxd_s1r*(res+tCfbr)) - g2*obxd_s1r - obxd_s2r)/(1 + g1*(2*(res+tCfbr) + g2)));
+    y1 = v*g1 + obxd_s1r;
+    obxd_s1r = v*g1 + y1;
+    y2 = y1*g1 + obxd_s2r;
+    obxd_s2r = y1*g1 + y2;
+    outputr = y2;
+  );
+  
+  // Set output based on filter mode
+  filtermode == 0 ? ( // LP
+    spl0 = y2 * outgain;
+    spl1 = mono ? spl0 : outputr * outgain;
+  ) : filtermode == 1 ? ( // HP
+    spl0 = (input0 - y2) * outgain;
+    spl1 = mono ? spl0 : (input1 - outputr) * outgain;
+  ) : ( // BP
+    spl0 = (y1 - y2) * outgain * 2;
+    spl1 = mono ? spl0 : (y1 - outputr) * outgain * 2;
+  );
 ) : filtertype == 2 ? ( // SEM
-  f = 2.0 * sin($pi * freq / srate);
-  k = 3.9 * f - 1.9 * f * f - 1.0;
-  p = (k + 1.0) * 0.5;
+  // Enhanced SEM coefficients with more aggressive bass
+  f = 2.5 * sin($pi * freq / srate); // Increased scaling for more bass
+  k = 4.2 * f - 2.2 * f * f - 1.0;  // More aggressive coefficient curve
+  p = (k + 1.0) * 0.6;              // Increased internal gain
+  
+  // Add nastier resonance behavior
+  res_aggressive = res * res * 1.4;  // Square response curve and boost
+  
+  // Process left channel with enhanced resonance
+  xl = input0 - res_aggressive * sem_lastOutL;
+  y1 = xl * p + sem_s1l * p - k * sem_s1l;
+  y2 = y1 * p + sem_s2l * p - k * sem_s2l;
+  
+  sem_s1l = y1;
+  sem_s2l = y2;
+  sem_lastOutL = y2;
+  
+  // Process right channel if stereo
+  mono == 0 ? (
+    xr = input1 - res_aggressive * sem_lastOutR;
+    y1r = xr * p + sem_s1r * p - k * sem_s1r;
+    y2r = y1r * p + sem_s2r * p - k * sem_s2r;
+    
+    sem_s1r = y1r;
+    sem_s2r = y2r;
+    sem_lastOutR = y2r;
+  );
+  
+  // Set output based on filter mode with enhanced bass compensation
+  filtermode == 0 ? ( // LP
+    spl0 = y2 * outgain * (1 + f*0.5); // Bass compensation
+    spl1 = mono ? spl0 : y2r * outgain * (1 + f*0.5);
+  ) : filtermode == 1 ? ( // HP
+    spl0 = (input0 - y2) * outgain;
+    spl1 = mono ? spl0 : (input1 - y2r) * outgain;
+  ) : ( // BP
+    spl0 = (y1 - y2) * outgain * 3; // Increased BP gain
+    spl1 = mono ? spl0 : (y1r - y2r) * outgain * 3;
+  );
 ) : filtertype == 3 ? ( // MS-20
   f = 2.0 * freq / srate;
   k = 3.7 * f - 1.7 * f * f - 1.0;

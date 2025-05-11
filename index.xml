@@ -493,5 +493,27 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
       </version>
     </reapack>
+    <reapack name="TT_Analog_Filters.jsfx" type="effect" desc="TaalTools Analog Filters">
+      <version name="2.9" author="TaalTools">
+        <source>Effects/Filters/TT_Analog_Filters.jsfx</source>
+        <changelog>
+          + Fixed issues with filter types not producing output
+          + Improved filter coefficient calculations
+          + Added proper stereo processing
+          + Enhanced filter resonance behavior
+          + Optimized filter type switching
+        </changelog>
+      </version>
+      <version name="3.0" author="TaalTools">
+        <source>Effects/Filters/TT_Analog_Filters.jsfx</source>
+        <changelog>
+          + Added authentic OB-Xd filter implementation with diode saturation
+          + Enhanced SEM filter with aggressive bass response
+          + Improved resonance characteristics for SEM filter
+          + Added bass compensation in lowpass mode
+          + Optimized stereo processing for new filter types
+        </changelog>
+      </version>
+    </reapack>
   </category>
 </index>

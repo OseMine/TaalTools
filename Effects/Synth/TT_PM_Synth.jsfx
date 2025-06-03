@@ -1,0 +1,170 @@
+desc: TaalTools Physical Modeling Synthesizer
+tags: synthesizer physical modeling
+author: TaalTools
+version: 1.0
+changelog: Initial Release
+
+slider1:0<0,127,1>MIDI Note Display
+slider2:0.5<0,1,0.01>Master Level
+slider3:0.7<0,1,0.01>String Tension
+slider4:0.3<0,0.99,0.01>Damping
+slider5:0.6<0,0.99,0.01>Position 
+slider6:0.4<0,0.99,0.01>Feedback
+slider7:100<20,1000,1>Filter Frequency
+slider8:0.6<0.1,5,0.01>Filter Q
+
+import ../Add/synth-framework.jsfx-inc
+
+@init
+// Initialize synth framework
+freemem = synth_setup(0, 16); // Allocate memory for synth
+
+// Initialize delay lines for physical modeling
+function pm_init(size) local(i) (
+  this.size = size;
+  this.pos = 0;
+  this.buffer = freemem;
+  freemem += size;
+  
+  // Clear buffer
+  i = 0;
+  while(i < size) (
+    this.buffer[i] = 0;
+    i += 1;
+  );
+);
+
+function pm_read(pos) local(idx, frac, a, b) (
+  idx = floor(pos);
+  frac = pos - idx;
+  
+  a = this.buffer[idx % this.size];
+  b = this.buffer[(idx + 1) % this.size];
+  
+  // Linear interpolation
+  a + frac * (b - a);
+);
+
+function pm_write(pos, value) (
+  this.buffer[pos % this.size] = value;
+);
+
+// Initialize physical model components
+delay1.pm_init(4096);
+delay2.pm_init(4096);
+
+// Filter state variables
+filter_y1l = filter_y2l = 0;
+filter_y1r = filter_y2r = 0;
+
+@slider
+// Update filter coefficients
+omega = 2 * $pi * slider7 / srate;
+alpha = sin(omega) / (2 * slider8);
+cosw = cos(omega);
+a0 = 1 + alpha;
+a1 = -2 * cosw;
+a2 = 1 - alpha;
+b0 = (1 - cos(omega))/2;
+b1 = 1 - cos(omega);
+b2 = (1 - cos(omega))/2;
+
+// Normalize coefficients
+b0 = b0/a0;
+b1 = b1/a0; 
+b2 = b2/a0;
+a1 = a1/a0;
+a2 = a2/a0;
+
+@block
+synth_block();
+
+@sample
+synth_sample();
+
+note = synth_note_first();
+while (note >= 0) (
+  freq = synth_freq(note);
+  vel = synth_velocity(note);
+  gate = synth_attack(note) >= 0;
+  
+  // Calculate delay lengths based on frequency
+  delay_length = srate / freq;
+  split_point = delay_length * slider5;
+  
+  // Generate excitation signal
+  excite = gate ? vel * 0.1 * sin(2*$pi*freq*play_position/srate) : 0;
+  
+  // Read from delay lines
+  delay1_out = delay1.pm_read(delay1.pos - split_point);
+  delay2_out = delay2.pm_read(delay2.pos - (delay_length - split_point));
+  
+  // Apply string tension and damping
+  string_out = delay1_out * slider3 + delay2_out * (1-slider3);
+  damped = string_out * (1 - slider4);
+  
+  // Filter feedback path
+  filtered = b0*damped + b1*filter_y1l + b2*filter_y2l 
+            - a1*filter_y1l - a2*filter_y2l;
+  filter_y2l = filter_y1l;
+  filter_y1l = filtered;
+  
+  // Write back to delay lines with feedback
+  fb_signal = filtered * slider6;
+  delay1.pm_write(delay1.pos, excite + fb_signal);
+  delay2.pm_write(delay2.pos, fb_signal);
+  
+  // Update delay line positions
+  delay1.pos = (delay1.pos + 1) % delay1.size;
+  delay2.pos = (delay2.pos + 1) % delay2.size;
+  
+  // Mix to output
+  spl0 = spl1 = (string_out + excite) * slider2 * 0.5;
+  
+  note = synth_note_next(note);
+);
+
+@gfx 400 280
+function draw_string(x, y, w, h) local(i, px, py, val) (
+  gfx_set(1, 1, 1, 0.5);
+  
+  // Draw string at rest position
+  gfx_line(x, y+h/2, x+w, y+h/2);
+  
+  // Draw active string displacement
+  gfx_set(0.2, 0.8, 1, 1);
+  px = x;
+  i = 0;
+  while (i < delay1.size && px < x+w) (
+    val = delay1.buffer[i];
+    py = y + h/2 - val*h/4;
+    gfx_line(px, y+h/2, px, py);
+    i += 16; // Skip some samples for performance
+    px += 1;
+  );
+);
+
+// Clear background
+gfx_clear = 0;
+
+// Draw title
+gfx_setfont(1, "Arial", 16);
+gfx_set(1,1,1,1);
+gfx_x = 10; gfx_y = 10;
+gfx_drawstr("TaalTools Physical Modeling Synthesizer");
+
+// Draw string visualization
+draw_string(10, 40, gfx_w-20, 100);
+
+// Draw parameter values
+gfx_setfont(1, "Arial", 14);
+gfx_x = 10; gfx_y = 160;
+gfx_drawstr(sprintf(#, "Note: %d", slider1));
+gfx_x = 10; gfx_y = 180;
+gfx_drawstr(sprintf(#, "Tension: %.2f", slider3));
+gfx_x = 10; gfx_y = 200;
+gfx_drawstr(sprintf(#, "Damping: %.2f", slider4));
+gfx_x = 10; gfx_y = 220;
+gfx_drawstr(sprintf(#, "Position: %.2f", slider5));
+gfx_x = 10; gfx_y = 240;
+gfx_drawstr(sprintf(#, "Feedback: %.2f", slider6));

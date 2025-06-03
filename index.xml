@@ -180,7 +180,6 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_Real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Additive_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Additive_Osc.jsfx</source>
-        <source file="Effects/Synth/TT_Organ_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Organ_Osc.jsfx</source>
         <source file="Effects/Synth/TT_AM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_AM.jsfx</source>
         <source file="Effects/Synth/TT_FM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_FM.jsfx</source>
         
@@ -204,6 +203,63 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         
         <!-- Delay Collection -->
         <source file="Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx</source>
+      </version>
+      <version name="3.3" author="Taal">
+        <changelog><![CDATA[- Added new TT_Additive_Osc synthesizer with 10 oscillators
+- Added TT_AM oscillator with amplitude modulation algorithms
+- Added TT_FM oscillator with frequency modulation algorithms 
+- Added TT_Organ_Osc with Hammond organ emulation
+- Added TT_PM_Synth physical modeling synthesizer
+- Updated all existing synth plugins with improved features]]></changelog>
+        
+        <!-- Common Include Files -->
+        <source file="Add/cookdsp.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp.jsfx-inc</source>
+        <source file="Add/cookdsp_envelope.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/cookdsp_envelope.jsfx-inc</source>
+        <source file="Add/svf_filter.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/svf_filter.jsfx-inc</source>
+        <source file="Add/wavetable.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/wavetable.jsfx-inc</source>
+        <source file="Add/synth-framework.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/synth-framework.jsfx-inc</source>
+        <source file="Add/fft_real_synth.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/fft_real_synth.jsfx-inc</source>
+
+        <!-- Synthesizer Collection -->
+        <source file="Effects/Synth/TT_Additive_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Additive_Osc.jsfx</source>
+        <source file="Effects/Synth/TT_AM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_AM.jsfx</source>
+        <source file="Effects/Synth/TT_CookDSP_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_CookDSP_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_FM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_FM.jsfx</source>
+        <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Framework_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Framework_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Organ_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Organ_Osc.jsfx</source>
+        <source file="Effects/Synth/TT_PM_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_PM_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Real_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_SVF_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_SVF_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_VA_Synth_Extended.jsfx</source>
+        <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
+
+        <!-- Effects Collection -->
+        <source file="Effects/Radio/TT_Radio_FX.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Radio/TT_Radio_FX.jsfx</source>
+        <source file="Effects/Radio/TT_Radio_FX_Pro.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Radio/TT_Radio_FX_Pro.jsfx</source>
+        <source file="Effects/Radio/TT_Radio_FX_Pro_Modulation.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Radio/TT_Radio_FX_Pro_Modulation.jsfx</source>
+        
+        <!-- Envelope Collection -->
+        <source file="Effects/Envelope/TT_Gate_Envelope2.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope2.jsfx</source>
+        <source file="Effects/Envelope/TT_Framework_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Framework_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_AR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_AR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Curve_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Curve_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DAHDSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DAHDSR_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DW8000_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DW8000_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_DX7_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_DX7_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Gate_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Gate_Envelope.jsfx</source>
+        <source file="Effects/Envelope/TT_Multi_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Multi_Envelope.jsfx</source>
+        
+        <!-- Filter Collection -->
+        <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Digital_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Digital_Filters.jsfx</source>
+        <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
+        <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
       </version>
       <version name="3.0" author="Taal">
         <changelog><![CDATA[- Added new Apple 12-Pole Filter type with adjustable slopes
@@ -236,7 +292,6 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Additive_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Additive_Osc.jsfx</source>
-        <source file="Effects/Synth/TT_Organ_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Organ_Osc.jsfx</source>
         <source file="Effects/Synth/TT_AM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_AM.jsfx</source>
         <source file="Effects/Synth/TT_FM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_FM.jsfx</source>
         <!-- Filter Collection -->
@@ -337,20 +392,6 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
         <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
         <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
-
-        <!-- Envelope Collection -->
-        <source file="Effects/Envelope/TT_Framework_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Framework_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-
-        <!-- VCA Collection -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Compressor_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Compressor_VCA.jsfx</source>
-        
-        <!-- Delay Collection -->
-        <source file="Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx</source>
       </version>
       <version name="2.5" author="Taal">
         <changelog><![CDATA[- Added simplified synthesizers (TT_SVF_Synth, TT_Framework_Synth, TT_CookDSP_Synth) with single voice and no modulation
@@ -378,20 +419,6 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
         <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
         <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
-
-        <!-- Envelope Collection -->
-        <source file="Effects/Envelope/TT_Framework_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_Framework_Envelope.jsfx</source>
-        <source file="Effects/Envelope/TT_ADSR_Envelope.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Envelope/TT_ADSR_Envelope.jsfx</source>
-
-        <!-- VCA Collection -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Compressor_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Compressor_VCA.jsfx</source>
-        
-        <!-- Delay Collection -->
-        <source file="Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx</source>
       </version>
       <version name="2.4" author="Taal">
         <changelog><![CDATA[- Added new Roland Vintage Tape Echo effect with multiple classic modes (RE-101, RE-201, RE-301, RE-501)
@@ -402,6 +429,11 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
         <source file="Effects/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_VA_Synth_Extended.jsfx</source>
+        <source file="Effects/Synth/TT_SVF_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_SVF_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Framework_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Framework_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_CookDSP_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_CookDSP_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
 
         <!-- Filter Collection -->
         <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
@@ -409,16 +441,8 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
         <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
         <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
-
-        <!-- VCA Collection -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Compressor_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Compressor_VCA.jsfx</source>
-        
-        <!-- Delay Collection -->
-        <source file="Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Delay/TT_Roland_Vintage_Tape_Echo.jsfx</source>
+        <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
       </version>
       <version name="2.3" author="Taal">
         <changelog><![CDATA[- Added new Compressor VCA with threshold, ratio, attack, release, and knee controls
@@ -428,6 +452,11 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Synth/TT_Formula_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Formula_Synth.jsfx</source>
         <source file="Effects/Synth/TT_Vintage_Analog_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Vintage_Analog_Synth.jsfx</source>
         <source file="Effects/Synth/TT_VA_Synth_Extended.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_VA_Synth_Extended.jsfx</source>
+        <source file="Effects/Synth/TT_SVF_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_SVF_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Framework_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Framework_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_CookDSP_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_CookDSP_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_real_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_real_Synth.jsfx</source>
+        <source file="Effects/Synth/TT_Wavetable_Synth.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Wavetable_Synth.jsfx</source>
 
         <!-- Filter Collection -->
         <source file="Effects/Filters/TT_Analog_Filters.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Analog_Filters.jsfx</source>
@@ -435,12 +464,8 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
         <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
         <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
-
-        <!-- VCA Collection -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
+        <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
       </version>
       <version name="2.2" author="Taal">
         <changelog><![CDATA[- Added analog saturation to Analog VCA with tape and transformer modes
@@ -460,12 +485,8 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/Filters/TT_Peak_Following_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Peak_Following_Filter.jsfx</source>
         <source file="Effects/Filters/TT_Resonant_LP.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Resonant_LP.jsfx</source>
         <source file="Effects/Filters/TT_Three_Band_Peak_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_Three_Band_Peak_Filter.jsfx</source>
-
-        <!-- VCA Collection -->
-        <source file="Effects/VCA/TT_Analog_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Analog_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
-        <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
+        <source file="Effects/Filters/TT_SVF_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_SVF_Filter.jsfx</source>
+        <source file="Effects/Filters/TT_CookDSP_Filter.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Filters/TT_CookDSP_Filter.jsfx</source>
       </version>
       <version name="2.1" author="Taal">
         <changelog><![CDATA[- Reorganized effects into proper categories
@@ -491,28 +512,6 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Effects/VCA/TT_Digital_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Digital_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Experimental_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Experimental_VCA.jsfx</source>
         <source file="Effects/VCA/TT_Distorted_VCA.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/VCA/TT_Distorted_VCA.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="TT_Analog_Filters.jsfx" type="effect" desc="TaalTools Analog Filters">
-      <version name="2.9" author="TaalTools">
-        <source>Effects/Filters/TT_Analog_Filters.jsfx</source>
-        <changelog>
-          + Fixed issues with filter types not producing output
-          + Improved filter coefficient calculations
-          + Added proper stereo processing
-          + Enhanced filter resonance behavior
-          + Optimized filter type switching
-        </changelog>
-      </version>
-      <version name="3.0" author="TaalTools">
-        <source>Effects/Filters/TT_Analog_Filters.jsfx</source>
-        <changelog>
-          + Added authentic OB-Xd filter implementation with diode saturation
-          + Enhanced SEM filter with aggressive bass response
-          + Improved resonance characteristics for SEM filter
-          + Added bass compensation in lowpass mode
-          + Optimized stereo processing for new filter types
-        </changelog>
       </version>
     </reapack>
   </category>

@@ -1,9 +1,10 @@
 desc: TaalTools Wavetable Synthesizer
 author: Taal
-version: 1.0
-changelog: Initial release
+version: 1.1
+changelog: Added MIDI handler include
 
-import ../Add/wavetable.jsfx-inc
+import ../../Add/wavetable.jsfx-inc
+import ../../Add/midi_note_handler.jsfx-inc
 
 slider1:0<0,127,1>MIDI Note Display
 slider2:0.5<0,1,0.01>Oscillator Level
@@ -16,6 +17,13 @@ slider8:0<0,1,0.01>Analog Warmth
 slider9:0<0,1,0.01>Sub Oscillator
 
 @init
+// Initialize MIDI handler
+midi.slider_note_display = 1;
+midi.tune_st = 0;
+midi.tune_cents = 0;
+midi.octave_shift = 0;
+midi.init_midi();
+
 // Initialize wavetable oscillator
 function render_sine(buf, size, gain) local(x, dx) (
   x = 0;
@@ -104,6 +112,10 @@ function saturate(x, amount) local(out) (
 );
 
 @slider
+midi.tune_st = slider4;
+midi.tune_cents = slider5;
+midi.octave_shift = slider6;
+
 // Update waveform based on slider
 slider3 == 0 ? render_sine(main_osc.buf, main_osc.size, 0.7) :
 slider3 == 1 ? render_square(main_osc.buf, main_osc.size, 0.5) :
@@ -118,29 +130,10 @@ render_sub(sub_osc.buf, sub_osc.size, 0.5);
 warmth_amount = slider8;
 
 @block
-// Handle MIDI input
-while (midirecv(offset, msg1, msg2, msg3)) (
-  status = msg1 & $xF0;
-  
-  status == $x90 && msg3 > 0 ? (
-    note_on = 1;
-    vel = msg3/127;
-    slider1 = msg2;
-    
-    // Calculate frequency with tuning
-    freq = 440 * pow(2, (msg2 + slider4 + slider5/100 + slider6*12 - 69) / 12);
-    
-    // Set oscillator frequencies
-    main_osc.wave_setf(freq);
-    sub_osc.wave_setf(freq/2); // Sub oscillator is one octave lower
-  );
-  
-  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
-    note_on = 0;
-  );
-  
-  midisend(offset, msg1, msg2, msg3); // Pass through MIDI
-);
+midi.handle_midi();
+
+main_osc.wave_setf(midi.get_frequency());
+sub_osc.wave_setf(midi.get_frequency()/2);
 
 @sample
 // Get sample from wavetable based on interpolation mode
@@ -164,8 +157,8 @@ warmth_amount > 0 ? (
   prev_sample = osc;
 );
 
-// Output
-spl0 = spl1 = osc * slider2 * vel * note_on * 0.5;
+// Output with MIDI velocity and note status
+spl0 = spl1 = osc * slider2 * midi.get_velocity() * midi.is_note_on() * 0.5;
 
 @gfx 500 200
 function draw_label(x, y, txt) (

@@ -3,7 +3,7 @@ author: Taal
 version: 1.3
 changelog: Simplified interface
 
-slider1:0.5<0,5,0.1>Amplitude
+slider1:note_display=0<0,127,1>MIDI Note Display
 slider2:0<-12,12,1>Octave Shift
 slider3:0<0,7,1{Sin,Square,Sawtooth,Triangle,Sin(2x),Sin(3x),Sin(x)+Sin(2x)/2,Custom}>Builtin Formula
 slider4:0<0,8,1{sin(x),cos(x),tan(x),x*x,sqrt(x),sin(2*x),sin(3*x),sin(x)+sin(2*x)/2,sin(x)+cos(x)/2}>Custom Formula
@@ -35,9 +35,10 @@ octave = slider2;
 // Handle MIDI input
 while (midirecv(offset, msg1, msg2, msg3)) (
   status = msg1 & $xF0;
-  status == $x90 && msg3 != 0 ? ( // Note On
+  status == $x90 && msg3 > 0 ? ( // Note On
     midi_note = msg2;
-    last_midi_note = msg2;  // Store the last played note
+    last_midi_note = msg2;
+    slider1 = msg2;  // Update note display
   ) : status == $x80 || (status == $x90 && msg3 == 0) ? ( // Note Off
     midi_note == msg2 ? midi_note = -1;
   );

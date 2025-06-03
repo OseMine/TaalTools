@@ -1,0 +1,57 @@
+desc: MIDI Note Handler for TaalTools Synths
+
+@init
+note_on = 0;
+vel = 1.0;
+slider_note_display = 1; // Slider number for note display
+
+// MIDI variables 
+function init_midi() (
+  note_on = 0;
+  vel = 1.0;
+  current_freq = 440;
+);
+
+// Calculate frequency with tuning parameters
+function calc_freq(note, tune_st, tune_cents, octave_shift) (
+  440 * pow(2, (note + tune_st + tune_cents/100 + octave_shift*12 - 69) / 12);
+);
+
+// Handle incoming MIDI
+function handle_midi() 
+  local(offset, msg1, msg2, msg3, status)
+(
+  while (midirecv(offset, msg1, msg2, msg3)) (
+    status = msg1 & $xF0;
+    
+    status == $x90 && msg3 > 0 ? ( // Note On
+      note_on = 1;
+      vel = msg3/127;
+      slider(slider_note_display) = msg2; // Update note display
+      
+      this.last_note = msg2;
+      this.freq = this.calc_freq(msg2, this.tune_st, this.tune_cents, this.octave_shift);
+    );
+    
+    (status == $x80 || (status == $x90 && msg3 == 0)) ? ( // Note Off
+      note_on = 0;
+    );
+    
+    midisend(offset, msg1, msg2, msg3); // Pass through MIDI
+  );
+);
+
+// Get note status
+function is_note_on() (
+  note_on;
+);
+
+// Get velocity
+function get_velocity() (
+  vel;
+);
+
+// Get current frequency
+function get_frequency() (
+  freq;
+);

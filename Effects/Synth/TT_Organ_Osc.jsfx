@@ -8,6 +8,7 @@ provides: TaalTools_HammondOrgan/TaalTools_HammondOrgan.jsfx
 slider1:master_volume=0.5<0,1,0.01>Master Volume
 slider2:note_mode=0<0,1,1{Direct MIDI,Fixed Note}>Note Mode
 slider3:fixed_note=60<0,127,1>Fixed Note (when Note Mode = Fixed)
+slider1:note_display=0<0,127,1>MIDI Note Display
 
 // Hammond drawbars (16', 5 1/3', 8', 4', 2 2/3', 2', 1 3/5', 1 1/3', 1')
 slider10:drawbar_16=0.7<0,1,0.01>16' Drawbar
@@ -64,6 +65,7 @@ while (midirecv(offset, msg1, msg23)) (
       active_note = note;
       note_on = 1;
       velocity = vel / 127;
+      slider1 = note;  // Update note display
     ) : (
       // Note Off (note on with velocity 0)
       note == active_note ? (

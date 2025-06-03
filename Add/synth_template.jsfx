@@ -1,0 +1,60 @@
+desc: TaalTools Synth Template
+author: Taal
+version: 1.0
+
+import midi_note_handler.jsfx-inc
+
+slider1:0<0,127,1>MIDI Note Display
+slider2:0.5<0,1,0.01>Master Level
+slider3:0<-24,24,1>Tune (st)
+slider4:0<-100,100,1>Fine Tune (cents)
+slider5:0<-2,2,0.01>Octave Shift
+
+@init
+midi.slider_note_display = 1; // Tell handler which slider shows note
+midi.tune_st = 0;
+midi.tune_cents = 0;
+midi.octave_shift = 0;
+midi.init_midi();
+
+// Initialize your synth here
+// ...
+
+@slider
+midi.tune_st = slider3;
+midi.tune_cents = slider4;
+midi.octave_shift = slider5;
+
+// Handle your synth parameters here
+// ...
+
+@block
+midi.handle_midi();
+
+// Your synth block processing here
+// ...
+
+@sample
+// Your synth sample processing here
+output = 0; // Replace with your synth output
+
+// Apply master level and velocity
+spl0 = spl1 = output * slider2 * midi.get_velocity() * midi.is_note_on();
+
+@gfx 500 200
+function draw_label(x, y, txt) (
+  gfx_x = x; gfx_y = y;
+  gfx_drawstr(txt);
+);
+
+// Clear background
+gfx_set(0.2, 0.2, 0.2, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// Draw title
+gfx_set(1, 1, 1, 1);
+draw_label(10, 10, "TaalTools Synthesizer");
+
+// Draw info
+gfx_set(1, 1, 1, 1);
+draw_label(10, 170, "Note: " + (midi.is_note_on() ? sprintf(#, "%d", slider1) : "None"));

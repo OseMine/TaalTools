@@ -1,23 +1,64 @@
-desc: TaalTools Physical Modeling Synthesizer
-tags: synthesizer physical modeling
+desc: TaalTools PM Oscillator
+tags: synthesizer oscillator physical-modeling
 author: TaalTools
-version: 1.0
-changelog: Initial Release
+version: 2.7
+changelog: Restructured to use template and MIDI handler
+provides: TaalTools_PMOsc/TaalTools_PMOsc.jsfx
+import ../Add/Amidi_note_handler.jsfx-inc
 
-slider1:0<0,127,1>MIDI Note Display
-slider2:0.5<0,1,0.01>Master Level
-slider3:0.7<0,1,0.01>String Tension
-slider4:0.3<0,0.99,0.01>Damping
-slider5:0.6<0,0.99,0.01>Position 
-slider6:0.4<0,0.99,0.01>Feedback
-slider7:100<20,1000,1>Filter Frequency
-slider8:0.6<0.1,5,0.01>Filter Q
+slider1:master_volume=0.5<0,1,0.01>Master Volume
+slider2:note_mode=0<0,1,1{Direct MIDI,Fixed Note}>Note Mode
+slider3:fixed_note=60<0,127,1>Fixed Note (when Note Mode = Fixed)
+slider4:note_display=0<0,127,1>MIDI Note Display
+slider5:tune=0<-24,24,1>Tune (st)
+slider6:fine_tune=0<-100,100,1>Fine Tune (cents)
+slider7:interpolation=1<0,2,1{Truncate,Linear,Spline}>Interpolation Mode
+slider8:warmth=0<0,1,0.01>Analog Warmth
 
-import ../Add/synth-framework.jsfx-inc
+slider10:string_tension=0.7<0,1,0.01>String Tension
+slider11:damping=0.3<0,0.99,0.01>Damping
+slider12:exciter_pos=0.6<0,0.99,0.01>Exciter Position
+slider13:feedback=0.4<0,0.99,0.01>Feedback Amount
+
+slider20:filter_freq=100<20,1000,1>Filter Frequency
+slider21:filter_q=0.6<0.1,5,0.01>Filter Q
+
+in_pin:none
+out_pin:left output
+out_pin:right output
 
 @init
-// Initialize synth framework
-freemem = synth_setup(0, 16); // Allocate memory for synth
+play_position = 0;
+freemem = 0;
+prev_sample = 0;
+velocity = 1.0;
+
+// Helper functions
+function lerp(a, b, t) (
+  a + t * (b - a)
+);
+
+function cubic_interp(y0, y1, y2, y3, t) local(t2, t3, a0, a1, a2, a3) (
+  t2 = t * t;
+  t3 = t2 * t;
+  a0 = y3 - y2 - y0 + y1;
+  a1 = y0 - y1 - a0;
+  a2 = y2 - y0;
+  a3 = y1;
+  a0*t3 + a1*t2 + a2*t + a3
+);
+
+function saturate(x, amount) local(out) (
+  amount = 0.1 + amount * 0.9;
+  out = x * (1.5 - amount * 0.5 * abs(x));
+  min(max(out, -1), 1)
+);
+
+// MIDI state
+last_note = -1;
+note_on = 0;
+current_velocity = 0;
+active_note = 60;
 
 // Initialize delay lines for physical modeling
 function pm_init(size) local(i) (
@@ -26,7 +67,7 @@ function pm_init(size) local(i) (
   this.buffer = freemem;
   freemem += size;
   
-  // Clear buffer
+  // Clear buffer with proper memory allocation
   i = 0;
   while(i < size) (
     this.buffer[i] = 0;
@@ -59,8 +100,8 @@ filter_y1r = filter_y2r = 0;
 
 @slider
 // Update filter coefficients
-omega = 2 * $pi * slider7 / srate;
-alpha = sin(omega) / (2 * slider8);
+omega = 2 * $pi * slider20 / srate;
+alpha = sin(omega) / (2 * slider21);
 cosw = cos(omega);
 a0 = 1 + alpha;
 a1 = -2 * cosw;
@@ -77,31 +118,33 @@ a1 = a1/a0;
 a2 = a2/a0;
 
 @block
-synth_block();
+handle_midi_message();
 
 @sample
-synth_sample();
+// Determine current frequency based on note mode
+note_mode == 0 ? (
+  current_note = note_on ? active_note : -1;
+) : (
+  current_note = fixed_note;
+);
 
-note = synth_note_first();
-while (note >= 0) (
-  freq = synth_freq(note);
-  vel = synth_velocity(note);
-  gate = synth_attack(note) >= 0;
+current_note >= 0 ? (
+  freq = 440 * pow(2, (current_note - 69) / 12);
   
-  // Calculate delay lengths based on frequency
+  // Calculate excitation
+  excite = current_velocity * 0.1 * sin(2*$pi*freq*play_position/srate);
+  
+  // Process physical model
   delay_length = srate / freq;
-  split_point = delay_length * slider5;
-  
-  // Generate excitation signal
-  excite = gate ? vel * 0.1 * sin(2*$pi*freq*play_position/srate) : 0;
+  split_point = delay_length * slider12;
   
   // Read from delay lines
   delay1_out = delay1.pm_read(delay1.pos - split_point);
   delay2_out = delay2.pm_read(delay2.pos - (delay_length - split_point));
   
   // Apply string tension and damping
-  string_out = delay1_out * slider3 + delay2_out * (1-slider3);
-  damped = string_out * (1 - slider4);
+  string_out = delay1_out * slider10 + delay2_out * (1-slider10);
+  damped = string_out * (1 - slider11);
   
   // Filter feedback path
   filtered = b0*damped + b1*filter_y1l + b2*filter_y2l 
@@ -110,7 +153,7 @@ while (note >= 0) (
   filter_y1l = filtered;
   
   // Write back to delay lines with feedback
-  fb_signal = filtered * slider6;
+  fb_signal = filtered * slider13;
   delay1.pm_write(delay1.pos, excite + fb_signal);
   delay2.pm_write(delay2.pos, fb_signal);
   
@@ -118,13 +161,30 @@ while (note >= 0) (
   delay1.pos = (delay1.pos + 1) % delay1.size;
   delay2.pos = (delay2.pos + 1) % delay2.size;
   
-  // Mix to output
-  spl0 = spl1 = (string_out + excite) * slider2 * 0.5;
-  
-  note = synth_note_next(note);
+  // Mix output with proper polyphony
+  output = (string_out + excite);
+) : (
+  output = 0;
 );
 
-@gfx 400 280
+// Fix interpolation section
+output = slider7 == 0 ? output : // Truncate - use raw output
+        slider7 == 1 ? lerp(delay1_out, delay2_out, 0.5) : // Linear
+        cubic_interp(delay1_out, delay1_out, delay2_out, delay2_out, 0.5); // Spline
+
+// Apply analog warmth
+slider8 > 0 ? (
+  output = output * (1 - slider8*0.3) + prev_sample * (slider8*0.3);
+  output = saturate(output, slider8);
+  prev_sample = output;
+);
+
+// Apply master volume and velocity
+spl0 = spl1 = output * slider1 * velocity;
+
+play_position += 1;
+
+@gfx 500 200
 function draw_string(x, y, w, h) local(i, px, py, val) (
   gfx_set(1, 1, 1, 0.5);
   
@@ -148,23 +208,20 @@ function draw_string(x, y, w, h) local(i, px, py, val) (
 gfx_clear = 0;
 
 // Draw title
-gfx_setfont(1, "Arial", 16);
 gfx_set(1,1,1,1);
+gfx_setfont(1, "Arial", 16);
 gfx_x = 10; gfx_y = 10;
 gfx_drawstr("TaalTools Physical Modeling Synthesizer");
 
-// Draw string visualization
+// Draw string visualization with improved style
+gfx_set(0.8, 0.8, 0.8, 1);
+gfx_rect(10, 40, gfx_w-20, 100);
 draw_string(10, 40, gfx_w-20, 100);
 
-// Draw parameter values
+// Draw parameter values with new style
 gfx_setfont(1, "Arial", 14);
-gfx_x = 10; gfx_y = 160;
-gfx_drawstr(sprintf(#, "Note: %d", slider1));
-gfx_x = 10; gfx_y = 180;
-gfx_drawstr(sprintf(#, "Tension: %.2f", slider3));
-gfx_x = 10; gfx_y = 200;
-gfx_drawstr(sprintf(#, "Damping: %.2f", slider4));
-gfx_x = 10; gfx_y = 220;
-gfx_drawstr(sprintf(#, "Position: %.2f", slider5));
-gfx_x = 10; gfx_y = 240;
-gfx_drawstr(sprintf(#, "Feedback: %.2f", slider6));
+gfx_set(1,1,1,1);
+gfx_x = 10; gfx_y = 150;
+gfx_drawstr(sprintf(#, "Note: %d", note_on ? slider4 : -1));
+gfx_x = 10; gfx_y = 170;
+gfx_drawstr(sprintf(#, "Tension: %.2f | Warmth: %.2f", slider10, slider8));

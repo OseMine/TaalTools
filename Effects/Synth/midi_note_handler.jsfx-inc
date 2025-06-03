@@ -1,0 +1,39 @@
+@init
+active_note = -1;
+note_on = 0;
+current_velocity = 0;
+
+@block
+function handle_midi_message() (
+  while (midirecv(offset, msg1, msg23)) (
+    status = msg1 & 0xF0;
+    
+    // Note On
+    status == 0x90 && (msg23 & 0xFF00) ? (
+      note = msg23 & 0x7F;
+      vel = (msg23 & 0xFF00) >> 8;
+      
+      vel > 0 ? (
+        active_note = note;
+        note_on = 1;
+        current_velocity = vel / 127;
+        slider4 = note;
+        
+        // Calculate frequency with tuning
+        freq = 440 * pow(2, (note + slider5 + slider6/100 - 69) / 12);
+      ) : (
+        note == active_note ? (
+          note_on = 0;
+        );
+      );
+    ) : 
+    
+    // Note Off
+    status == 0x80 ? (
+      note = msg23 & 0x7F;
+      note == active_note ? note_on = 0;
+    );
+    
+    midisend(offset, msg1, msg23);
+  );
+);

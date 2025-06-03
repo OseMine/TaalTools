@@ -155,7 +155,7 @@ Complete collection of TaalTools effects including synthesizers, filters and VCA
         <source file="Add/wavetable.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/wavetable.jsfx-inc</source>
         <source file="Add/synth-framework.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/synth-framework.jsfx-inc</source>
         <source file="Add/fft_real_synth.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/fft_real_synth.jsfx-inc</source>
-
+        <source file="Add/midi_note_handler.jsfx-inc">https://github.com/OseMine/TaalTools/raw/main/Add/midi_note_handler.jsfx-inc</source>
         <!-- Synthesizer Collection -->
         <source file="Effects/Synth/TT_Additive_Osc.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_Additive_Osc.jsfx</source>
         <source file="Effects/Synth/TT_AM.jsfx">https://github.com/OseMine/TaalTools/raw/main/Effects/Synth/TT_AM.jsfx</source>
